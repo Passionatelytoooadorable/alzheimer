@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pehchaan - AI Memory Aid for Alzheimer's</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+
+     <!-- Favicon -->
+    <link id='favicon' rel="shortcut icon" href="./assets/images/favicon.png" type="image/x-png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Voice Prompt Interface -->
+    <div id="voicePrompt" class="voice-prompt">
+        <div class="voice-container">
+            <i class="fas fa-microphone" id="micIcon"></i>
+            <div id="voiceText" class="voice-text">Tap to speak</div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <i class="fas fa-brain"></i>
+                    Pehchaan
+                </h1>
+                <div class="user-controls">
+                    <button id="themeToggle" class="theme-btn">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="settingsBtn" class="settings-btn">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Navigation -->
+        <nav class="main-nav">
+            <div class="nav-container">
+                <button class="nav-btn active" data-tab="memoryVault">
+                    <i class="fas fa-photo-video"></i>
+                    <span>Memory Vault</span>
+                </button>
+                <button class="nav-btn" data-tab="journal">
+                    <i class="fas fa-book"></i>
+                    <span>Journal</span>
+                </button>
+                <button class="nav-btn" data-tab="map">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Safe Map</span>
+                </button>
+                <button class="nav-btn" data-tab="companion">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Friend</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Memory Vault Tab -->
+            <section id="memoryVault" class="tab-content active">
+                <div class="section-header">
+                    <h2>Memory Vault</h2>
+                    <p>Store and recognize familiar faces</p>
+                </div>
+                
+                <div class="vault-controls">
+                    <button id="addMemoryBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Add New Memory
+                    </button>
+                    <button id="recognizeBtn" class="btn-secondary">
+                        <i class="fas fa-camera"></i> Who Is This?
+                    </button>
+                </div>
+
+                <div class="memories-grid" id="memoriesGrid">
+                    <!-- Memories will be loaded here -->
+                </div>
+
+                <!-- Camera Modal -->
+                <div id="cameraModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Take a Photo</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <video id="cameraVideo" autoplay playsinline></video>
+                            <canvas id="cameraCanvas" style="display: none;"></canvas>
+                            <div class="camera-controls">
+                                <button id="captureBtn" class="btn-primary">
+                                    <i class="fas fa-camera"></i> Capture
+                                </button>
+                                <button id="retakeBtn" class="btn-secondary" style="display: none;">
+                                    <i class="fas fa-redo"></i> Retake
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Memory Modal -->
+                <div id="addMemoryModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Add New Memory</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="memoryForm">
+                                <div class="form-group">
+                                    <label for="personName">Name:</label>
+                                    <input type="text" id="personName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="relationship">Relationship:</label>
+                                    <input type="text" id="relationship" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="memoryNotes">Notes:</label>
+                                    <textarea id="memoryNotes" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="memoryPhoto">Photo:</label>
+                                    <div id="photoPreview" class="photo-preview"></div>
+                                    <button type="button" id="takePhotoBtn" class="btn-secondary">
+                                        <i class="fas fa-camera"></i> Take Photo
+                                    </button>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Save Memory</button>
+                                    <button type="button" class="btn-secondary close-modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Journal Tab -->
+            <section id="journal" class="tab-content">
+                <div class="section-header">
+                    <h2>Memory Journal</h2>
+                    <p>Record your daily thoughts and memories</p>
+                </div>
+                
+                <div class="journal-controls">
+                    <button id="addEntryBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> New Entry
+                    </button>
+                    <button id="voiceEntryBtn" class="btn-secondary">
+                        <i class="fas fa-microphone"></i> Voice Entry
+                    </button>
+                </div>
+
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                        <h3 id="currentMonth">November 2024</h3>
+                        <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+
+                <div class="journal-entries" id="journalEntries">
+                    <!-- Journal entries will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Safe Map Tab -->
+            <section id="map" class="tab-content">
+                <div class="section-header">
+                    <h2>Safe Places Map</h2>
+                    <p>Find your way to familiar places</p>
+                </div>
+
+                <div class="map-controls">
+                    <button id="goHomeBtn" class="btn-primary">
+                        <i class="fas fa-home"></i> Take Me Home
+                    </button>
+                    <button id="findPlacesBtn" class="btn-secondary">
+                        <i class="fas fa-search-location"></i> Find Safe Places
+                    </button>
+                </div>
+
+                <div class="map-container">
+                    <div id="mapDisplay" class="map-display">
+                        <div class="map-placeholder">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <p>Map will appear here</p>
+                            <p class="small">Your safe places will be marked</p>
+                        </div>
+                    </div>
+                    
+                    <div class="safe-places-list">
+                        <h3>Safe Places</h3>
+                        <div class="places-grid">
+                            <div class="place-card" data-place="home">
+                                <i class="fas fa-home"></i>
+                                <span>Home</span>
+                            </div>
+                            <div class="place-card" data-place="park">
+                                <i class="fas fa-tree"></i>
+                                <span>Park</span>
+                            </div>
+                            <div class="place-card" data-place="store">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Grocery Store</span>
+                            </div>
+                            <div class="place-card" data-place="pharmacy">
+                                <i class="fas fa-prescription-bottle"></i>
+                                <span>Pharmacy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Companion Tab -->
+            <section id="companion" class="tab-content">
+                <div class="section-header">
+                    <h2>AI Companion</h2>
+                    <p>Your friendly assistant is here to help</p>
+                </div>
+
+                <div class="companion-container">
+                    <div class="companion-avatar">
+                        <div class="avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="companion-status">
+                            <span class="status-online">Online</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message bot-message">
+                                <div class="message-content">
+                                    Hello! I'm your AI companion. How can I help you today? You can ask me about your memories, journal, or just chat!
+                                </div>
+                                <div class="message-time">Just now</div>
+                            </div>
+                        </div>
+
+                        <div class="chat-input-container">
+                            <div class="quick-actions">
+                                <button class="quick-btn" data-message="What did I do yesterday?">
+                                    <i class="fas fa-calendar-day"></i> Yesterday
+                                </button>
+                                <button class="quick-btn" data-message="Who is my daughter?">
+                                    <i class="fas fa-user"></i> Family
+                                </button>
+                                <button class="quick-btn" data-message="Where is the nearest safe place?">
+                                    <i class="fas fa-map-marker-alt"></i> Location
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="chatInput" placeholder="Type your message or use voice...">
+                                <button id="sendMessage" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                                <button id="voiceChatBtn" class="btn-secondary">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <h4>Voice Settings</h4>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="voicePrompts" checked>
+                            Enable Voice Prompts
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="autoRead" checked>
+                            Auto-read Messages
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h4>Accessibility</h4>
+                    <div class="setting-item">
+                        <label>Font Size:</label>
+                        <select id="fontSize">
+                            <option value="small">Small</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="large">Large</option>
+                            <option value="x-large">Extra Large</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Color Contrast:</label>
+                        <select id="colorContrast">
+                            <option value="normal">Normal</option>
+                            <option value="high">High Contrast</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+       <!-- Error Display -->
+    <div id="errorDisplay" class="error-display" style="display: none;">
+        <div class="error-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Something went wrong</h3>
+            <p id="errorMessage"></p>
+            <button onclick="location.reload()" class="btn-primary">Reload Page</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+// Check if user is logged in (in a real app, this would check authentication)
+const isLoggedIn = localStorage.getItem('isLoggedIn');
+if (!isLoggedIn) {
+    window.location.href = 'login.html';
+}
+</script>
+
+
+</body>
+</html>

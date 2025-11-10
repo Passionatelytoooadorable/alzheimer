@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pehchaan</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Pehchaan</h1>
+            <p class="tagline">Your Personal Memory Vault</p>
+            <p class="app-description">
+                Pehchaan helps you recognize and remember familiar faces, 
+                strengthening your connections with loved ones, colleagues, 
+                and important people in your life.
+            </p>
+            <ul class="features">
+                <li><i class="fas fa-check-circle"></i> Store and organize memories of people</li>
+                <li><i class="fas fa-check-circle"></i> Face recognition assistance</li>
+                <li><i class="fas fa-check-circle"></i> Memory strengthening exercises</li>
+                <li><i class="fas fa-check-circle"></i> Secure and private storage</li>
+            </ul>
+        </div>
+        
+        <div class="login-section">
+            <div class="form-container">
+                <h2 class="form-title">Welcome Back</h2>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="Enter your email" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" required>
+                    </div>
+                    
+                    <div class="remember-forgot">
+                        <div class="remember">
+                            <input type="checkbox" id="remember">
+                            <label for="remember">Remember me</label>
+                        </div>
+                        <a href="#" class="forgot">Forgot password?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn login-btn">Login to Your Account</button>
+                </form>
+                
+                <div class="divider"><span>or</span></div>
+                
+                <button class="btn signup-btn" id="signupBtn">Create New Account</button>
+                
+                <div class="social-login">
+                    <a href="#" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-btn google"><i class="fab fa-google"></i></a>
+                    <a href="#" class="social-btn apple"><i class="fab fa-apple"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
