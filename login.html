@@ -3,62 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Pehchaan</title>
+    <title>Login - Alzheimer's Support Platform</title>
     <link rel="stylesheet" href="login.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="welcome-section">
-            <h1>Pehchaan</h1>
-            <p class="tagline">Your Personal Memory Vault</p>
-            <p class="app-description">
-                Pehchaan helps you recognize and remember familiar faces, 
-                strengthening your connections with loved ones.
-            </p>
-            <ul class="features">
-                <li><i class="fas fa-check-circle"></i> Store memories of people</li>
-                <li><i class="fas fa-check-circle"></i> Face recognition assistance</li>
-                <li><i class="fas fa-check-circle"></i> Memory exercises</li>
-                <li><i class="fas fa-check-circle"></i> Secure storage</li>
-            </ul>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
         </div>
-        
-        <div class="login-section">
-            <div class="form-container">
-                <h2 class="form-title">Welcome to Pehchaan</h2>
-                <form id="loginForm">
-                    <div class="input-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" placeholder="Enter your email" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" placeholder="Enter your password" required>
-                    </div>
-                    
-                    <div class="remember-forgot">
-                        <div class="remember">
-                            <input type="checkbox" id="remember">
-                            <label for="remember">Remember me</label>
-                        </div>
-                        <a href="#" class="forgot">Forgot password?</a>
-                    </div>
-                    
-                    <button type="submit" class="btn login-btn">Login to Your Account</button>
-                </form>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="#">About</a>
+            <a href="#">Resources</a>
+            <a href="login.html" class="active">Login</a>
+        </nav>
+    </header>
+
+    <main class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Welcome Back</h1>
+                <p>Sign in to access your support resources</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username or Email</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
                 
-                <div class="divider"><span>or</span></div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
                 
-                <button class="btn signup-btn" id="signupBtn">Create New Account</button>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
                 
-                <div class="demo-credentials">
-                    <p><strong>Demo Login:</strong> demo@pehchaan.com / demo123</p>
+                <button type="submit" class="login-button">Sign In</button>
+            </form>
+            
+            <div class="login-footer">
+                <p>Don't have an account? <a href="#">Sign up here</a></p>
+                <div class="accessibility-options">
+                    <button id="textSize" class="accessibility-btn">Increase Text Size</button>
+                    <button id="highContrast" class="accessibility-btn">High Contrast</button>
                 </div>
             </div>
         </div>
-    </div>
+        
+        <div class="login-info">
+            <h2>Special Features for Cognitive Support</h2>
+            <ul>
+                <li>Simple, clear interface</li>
+                <li>High contrast options</li>
+                <li>Text size adjustment</li>
+                <li>Memory aids and reminders</li>
+                <li>Easy navigation</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
 
     <script src="login.js"></script>
 </body>
