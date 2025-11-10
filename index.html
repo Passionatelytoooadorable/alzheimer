@@ -337,17 +337,19 @@
             <button onclick="location.reload()" class="btn-primary">Reload Page</button>
         </div>
     </div>
+    <script>
+        // Login check - add this at the top of your body
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        if (!isLoggedIn) {
+            window.location.href = 'login.html';
+        }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="script.js"></script>
-    <script>
-// Check if user is logged in (in a real app, this would check authentication)
-const isLoggedIn = localStorage.getItem('isLoggedIn');
-if (!isLoggedIn) {
-    window.location.href = 'login.html';
-}
-</script>
+
 
 
 </body>
+
 </html>
