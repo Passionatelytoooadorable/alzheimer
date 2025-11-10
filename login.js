@@ -1,4 +1,4 @@
-// Login page specific JavaScript
+// Login page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const textSizeBtn = document.getElementById('textSize');
@@ -26,12 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Simulate API call
             setTimeout(() => {
-                alert('Login functionality would connect to a secure server in a real application.');
+                alert('Login successful! In a real application, you would be redirected to your dashboard.');
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
-                
-                // In a real app, you would redirect after successful login
-                // window.location.href = 'dashboard.html';
             }, 1500);
         });
     }
