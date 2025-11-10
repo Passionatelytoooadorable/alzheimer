@@ -13,6 +13,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <script>
+        // Login check - add this at the top of your body
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        if (!isLoggedIn) {
+            window.location.href = 'login.html';
+        }
+    </script>
     <!-- Voice Prompt Interface -->
     <div id="voicePrompt" class="voice-prompt">
         <div class="voice-container">
@@ -20,6 +27,23 @@
             <div id="voiceText" class="voice-text">Tap to speak</div>
         </div>
     </div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1>Pehchaan</h1>
+                    <p class="tagline">Memory Vault</p>
+                </div>
+                <div class="user-section">
+                    <span class="user-email" id="userEmail">demo@pehchaan.com</span>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
 
     <!-- Main Container -->
     <div class="container">
@@ -337,13 +361,6 @@
             <button onclick="location.reload()" class="btn-primary">Reload Page</button>
         </div>
     </div>
-    <script>
-        // Login check - add this at the top of your body
-        const isLoggedIn = localStorage.getItem('isLoggedIn');
-        if (!isLoggedIn) {
-            window.location.href = 'login.html';
-        }
-    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="script.js"></script>
@@ -353,3 +370,4 @@
 </body>
 
 </html>
+
