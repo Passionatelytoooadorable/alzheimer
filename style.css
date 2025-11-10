@@ -2093,8 +2093,8 @@ header {
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
+    margin-left: auto; /* This will push it to the right */
 }
-
 .logout-btn:hover {
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
@@ -2140,3 +2140,4 @@ header {
         padding: 10px 20px;
     }
 }
+
