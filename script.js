@@ -1,3 +1,21 @@
+// Logout function
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userEmail');
+        window.location.href = 'login.html';
+    }
+}
+
+// Display user email on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const userEmail = localStorage.getItem('userEmail') || 'demo@pehchaan.com';
+    const userEmailElement = document.getElementById('userEmail');
+    if (userEmailElement) {
+        userEmailElement.textContent = userEmail;
+    }
+});
+
 // Enhanced MemoryAidAssistant Class with Proper Loading
 class MemoryAidAssistant {
     constructor() {
@@ -727,4 +745,5 @@ window.addEventListener('error', (event) => {
 function logout() {
     localStorage.removeItem('isLoggedIn');
     window.location.href = 'login.html';
+
 }
