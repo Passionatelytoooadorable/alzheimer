@@ -6,7 +6,7 @@
 }
 
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     color: #333;
     line-height: 1.6;
     min-height: 100vh;
@@ -59,19 +59,267 @@ body {
 .login-container {
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     padding: 2rem;
     gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.illustration-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.animation-container {
+    position: relative;
+    width: 400px;
+    height: 300px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* Elderly Person */
+.elderly-person {
+    position: absolute;
+    left: 100px;
+    bottom: 50px;
+    animation: gentle-bounce 4s ease-in-out infinite;
+}
+
+.elderly-person .head {
+    width: 60px;
+    height: 60px;
+    background: #ffccbc;
+    border-radius: 50%;
+    position: relative;
+}
+
+.elderly-person .head::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #ffab91;
+    border-radius: 50%;
+    top: 10px;
+    left: 10px;
+}
+
+.elderly-person .body {
+    width: 80px;
+    height: 70px;
+    background: #90caf9;
+    border-radius: 40% 40% 0 0;
+    position: absolute;
+    top: 60px;
+    left: -10px;
+}
+
+.elderly-person .arm-left,
+.elderly-person .arm-right {
+    width: 20px;
+    height: 50px;
+    background: #90caf9;
+    border-radius: 10px;
+    position: absolute;
+    top: 70px;
+}
+
+.elderly-person .arm-left {
+    left: -15px;
+    transform: rotate(20deg);
+    animation: arm-sway 3s ease-in-out infinite;
+}
+
+.elderly-person .arm-right {
+    right: -15px;
+    transform: rotate(-20deg);
+    animation: arm-sway 3s ease-in-out infinite 1.5s;
+}
+
+/* Caregiver */
+.caregiver {
+    position: absolute;
+    right: 100px;
+    bottom: 50px;
+    animation: gentle-bounce 4s ease-in-out infinite 2s;
+}
+
+.caregiver .head {
+    width: 50px;
+    height: 50px;
+    background: #ffd54f;
+    border-radius: 50%;
+    position: relative;
+}
+
+.caregiver .head::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: #ffb300;
+    border-radius: 50%;
+    top: 10px;
+    left: 10px;
+}
+
+.caregiver .body {
+    width: 70px;
+    height: 60px;
+    background: #81c784;
+    border-radius: 40% 40% 0 0;
+    position: absolute;
+    top: 50px;
+    left: -10px;
+}
+
+.caregiver .arm-left,
+.caregiver .arm-right {
+    width: 15px;
+    height: 40px;
+    background: #81c784;
+    border-radius: 10px;
+    position: absolute;
+    top: 60px;
+}
+
+.caregiver .arm-left {
+    left: -12px;
+    transform: rotate(15deg);
+}
+
+.caregiver .arm-right {
+    right: -12px;
+    transform: rotate(-15deg);
+    animation: point-phone 4s ease-in-out infinite;
+}
+
+.caregiver .phone {
+    width: 25px;
+    height: 40px;
+    background: #374785;
+    border-radius: 5px;
+    position: absolute;
+    top: 40px;
+    right: -30px;
+    animation: phone-glow 3s ease-in-out infinite;
+}
+
+.caregiver .phone::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 20px;
+    background: #a8d0e6;
+    border-radius: 2px;
+    top: 10px;
+    left: 5px;
+}
+
+/* Interaction Elements */
+.interaction-bubble {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 60px;
+    background: rgba(168, 208, 230, 0.8);
+    border-radius: 30px;
+    animation: bubble-pulse 5s ease-in-out infinite;
+}
+
+.heart {
+    position: absolute;
+    font-size: 1.2rem;
+    opacity: 0;
+    animation: float-heart 6s ease-in-out infinite;
+}
+
+.heart-1 {
+    top: 120px;
+    left: 120px;
+    animation-delay: 0s;
+}
+
+.heart-2 {
+    top: 80px;
+    left: 200px;
+    animation-delay: 2s;
+}
+
+.heart-3 {
+    top: 150px;
+    right: 150px;
+    animation-delay: 4s;
+}
+
+/* Animations */
+@keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes arm-sway {
+    0%, 100% { transform: rotate(20deg); }
+    50% { transform: rotate(10deg); }
+}
+
+@keyframes point-phone {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(-25deg); }
+}
+
+@keyframes phone-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(168, 208, 230, 0); }
+    50% { box-shadow: 0 0 20px rgba(168, 208, 230, 0.8); }
+}
+
+@keyframes bubble-pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+    50% { transform: translateX(-50%) scale(1.1); opacity: 0.9; }
+}
+
+@keyframes float-heart {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    20% { transform: translateY(-20px) scale(1); opacity: 1; }
+    80% { transform: translateY(-60px) scale(0.8); opacity: 0.7; }
+    100% { transform: translateY(-80px) scale(0); opacity: 0; }
+}
+
+.illustration-text {
+    text-align: center;
+    max-width: 400px;
+}
+
+.illustration-text h2 {
+    color: #374785;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.illustration-text p {
+    color: #6c757d;
+    line-height: 1.6;
 }
 
 .login-card {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     padding: 2.5rem;
     width: 100%;
-    max-width: 450px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     backdrop-filter: blur(10px);
 }
 
@@ -208,160 +456,6 @@ body {
     background-color: #e9ecef;
 }
 
-.login-info {
-    max-width: 400px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 15px;
-    padding: 2rem;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    backdrop-filter: blur(10px);
-}
-
-.login-info h2 {
-    color: #374785;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-}
-
-.login-info ul {
-    list-style-type: none;
-}
-
-.login-info li {
-    padding: 0.5rem 0;
-    position: relative;
-    padding-left: 1.5rem;
-    color: #495057;
-}
-
-.login-info li:before {
-    content: "✓";
-    color: #a8d0e6;
-    position: absolute;
-    left: 0;
-    font-weight: bold;
-}
-
-.community-animation {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 1.5rem;
-    height: 150px;
-    position: relative;
-}
-
-.person {
-    position: absolute;
-    width: 40px;
-    height: 60px;
-    border-radius: 50% 50% 40% 40%;
-    background-color: #f8b7cd;
-    animation: float 6s ease-in-out infinite;
-}
-
-.person:nth-child(2) {
-    background-color: #a8d0e6;
-    animation-delay: -1.5s;
-    left: 30%;
-}
-
-.person:nth-child(3) {
-    background-color: #b8e0d2;
-    animation-delay: -3s;
-    right: 30%;
-}
-
-.person:nth-child(4) {
-    background-color: #e6a8d0;
-    animation-delay: -4.5s;
-    left: 45%;
-    top: 20%;
-}
-
-.person:nth-child(5) {
-    background-color: #d0e6a8;
-    animation-delay: -6s;
-    right: 45%;
-    top: 20%;
-}
-
-.person::before {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: white;
-    border-radius: 50%;
-    top: 10px;
-    left: 10px;
-}
-
-.person::after {
-    content: "";
-    position: absolute;
-    width: 30px;
-    height: 15px;
-    background-color: #374785;
-    border-radius: 50%;
-    top: 25px;
-    left: 5px;
-    opacity: 0.3;
-}
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0) rotate(0deg);
-    }
-    25% {
-        transform: translateY(-10px) rotate(2deg);
-    }
-    50% {
-        transform: translateY(0) rotate(0deg);
-    }
-    75% {
-        transform: translateY(5px) rotate(-2deg);
-    }
-}
-
-.connection {
-    position: absolute;
-    height: 2px;
-    background-color: #a8d0e6;
-    opacity: 0.5;
-    animation: pulse 3s ease-in-out infinite;
-}
-
-.connection-1 {
-    width: 80px;
-    top: 40%;
-    left: 25%;
-    animation-delay: 0s;
-}
-
-.connection-2 {
-    width: 60px;
-    top: 50%;
-    left: 40%;
-    animation-delay: 0.5s;
-}
-
-.connection-3 {
-    width: 70px;
-    top: 40%;
-    right: 25%;
-    animation-delay: 1s;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 0.3;
-    }
-    50% {
-        opacity: 0.7;
-    }
-}
-
 .footer {
     background-color: #a8d0e6;
     color: #374785;
@@ -376,8 +470,7 @@ body.high-contrast {
     color: #fff;
 }
 
-body.high-contrast .login-card,
-body.high-contrast .login-info {
+body.high-contrast .login-card {
     background-color: #000;
     color: #fff;
     border: 2px solid #fff;
@@ -425,26 +518,26 @@ body.large-text .form-group input {
         gap: 2rem;
     }
     
-    .login-card {
-        padding: 2rem;
+    .animation-container {
+        width: 300px;
+        height: 250px;
     }
     
-    .login-info {
-        max-width: 100%;
+    .elderly-person {
+        left: 60px;
+    }
+    
+    .caregiver {
+        right: 60px;
+    }
+    
+    .login-card {
+        padding: 2rem;
     }
     
     .form-options {
         flex-direction: column;
         gap: 1rem;
         align-items: flex-start;
-    }
-    
-    .community-animation {
-        height: 120px;
-    }
-    
-    .person {
-        width: 30px;
-        height: 45px;
     }
 }
