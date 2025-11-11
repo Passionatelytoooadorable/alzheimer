@@ -1,1 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="#">Resources</a>
+            <a href="login.html">Logout</a>
+        </nav>
+    </header>
 
+    <main class="dashboard-container">
+        <div class="welcome-section">
+            <h1>Welcome Back, <span id="userName">User</span>!</h1>
+            <p class="date-display" id="currentDate"></p>
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-info">
+                        <h3>Memory Vault</h3>
+                        <p><span id="memoryCount">0</span> memories saved</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <h3>Journal</h3>
+                        <p><span id="journalCount">0</span> entries this week</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="feature-grid">
+            <!-- Memory Vault -->
+            <a href="memory-vault.html" class="feature-tile memory-tile">
+                <div class="tile-icon">📚</div>
+                <div class="tile-content">
+                    <h3>Memory Vault</h3>
+                    <p>Store and cherish your precious memories with photos and voice notes</p>
+                    <div class="tile-badge" id="memoryBadge">New</div>
+                </div>
+            </a>
+
+            <!-- Journal -->
+            <a href="journal.html" class="feature-tile journal-tile">
+                <div class="tile-icon">📝</div>
+                <div class="tile-content">
+                    <h3>Daily Journal</h3>
+                    <p>Record your thoughts, feelings, and daily experiences</p>
+                    <div class="tile-badge" id="journalBadge">2 new prompts</div>
+                </div>
+            </a>
+
+            <!-- Location Tracker -->
+            <a href="location-tracker.html" class="feature-tile location-tile">
+                <div class="tile-icon">📍</div>
+                <div class="tile-content">
+                    <h3>Location Safety</h3>
+                    <p>Share your location with trusted contacts for safety</p>
+                    <div class="tile-status" id="locationStatus">Location off</div>
+                </div>
+            </a>
+
+            <!-- AI Companion -->
+            <a href="ai-companion.html" class="feature-tile ai-tile">
+                <div class="tile-icon">🤖</div>
+                <div class="tile-content">
+                    <h3>AI Care Companion</h3>
+                    <p>Get help with reminders, questions, and daily assistance</p>
+                    <div class="tile-badge" id="aiBadge">Online</div>
+                </div>
+            </a>
+
+            <!-- Emergency Contact -->
+            <div class="feature-tile emergency-tile">
+                <div class="tile-icon">🆘</div>
+                <div class="tile-content">
+                    <h3>Emergency Contact</h3>
+                    <p>Quick access to your emergency contacts</p>
+                    <button class="emergency-btn" id="emergencyBtn">Call Help</button>
+                </div>
+            </div>
+
+            <!-- Daily Reminders -->
+            <div class="feature-tile reminders-tile">
+                <div class="tile-icon">⏰</div>
+                <div class="tile-content">
+                    <h3>Today's Reminders</h3>
+                    <ul class="reminders-list" id="remindersList">
+                        <li>Take morning medication</li>
+                        <li>Doctor appointment at 2 PM</li>
+                        <li>Call family member</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h2>Recent Activity</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">📚</div>
+                    <div class="activity-details">
+                        <p>Added new memory to vault</p>
+                        <span class="activity-time">2 hours ago</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📝</div>
+                    <div class="activity-details">
+                        <p>Wrote in your journal</p>
+                        <span class="activity-time">Yesterday</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">🤖</div>
+                    <div class="activity-details">
+                        <p>Asked AI companion about medication</p>
+                        <span class="activity-time">2 days ago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <!-- Emergency Contact Modal -->
+    <div id="emergencyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Emergency Contacts</h2>
+            <div class="contact-list">
+                <div class="contact-item">
+                    <div class="contact-name">Dr. Sarah Johnson</div>
+                    <div class="contact-number">(555) 123-4567</div>
+                    <button class="call-btn" onclick="callNumber('5551234567')">Call</button>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">Family Member</div>
+                    <div class="contact-number">(555) 987-6543</div>
+                    <button class="call-btn" onclick="callNumber('5559876543')">Call</button>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-name">Emergency Services</div>
+                    <div class="contact-number">911</div>
+                    <button class="call-btn emergency-call" onclick="callNumber('911')">Call 911</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
