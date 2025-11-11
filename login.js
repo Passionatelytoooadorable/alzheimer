@@ -66,3 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// success handler:
+setTimeout(() => {
+    window.location.href = 'dashboard.html';
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+}, 1500);
