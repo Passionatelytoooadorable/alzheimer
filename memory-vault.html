@@ -3,205 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Vault - Alzheimer's Support</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="memory-vault.css">
+    <title>Memory Vault</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="header">
-        <div class="logo">
-            <div class="logo-icon">🧠</div>
-            <div class="logo-text">Alzheimer's Support</div>
-        </div>
-        <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="memory-vault.html" class="active">Memory Vault</a>
-            <a href="#">Resources</a>
-            <a href="login.html">Logout</a>
-        </nav>
-    </header>
+    <div class="container">
+        <header>
+            <h1>Memory Vault</h1>
+            <p class="subtitle">Your digital memory album - preserving precious moments and relationships.</p>
+        </header>
 
-    <main class="memory-vault-container">
-            <!-- Full Edge-to-Edge Header -->
-    <section class="vault-header">
-        <div class="header-content">
-            <div class="header-text">
-                <h1>Memory Vault 💖</h1>
-                <p>Your digital memory album - preserving precious moments and relationships</p>
-            </div>
-            <div class="header-stats">
-                <div class="stat">
-                    <span class="stat-number" id="totalMemories">2</span>
-                    <span class="stat-label">Memories</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number" id="totalPeople">2</span>
-                    <span class="stat-label">People</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number" id="recentAdded">2</span>
-                    <span class="stat-label">Recently Added</span>
-                </div>
-            </div>
-            <div class="header-animation">
-                <div class="floating-photos">
-                    <div class="photo-frame frame-1">📸</div>
-                    <div class="photo-frame frame-2">👨‍👩‍👧</div>
-                    <div class="photo-frame frame-3">🎂</div>
-                    <div class="photo-frame frame-4">🏖️</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Main Content - Side by Side Layout -->
-    <div class="main-content">
-        <!-- Left Side - Memories Grid -->
-        <div class="memories-section">
-            <!-- Quick Actions -->
-            <section class="quick-actions">
-                <button class="action-btn primary" id="addMemoryBtn">
-                    <span class="btn-icon">➕</span>
-                    Add New Memory
-                </button>
-                <button class="action-btn secondary" id="cameraBtn">
-                    <span class="btn-icon">📷</span>
-                    Take Photo to Recognize
-                </button>
-                <button class="action-btn tertiary" id="voiceRecordBtn">
-                    <span class="btn-icon">🎤</span>
-                    Add Voice Note
-                </button>
-            </section>
-
-            <!-- Memory Grid -->
-            <section class="memory-grid-section">
-                <h2>Your Precious Memories</h2>
-                <div class="filter-options">
-                    <button class="filter-btn active" data-filter="all">All Memories</button>
-                    <button class="filter-btn" data-filter="family">Family</button>
-                    <button class="filter-btn" data-filter="friends">Friends</button>
-                    <button class="filter-btn" data-filter="events">Special Events</button>
-                </div>
-
-                <div class="memory-grid" id="memoryGrid">
-                    <!-- Memory cards will be dynamically added here -->
-                </div>
-            </section>
-
-            <!-- Camera Recognition Section -->
-            <section class="camera-section" id="cameraSection" style="display: none;">
-                <h2>Photo Recognition</h2>
-                <div class="camera-container">
-                    <div class="camera-preview" id="cameraPreview">
-                        <div class="camera-placeholder">
-                            <div class="camera-icon">📷</div>
-                            <p>Camera preview will appear here</p>
-                        </div>
-                    </div>
-                    <div class="camera-controls">
-                        <button class="camera-btn" id="startCamera">Start Camera</button>
-                        <button class="camera-btn capture" id="captureBtn" disabled>Capture Photo</button>
-                        <button class="camera-btn" id="uploadPhoto">Upload Photo Instead</button>
-                    </div>
-                </div>
-                <div class="recognition-result" id="recognitionResult" style="display: none;">
-                    <h3>Recognition Result</h3>
-                    <div class="result-card">
-                        <div class="matched-person">
-                            <img src="" alt="Matched person" id="matchedImage">
-                            <div class="person-info">
-                                <h4 id="matchedName">John Doe</h4>
-                                <p id="matchedDescription">This is John, your grandson. He loves playing basketball.</p>
-                                <div class="match-confidence">
-                                    <span class="confidence-label">Match Confidence:</span>
-                                    <div class="confidence-bar">
-                                        <div class="confidence-fill" style="width: 85%"></div>
-                                    </div>
-                                    <span class="confidence-percent">85%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <div class="actions">
+            <button class="action-btn" id="addMemoryBtn">
+                <i class="fas fa-plus"></i>
+                Add New Memory
+            </button>
+            <button class="action-btn">
+                <i class="fas fa-camera"></i>
+                Take Photo to Recognize
+            </button>
+            <button class="action-btn">
+                <i class="fas fa-microphone"></i>
+                Add Voice Note
+            </button>
         </div>
 
-        <!-- Right Side - Add Memory Form -->
-        <aside class="add-memory-sidebar">
-            <h2>Add New Memory</h2>
-            <form id="addMemoryForm" class="memory-form">
-                <div class="form-group">
-                    <label for="personName">Person's Name *</label>
-                    <input type="text" id="personName" name="personName" required placeholder="Enter full name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="relationship">Relationship *</label>
-                    <select id="relationship" name="relationship" required>
-                        <option value="">Select relationship</option>
-                        <option value="spouse">Spouse/Partner</option>
-                        <option value="child">Child</option>
-                        <option value="grandchild">Grandchild</option>
-                        <option value="sibling">Brother/Sister</option>
-                        <option value="friend">Friend</option>
-                        <option value="caregiver">Caregiver</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="memoryDescription">Memory Description *</label>
-                    <textarea id="memoryDescription" name="memoryDescription" required 
-                              placeholder="E.g., This is Ankit, grandson. His birthday was on 19th June. He loves playing football and visiting the beach..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="memoryPhoto">Upload Photo *</label>
-                    <div class="upload-area" id="uploadArea">
-                        <div class="upload-placeholder">
-                            <span class="upload-icon">📸</span>
-                            <p>Click to upload photo or drag & drop</p>
-                            <span class="upload-hint">JPEG, PNG - Max 5MB</span>
+        <div class="gallery-section">
+            <h2 class="section-title">Recently Added</h2>
+            <div class="memory-gallery">
+                <div class="memory-card">
+                    <div class="memory-image">
+                        <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Family Gathering">
+                    </div>
+                    <div class="memory-content">
+                        <h3>Family Gathering</h3>
+                        <p>December 2023 - Wonderful family reunion with everyone together</p>
+                        <div class="memory-date">
+                            <i class="far fa-calendar"></i>
+                            Added: 2 days ago
                         </div>
-                        <input type="file" id="memoryPhoto" name="memoryPhoto" accept="image/*" hidden>
-                    </div>
-                    <div class="image-preview" id="imagePreview" style="display: none;">
-                        <img id="previewImage" src="" alt="Preview">
-                        <button type="button" class="remove-image" id="removeImage">Remove</button>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="voiceNote">Add Voice Note (Optional)</label>
-                    <div class="voice-recorder">
-                        <button type="button" class="voice-btn" id="startRecording">
-                            <span class="voice-icon">🎤</span>
-                            Start Recording
-                        </button>
-                        <div class="recording-controls" id="recordingControls" style="display: none;">
-                            <span class="recording-indicator">🔴 Recording...</span>
-                            <span class="recording-timer" id="recordingTimer">00:00</span>
-                            <button type="button" class="voice-btn stop" id="stopRecording">Stop</button>
+
+                <div class="memory-card">
+                    <div class="memory-image">
+                        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Beach Vacation">
+                    </div>
+                    <div class="memory-content">
+                        <h3>Beach Vacation</h3>
+                        <p>Summer 2023 - Relaxing days by the ocean with beautiful sunsets</p>
+                        <div class="memory-date">
+                            <i class="far fa-calendar"></i>
+                            Added: 1 week ago
                         </div>
-                        <audio id="voicePreview" controls style="display: none;"></audio>
                     </div>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" id="cancelAddMemory">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Memory</button>
+
+                <div class="memory-card">
+                    <div class="memory-image">
+                        <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Birthday Celebration">
+                    </div>
+                    <div class="memory-content">
+                        <h3>Birthday Celebration</h3>
+                        <p>March 2023 - Special birthday party with friends and family</p>
+                        <div class="memory-date">
+                            <i class="far fa-calendar"></i>
+                            Added: 2 weeks ago
+                        </div>
+                    </div>
                 </div>
-            </form>
-        </aside>
+
+                <div class="memory-card">
+                    <div class="memory-image">
+                        <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Anniversary">
+                    </div>
+                    <div class="memory-content">
+                        <h3>Anniversary</h3>
+                        <p>January 2023 - Celebrating many wonderful years together</p>
+                        <div class="memory-date">
+                            <i class="far fa-calendar"></i>
+                            Added: 3 weeks ago
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    </main>
-        
-    <footer class="footer">
-        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
-    </footer>
 
-    <script src="memory-vault.js"></script>
+    <!-- Add Memory Modal -->
+    <div class="modal" id="addMemoryModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Memory</h2>
+            <form id="memoryForm">
+                <div class="form-group">
+                    <label for="memoryTitle">Memory Title</label>
+                    <input type="text" id="memoryTitle" placeholder="Enter memory title" required>
+                </div>
+                <div class="form-group">
+                    <label for="memoryDate">Date</label>
+                    <input type="date" id="memoryDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="memoryDescription">Description</label>
+                    <textarea id="memoryDescription" placeholder="Describe this memory" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="memoryImage">Upload Image</label>
+                    <input type="file" id="memoryImage" accept="image/*">
+                </div>
+                <button type="submit" class="submit-btn">Save Memory</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
