@@ -65,18 +65,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loginSuccess(user, submitBtn, originalText) {
-        showMessage('Login successful! Redirecting...', 'success');
-        
+    showMessage('Login successful! Redirecting...', 'success');
+    
         // Store user session
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userName', user.name);
         localStorage.setItem('userEmail', user.username);
         
-        // Redirect to dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 1500);
-    }
+        // Redirect to INDEX.HTML 
+    setTimeout(() => {
+        window.location.href = 'index.html'; 
+    }, 1500);
+}
 
     function loginFailed(submitBtn, originalText) {
         showMessage('Invalid username or password. Please try again.', 'error');
@@ -231,3 +231,4 @@ document.addEventListener('DOMContentLoaded', function() {
     
     autoFillDemo();
 });
+
