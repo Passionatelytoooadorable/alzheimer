@@ -1,3 +1,11 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+        window.location.href = 'login.html';
+        return;
+    }
+
 // Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize dashboard
