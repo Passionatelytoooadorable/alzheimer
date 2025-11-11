@@ -5,16 +5,22 @@
     padding: 2rem;
 }
 
-.welcome-section {
+/* Full Width Welcome Header */
+.welcome-header {
     background: linear-gradient(135deg, #a8d0e6 0%, #8bc1e3 100%);
-    border-radius: 15px;
-    padding: 2rem;
-    margin-bottom: 2rem;
     color: white;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-.welcome-section h1 {
+.welcome-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.welcome-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
     font-weight: 600;
@@ -28,42 +34,32 @@
 
 .quick-stats {
     display: flex;
-    gap: 1rem;
+    gap: 3rem;
     flex-wrap: wrap;
 }
 
-.stat-card {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    backdrop-filter: blur(10px);
-    min-width: 200px;
+.stat-item {
+    text-align: center;
 }
 
-.stat-icon {
+.stat-number {
+    display: block;
     font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
 }
 
-.stat-info h3 {
-    margin: 0 0 0.25rem 0;
-    font-size: 1.1rem;
-}
-
-.stat-info p {
-    margin: 0;
-    opacity: 0.9;
+.stat-label {
     font-size: 0.9rem;
+    opacity: 0.9;
 }
 
-/* Feature Grid */
-.feature-grid {
+/* Feature Rows */
+.feature-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
 }
 
 .feature-tile {
@@ -76,8 +72,8 @@
     transition: all 0.3s ease;
     border: 2px solid transparent;
     display: flex;
-    gap: 1rem;
-    align-items: flex-start;
+    flex-direction: column;
+    height: 100%;
 }
 
 .feature-tile:hover {
@@ -86,25 +82,23 @@
     border-color: #a8d0e6;
 }
 
+.tile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
 .tile-icon {
-    font-size: 2.5rem;
+    font-size: 2rem;
     flex-shrink: 0;
 }
 
-.tile-content {
-    flex: 1;
-}
-
-.tile-content h3 {
-    margin: 0 0 0.5rem 0;
+.tile-header h3 {
+    margin: 0;
     color: #374785;
     font-size: 1.3rem;
-}
-
-.tile-content p {
-    margin: 0 0 1rem 0;
-    color: #6c757d;
-    line-height: 1.5;
+    flex: 1;
 }
 
 .tile-badge, .tile-status {
@@ -125,110 +119,221 @@
     color: #6c757d;
 }
 
+.tile-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tile-content p {
+    margin: 0 0 1rem 0;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
 /* Specific Tile Styles */
 .memory-tile .tile-icon { color: #4ecdc4; }
 .journal-tile .tile-icon { color: #45b7d1; }
 .location-tile .tile-icon { color: #96ceb4; }
 .ai-tile .tile-icon { color: #feca57; }
 
-.emergency-tile {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-    color: white;
-}
-
-.emergency-tile .tile-content h3,
-.emergency-tile .tile-content p {
-    color: white;
-}
-
-.emergency-btn {
-    background: white;
-    color: #ff6b6b;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.emergency-btn:hover {
-    background: #ffeaea;
-    transform: scale(1.05);
-}
-
+/* Reminders Tile */
 .reminders-tile {
-    background: linear-gradient(135deg, #a8d0e6 0%, #8bc1e3 100%);
-    color: white;
-}
-
-.reminders-tile .tile-content h3,
-.reminders-tile .tile-content p {
-    color: white;
+    border-left: 4px solid #4ecdc4;
 }
 
 .reminders-list {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 0 0 1rem 0;
+    flex: 1;
 }
 
-.reminders-list li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
+.reminder-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.reminders-list li:last-child {
+.reminder-item:last-child {
     border-bottom: none;
 }
 
-/* Recent Activity */
-.recent-activity {
-    background: white;
-    border-radius: 15px;
-    padding: 2rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-}
-
-.recent-activity h2 {
+.reminder-time {
+    font-weight: 600;
     color: #374785;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+    min-width: 60px;
 }
 
-.activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.reminder-text {
+    flex: 1;
+    color: #495057;
 }
 
-.activity-item {
+.reminder-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.reminder-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.reminder-status.upcoming {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.reminder-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.add-reminder-btn {
+    background: transparent;
+    border: 2px dashed #a8d0e6;
+    color: #374785;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: auto;
+}
+
+.add-reminder-btn:hover {
+    background: #a8d0e6;
+    color: white;
+}
+
+/* Emergency Tile */
+.emergency-tile {
+    border-left: 4px solid #ff6b6b;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+}
+
+.emergency-contacts {
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.contact-card {
     display: flex;
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: #f8f9fa;
+    background: white;
     border-radius: 10px;
-    transition: background-color 0.3s ease;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.activity-item:hover {
-    background: #e9ecef;
-}
-
-.activity-icon {
+.contact-avatar {
     font-size: 1.5rem;
     flex-shrink: 0;
 }
 
-.activity-details p {
-    margin: 0 0 0.25rem 0;
+.contact-info {
+    flex: 1;
+}
+
+.contact-name {
+    font-weight: 600;
+    color: #374785;
+    margin-bottom: 0.25rem;
+}
+
+.contact-role {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.contact-number {
+    font-size: 0.9rem;
+    color: #495057;
     font-weight: 500;
 }
 
-.activity-time {
-    font-size: 0.8rem;
+.call-btn {
+    background: #a8d0e6;
+    color: #374785;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.call-btn:hover {
+    background: #8bc1e3;
+}
+
+.emergency-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    margin-top: auto;
+}
+
+.emergency-btn:hover {
+    background: #ee5a52;
+    transform: scale(1.02);
+}
+
+/* Feature Stats */
+.feature-stats {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+}
+
+.stat {
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+/* Location Info */
+.location-info {
+    margin-top: auto;
+}
+
+.location-status, .safe-zone {
+    font-size: 0.9rem;
     color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+/* AI Features */
+.ai-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.ai-feature {
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #495057;
 }
 
 /* Modal Styles */
@@ -278,7 +383,7 @@
 
 .contact-item {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
     padding: 1rem;
     background: #f8f9fa;
@@ -293,21 +398,6 @@
 
 .contact-number {
     color: #6c757d;
-}
-
-.call-btn {
-    background: #a8d0e6;
-    color: #374785;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.call-btn:hover {
-    background: #8bc1e3;
 }
 
 .emergency-call {
@@ -325,30 +415,41 @@
         padding: 1rem;
     }
     
-    .feature-grid {
+    .welcome-content {
+        padding: 0 1rem;
+    }
+    
+    .welcome-header h1 {
+        font-size: 2rem;
+    }
+    
+    .feature-row {
         grid-template-columns: 1fr;
     }
     
     .quick-stats {
+        gap: 1.5rem;
+        justify-content: center;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .reminder-item {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
     
-    .stat-card {
-        min-width: auto;
-    }
-    
-    .welcome-section h1 {
-        font-size: 2rem;
-    }
-    
-    .feature-tile {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .contact-item {
+    .contact-card {
         flex-direction: column;
         text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .feature-stats {
+        flex-direction: column;
         gap: 0.5rem;
     }
 }
