@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Journal - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="journal.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="memory-vault.html">Memory Vault</a>
+            <a href="journal.html" class="active">Journal</a>
+            <a href="#">Resources</a>
+            <a href="login.html">Logout</a>
+        </nav>
+    </header>
+
+    <main class="journal-container">
+        <!-- Full Width Header -->
+        <section class="journal-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Daily Journal 📝</h1>
+                    <p>Record your thoughts, feelings, and daily experiences in your personal digital diary</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="totalEntries">0</span>
+                        <span class="stat-label">Entries</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="thisWeek">0</span>
+                        <span class="stat-label">This Week</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="remindersCount">0</span>
+                        <span class="stat-label">Reminders</span>
+                    </div>
+                </div>
+                <div class="header-animation">
+                    <div class="floating-icons">
+                        <div class="journal-icon icon-1">📖</div>
+                        <div class="journal-icon icon-2">✍️</div>
+                        <div class="journal-icon icon-3">📅</div>
+                        <div class="journal-icon icon-4">⏰</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content - Side by Side Layout -->
+        <div class="main-content">
+            <!-- Left Side - Journal Content -->
+            <div class="journal-content">
+                <!-- Quick Actions -->
+                <section class="quick-actions">
+                    <button class="action-btn primary" id="newEntryBtn">
+                        <span class="btn-icon">➕</span>
+                        New Journal Entry
+                    </button>
+                    <button class="action-btn secondary" id="voiceEntryBtn">
+                        <span class="btn-icon">🎤</span>
+                        Voice Entry
+                    </button>
+                    <button class="action-btn tertiary" id="promptsBtn">
+                        <span class="btn-icon">💡</span>
+                        Writing Prompts
+                    </button>
+                </section>
+
+                <!-- Dynamic Content Area -->
+                <div class="content-area">
+                    <!-- Journal Entries List - Initially Visible -->
+                    <section class="entries-section" id="entriesSection">
+                        <div class="section-header">
+                            <h2>Your Journal Entries</h2>
+                            <div class="filter-options">
+                                <button class="filter-btn active" data-filter="all">All Entries</button>
+                                <button class="filter-btn" data-filter="today">Today</button>
+                                <button class="filter-btn" data-filter="week">This Week</button>
+                                <button class="filter-btn" data-filter="month">This Month</button>
+                            </div>
+                        </div>
+
+                        <div class="entries-list" id="entriesList">
+                            <!-- Journal entries will be dynamically added here -->
+                        </div>
+                    </section>
+
+                    <!-- Journal Form - Initially Hidden -->
+                    <section class="journal-form-section" id="journalFormSection" style="display: none;">
+                        <div class="form-header">
+                            <h2 id="formTitle">New Journal Entry</h2>
+                            <button class="close-form-btn" id="closeFormBtn">✕</button>
+                        </div>
+                        <form id="journalForm" class="journal-form">
+                            <div class="form-group">
+                                <label for="entryDate">Date</label>
+                                <input type="date" id="entryDate" name="entryDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryTitle">Title</label>
+                                <input type="text" id="entryTitle" name="entryTitle" placeholder="Give your entry a title..." required>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryContent">Your Thoughts</label>
+                                <textarea id="entryContent" name="entryContent" placeholder="Write about your day, your feelings, or anything you'd like to remember..." required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryMood">How are you feeling?</label>
+                                <div class="mood-selector">
+                                    <button type="button" class="mood-btn" data-mood="😊">😊 Happy</button>
+                                    <button type="button" class="mood-btn" data-mood="😌">😌 Calm</button>
+                                    <button type="button" class="mood-btn" data-mood="😢">😢 Sad</button>
+                                    <button type="button" class="mood-btn" data-mood="😠">😠 Frustrated</button>
+                                    <button type="button" class="mood-btn" data-mood="😴">😴 Tired</button>
+                                </div>
+                                <input type="hidden" id="selectedMood" name="selectedMood">
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" id="cancelEntry">Cancel</button>
+                                <button type="submit" class="btn-primary">Save Entry</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- Writing Prompts Section - Initially Hidden -->
+                    <section class="prompts-section" id="promptsSection" style="display: none;">
+                        <div class="section-header">
+                            <h2>Writing Prompts</h2>
+                            <button class="close-prompts-btn" id="closePromptsBtn">✕</button>
+                        </div>
+                        <div class="prompts-list">
+                            <div class="prompt-card">
+                                <p>"What made you smile today?"</p>
+                                <button class="use-prompt-btn" data-prompt="What made you smile today?">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"Who did you talk to today and what did you discuss?"</p>
+                                <button class="use-prompt-btn" data-prompt="Who did you talk to today and what did you discuss?">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"What are you grateful for today?"</p>
+                                <button class="use-prompt-btn" data-prompt="What are you grateful for today?">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"What was the best part of your day?"</p>
+                                <button class="use-prompt-btn" data-prompt="What was the best part of your day?">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"Who made you feel loved today?"</p>
+                                <button class="use-prompt-btn" data-prompt="Who made you feel loved today?">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"What did you learn today?"</p>
+                                <button class="use-prompt-btn" data-prompt="What did you learn today?">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"Describe a happy memory from your past."</p>
+                                <button class="use-prompt-btn" data-prompt="Describe a happy memory from your past.">Use This Prompt</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Right Side - Calendar & Reminders -->
+            <aside class="calendar-sidebar">
+                <!-- Calendar Section -->
+                <div class="calendar-section">
+                    <h3>Memory Calendar</h3>
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="nav-btn" id="prevMonth">‹</button>
+                            <h4 id="currentMonth">November 2025</h4>
+                            <button class="nav-btn" id="nextMonth">›</button>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Calendar days will be dynamically generated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reminders Section -->
+                <div class="reminders-section">
+                    <div class="section-header">
+                        <h3>Today's Reminders</h3>
+                        <button class="add-reminder-btn" id="addReminderBtn">+ Add</button>
+                    </div>
+                    <div class="reminders-list" id="remindersList">
+                        <!-- Reminders will be dynamically added here -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Add Reminder Modal -->
+    <div id="reminderModal" class="modal">
+        <div class="modal-content reminder-modal">
+            <span class="close">&times;</span>
+            <h2>Add Reminder</h2>
+            <form id="reminderForm" class="reminder-form">
+                <div class="form-group">
+                    <label for="reminderTitle">Reminder</label>
+                    <input type="text" id="reminderTitle" name="reminderTitle" placeholder="E.g., Take morning medication" required>
+                </div>
+                <div class="form-group">
+                    <label for="reminderDate">Date</label>
+                    <input type="date" id="reminderDate" name="reminderDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="reminderTime">Time</label>
+                    <input type="time" id="reminderTime" name="reminderTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="reminderRepeat">Repeat</label>
+                    <select id="reminderRepeat" name="reminderRepeat">
+                        <option value="none">Never</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelReminder">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Reminder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="journal.js"></script>
+</body>
+</html>
