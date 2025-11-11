@@ -24,23 +24,25 @@
 
     <main class="memory-vault-container">
         <!-- Header Section -->
-        <section class="vault-header">
-            <div class="header-content">
+            <!-- Full Edge-to-Edge Header -->
+    <section class="vault-header">
+        <div class="header-content">
+            <div class="header-text">
                 <h1>Memory Vault 💖</h1>
                 <p>Your digital memory album - preserving precious moments and relationships</p>
-                <div class="header-stats">
-                    <div class="stat">
-                        <span class="stat-number" id="totalMemories">12</span>
-                        <span class="stat-label">Memories</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number" id="totalPeople">8</span>
-                        <span class="stat-label">People</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number" id="recentAdded">3</span>
-                        <span class="stat-label">Recently Added</span>
-                    </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat">
+                    <span class="stat-number" id="totalMemories">2</span>
+                    <span class="stat-label">Memories</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="totalPeople">2</span>
+                    <span class="stat-label">People</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="recentAdded">2</span>
+                    <span class="stat-label">Recently Added</span>
                 </div>
             </div>
             <div class="header-animation">
@@ -51,81 +53,84 @@
                     <div class="photo-frame frame-4">🏖️</div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Quick Actions -->
-        <section class="quick-actions">
-            <button class="action-btn primary" id="addMemoryBtn">
-                <span class="btn-icon">➕</span>
-                Add New Memory
-            </button>
-            <button class="action-btn secondary" id="cameraBtn">
-                <span class="btn-icon">📷</span>
-                Take Photo to Recognize
-            </button>
-            <button class="action-btn tertiary" id="voiceRecordBtn">
-                <span class="btn-icon">🎤</span>
-                Add Voice Note
-            </button>
-        </section>
+    <!-- Main Content - Side by Side Layout -->
+    <div class="main-content">
+        <!-- Left Side - Memories Grid -->
+        <div class="memories-section">
+            <!-- Quick Actions -->
+            <section class="quick-actions">
+                <button class="action-btn primary" id="addMemoryBtn">
+                    <span class="btn-icon">➕</span>
+                    Add New Memory
+                </button>
+                <button class="action-btn secondary" id="cameraBtn">
+                    <span class="btn-icon">📷</span>
+                    Take Photo to Recognize
+                </button>
+                <button class="action-btn tertiary" id="voiceRecordBtn">
+                    <span class="btn-icon">🎤</span>
+                    Add Voice Note
+                </button>
+            </section>
 
-        <!-- Memory Grid -->
-        <section class="memory-grid-section">
-            <h2>Your Precious Memories</h2>
-            <div class="filter-options">
-                <button class="filter-btn active" data-filter="all">All Memories</button>
-                <button class="filter-btn" data-filter="family">Family</button>
-                <button class="filter-btn" data-filter="friends">Friends</button>
-                <button class="filter-btn" data-filter="events">Special Events</button>
-            </div>
+            <!-- Memory Grid -->
+            <section class="memory-grid-section">
+                <h2>Your Precious Memories</h2>
+                <div class="filter-options">
+                    <button class="filter-btn active" data-filter="all">All Memories</button>
+                    <button class="filter-btn" data-filter="family">Family</button>
+                    <button class="filter-btn" data-filter="friends">Friends</button>
+                    <button class="filter-btn" data-filter="events">Special Events</button>
+                </div>
 
-            <div class="memory-grid" id="memoryGrid">
-                <!-- Memory cards will be dynamically added here -->
-            </div>
-        </section>
+                <div class="memory-grid" id="memoryGrid">
+                    <!-- Memory cards will be dynamically added here -->
+                </div>
+            </section>
 
-        <!-- Camera Recognition Section -->
-        <section class="camera-section" id="cameraSection" style="display: none;">
-            <h2>Photo Recognition</h2>
-            <div class="camera-container">
-                <div class="camera-preview" id="cameraPreview">
-                    <div class="camera-placeholder">
-                        <div class="camera-icon">📷</div>
-                        <p>Camera preview will appear here</p>
+            <!-- Camera Recognition Section -->
+            <section class="camera-section" id="cameraSection" style="display: none;">
+                <h2>Photo Recognition</h2>
+                <div class="camera-container">
+                    <div class="camera-preview" id="cameraPreview">
+                        <div class="camera-placeholder">
+                            <div class="camera-icon">📷</div>
+                            <p>Camera preview will appear here</p>
+                        </div>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="camera-btn" id="startCamera">Start Camera</button>
+                        <button class="camera-btn capture" id="captureBtn" disabled>Capture Photo</button>
+                        <button class="camera-btn" id="uploadPhoto">Upload Photo Instead</button>
                     </div>
                 </div>
-                <div class="camera-controls">
-                    <button class="camera-btn" id="startCamera">Start Camera</button>
-                    <button class="camera-btn capture" id="captureBtn" disabled>Capture Photo</button>
-                    <button class="camera-btn" id="uploadPhoto">Upload Photo Instead</button>
-                </div>
-            </div>
-            <div class="recognition-result" id="recognitionResult" style="display: none;">
-                <h3>Recognition Result</h3>
-                <div class="result-card">
-                    <div class="matched-person">
-                        <img src="" alt="Matched person" id="matchedImage">
-                        <div class="person-info">
-                            <h4 id="matchedName">John Doe</h4>
-                            <p id="matchedDescription">This is John, your grandson. He loves playing basketball.</p>
-                            <div class="match-confidence">
-                                <span class="confidence-label">Match Confidence:</span>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" style="width: 85%"></div>
+                <div class="recognition-result" id="recognitionResult" style="display: none;">
+                    <h3>Recognition Result</h3>
+                    <div class="result-card">
+                        <div class="matched-person">
+                            <img src="" alt="Matched person" id="matchedImage">
+                            <div class="person-info">
+                                <h4 id="matchedName">John Doe</h4>
+                                <p id="matchedDescription">This is John, your grandson. He loves playing basketball.</p>
+                                <div class="match-confidence">
+                                    <span class="confidence-label">Match Confidence:</span>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: 85%"></div>
+                                    </div>
+                                    <span class="confidence-percent">85%</span>
                                 </div>
-                                <span class="confidence-percent">85%</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
+            </section>
+        </div>
 
-    <!-- Add Memory Modal -->
-    <div id="addMemoryModal" class="modal">
-        <div class="modal-content memory-modal">
-            <span class="close">&times;</span>
+        <!-- Right Side - Add Memory Form -->
+        <aside class="add-memory-sidebar">
             <h2>Add New Memory</h2>
             <form id="addMemoryForm" class="memory-form">
                 <div class="form-group">
@@ -190,7 +195,7 @@
                     <button type="submit" class="btn-primary">Save Memory</button>
                 </div>
             </form>
-        </div>
+        </aside>
     </div>
 
     <footer class="footer">
