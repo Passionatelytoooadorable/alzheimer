@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('isLoggedIn');
-    
     if (!isLoggedIn) {
         window.location.href = 'login.html';
         return;
@@ -192,3 +191,4 @@ function initializeSampleData() {
 
 // Initialize sample data on first load
 initializeSampleData();
+});
