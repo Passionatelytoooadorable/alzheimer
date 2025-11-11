@@ -1,104 +1,51 @@
+// Modal functionality
 document.addEventListener('DOMContentLoaded', function() {
-    const addMemoryBtn = document.getElementById('addMemoryBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const placeholderContent = document.getElementById('placeholderContent');
+    const modal = document.getElementById('addMemoryModal');
+    const addBtn = document.getElementById('addMemoryBtn');
+    const closeBtn = document.querySelector('.close');
     const memoryForm = document.getElementById('memoryForm');
-    const uploadArea = document.getElementById('uploadArea');
-    const photoUpload = document.getElementById('photoUpload');
     
-    // Show memory form when "Add New Memory" is clicked
-    addMemoryBtn.addEventListener('click', function() {
-        placeholderContent.style.display = 'none';
-        memoryForm.style.display = 'block';
+    // Open modal
+    addBtn.addEventListener('click', function() {
+        modal.style.display = 'block';
     });
     
-    // Hide memory form when cancel is clicked
-    cancelBtn.addEventListener('click', function() {
-        memoryForm.style.display = 'none';
-        placeholderContent.style.display = 'block';
+    // Close modal
+    closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
     });
     
-    // Handle file upload area click
-    uploadArea.addEventListener('click', function() {
-        photoUpload.click();
-    });
-    
-    // Handle file selection
-    photoUpload.addEventListener('change', function(e) {
-        if (e.target.files.length > 0) {
-            const fileName = e.target.files[0].name;
-            uploadArea.innerHTML = `
-                <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
-                <p>File selected: ${fileName}</p>
-                <p class="file-types">Click to change photo</p>
-            `;
-        }
-    });
-    
-    // Handle drag and drop for file upload
-    uploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#ffcc00';
-        uploadArea.style.background = 'rgba(255, 255, 255, 0.1)';
-    });
-    
-    uploadArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        uploadArea.style.background = 'transparent';
-    });
-    
-    uploadArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        uploadArea.style.background = 'transparent';
-        
-        if (e.dataTransfer.files.length > 0) {
-            photoUpload.files = e.dataTransfer.files;
-            const fileName = e.dataTransfer.files[0].name;
-            uploadArea.innerHTML = `
-                <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
-                <p>File selected: ${fileName}</p>
-                <p class="file-types">Click to change photo</p>
-            `;
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
         }
     });
     
     // Handle form submission
-    const form = document.querySelector('.memory-form form');
-    form.addEventListener('submit', function(e) {
+    memoryForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const personName = document.getElementById('personName').value;
-        const relationship = document.getElementById('relationship').value;
+        const title = document.getElementById('memoryTitle').value;
+        const date = document.getElementById('memoryDate').value;
+        const description = document.getElementById('memoryDescription').value;
         
-        if (!personName || !relationship) {
-            alert('Please fill in all required fields');
-            return;
-        }
+        // In a real app, you would save this data and add the new memory to the gallery
+        alert(`Memory "${title}" added successfully!`);
         
-        // In a real app, you would save the memory data here
-        alert(`Memory for ${personName} (${relationship}) has been saved!`);
-        
-        // Reset form and show placeholder
-        form.reset();
-        memoryForm.style.display = 'none';
-        placeholderContent.style.display = 'block';
-        
-        // Reset upload area
-        uploadArea.innerHTML = `
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>Click to upload photo or drag & drop</p>
-            <p class="file-types">JPEG, PNG - Max 5MB</p>
-        `;
+        // Reset form and close modal
+        memoryForm.reset();
+        modal.style.display = 'none';
     });
     
-    // Category selection
-    const categories = document.querySelectorAll('.categories li');
-    categories.forEach(category => {
-        category.addEventListener('click', function() {
-            categories.forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
+    // Add click functionality to memory cards
+    const memoryCards = document.querySelectorAll('.memory-card');
+    
+    memoryCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const title = this.querySelector('h3').textContent;
+            alert(`Viewing memory: ${title}`);
+            // In a real app, you would open a detailed view of the memory
         });
     });
 });
