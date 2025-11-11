@@ -1,1 +1,354 @@
+/* Dashboard Specific Styles */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
 
+.welcome-section {
+    background: linear-gradient(135deg, #a8d0e6 0%, #8bc1e3 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.welcome-section h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.date-display {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.quick-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    backdrop-filter: blur(10px);
+    min-width: 200px;
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-info h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+}
+
+.stat-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+/* Feature Grid */
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.feature-tile {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.feature-tile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border-color: #a8d0e6;
+}
+
+.tile-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.tile-content {
+    flex: 1;
+}
+
+.tile-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: #374785;
+    font-size: 1.3rem;
+}
+
+.tile-content p {
+    margin: 0 0 1rem 0;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.tile-badge, .tile-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.tile-badge {
+    background: #ff6b6b;
+    color: white;
+}
+
+.tile-status {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+/* Specific Tile Styles */
+.memory-tile .tile-icon { color: #4ecdc4; }
+.journal-tile .tile-icon { color: #45b7d1; }
+.location-tile .tile-icon { color: #96ceb4; }
+.ai-tile .tile-icon { color: #feca57; }
+
+.emergency-tile {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+}
+
+.emergency-tile .tile-content h3,
+.emergency-tile .tile-content p {
+    color: white;
+}
+
+.emergency-btn {
+    background: white;
+    color: #ff6b6b;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.emergency-btn:hover {
+    background: #ffeaea;
+    transform: scale(1.05);
+}
+
+.reminders-tile {
+    background: linear-gradient(135deg, #a8d0e6 0%, #8bc1e3 100%);
+    color: white;
+}
+
+.reminders-tile .tile-content h3,
+.reminders-tile .tile-content p {
+    color: white;
+}
+
+.reminders-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reminders-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.reminders-list li:last-child {
+    border-bottom: none;
+}
+
+/* Recent Activity */
+.recent-activity {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.recent-activity h2 {
+    color: #374785;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #e9ecef;
+}
+
+.activity-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.activity-details p {
+    margin: 0 0 0.25rem 0;
+    font-weight: 500;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.contact-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    gap: 1rem;
+}
+
+.contact-name {
+    font-weight: 600;
+    flex: 1;
+}
+
+.contact-number {
+    color: #6c757d;
+}
+
+.call-btn {
+    background: #a8d0e6;
+    color: #374785;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.call-btn:hover {
+    background: #8bc1e3;
+}
+
+.emergency-call {
+    background: #ff6b6b;
+    color: white;
+}
+
+.emergency-call:hover {
+    background: #ee5a52;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-stats {
+        flex-direction: column;
+    }
+    
+    .stat-card {
+        min-width: auto;
+    }
+    
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+    
+    .feature-tile {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .contact-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+}
