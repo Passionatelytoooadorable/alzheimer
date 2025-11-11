@@ -240,10 +240,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Auto-fill demo credentials for testing (optional)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('demo') === 'true') {
-        document.getElementById('username').value = 'demo';
-        document.getElementById('password').value = 'demo123';
-    }
-});
+   
+
