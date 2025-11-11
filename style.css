@@ -83,27 +83,6 @@ body {
     color: #555;
 }
 
-.button-group {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 2rem;
-}
-
-.cta-button.secondary {
-    background-color: transparent;
-    border: 2px solid #4a86e8;
-    color: #4a86e8;
-}
-
-.cta-button.secondary:hover {
-    background-color: #4a86e8;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(74, 134, 232, 0.4);
-}
-
 .cta-button {
     display: inline-block;
     background-color: #4a86e8;
@@ -188,4 +167,5 @@ body {
         max-width: 300px;
     }
 }
+
 
