@@ -25,7 +25,7 @@ function loadSampleMemories() {
     const sampleMemories = [
         {
             id: 1,
-            name: "Ankit Sharma",
+            name: "Alex",
             relationship: "grandchild",
             description: "This is Ankit, grandson. His birthday was on 19th June. He loves playing football and visiting the beach with us every summer.",
             image: "👦",
@@ -33,7 +33,7 @@ function loadSampleMemories() {
         },
         {
             id: 2,
-            name: "Priya Patel",
+            name: "Ella Johnson",
             relationship: "daughter",
             description: "My wonderful daughter Priya. She's a doctor and visits every weekend with her family. She makes the best chocolate cake!",
             image: "👩",
@@ -57,8 +57,11 @@ function loadSampleMemories() {
         }
     ];
 
-    // Store in localStorage if not already present
-    if (!localStorage.getItem('memories')) {
+    // Always ensure sample memories are available
+    const existingMemories = JSON.parse(localStorage.getItem('memories')) || [];
+    
+    // If no memories exist, load the sample memories
+    if (existingMemories.length === 0) {
         localStorage.setItem('memories', JSON.stringify(sampleMemories));
     }
 
@@ -369,6 +372,51 @@ function showNotification(message, type) {
         notification.remove();
     }, 3000);
 }
+
+// Emergency reset function for demo (hidden from UI)
+function resetToSampleMemories() {
+    const sampleMemories = [
+        {
+            id: 1,
+            name: "Alex",
+            relationship: "grandchild",
+            description: "This is Ankit, grandson. His birthday was on 19th June. He loves playing football and visiting the beach with us every summer.",
+            image: "👦",
+            color: "#4ecdc4"
+        },
+        {
+            id: 2,
+            name: "Ella Johnson",
+            relationship: "daughter",
+            description: "My wonderful daughter Priya. She's a doctor and visits every weekend with her family. She makes the best chocolate cake!",
+            image: "👩",
+            color: "#ff6b6b"
+        },
+        {
+            id: 3,
+            name: "Robert Johnson",
+            relationship: "spouse",
+            description: "My loving husband Robert. We've been married for 45 years. He loves gardening and reading mystery novels together.",
+            image: "👴",
+            color: "#a8d0e6"
+        },
+        {
+            id: 4,
+            name: "Sarah & Mike",
+            relationship: "friends",
+            description: "Our dear friends from the book club. We meet every Thursday for tea and discuss our latest reads. 30 years of friendship!",
+            image: "👫",
+            color: "#ffd166"
+        }
+    ];
+    
+    localStorage.setItem('memories', JSON.stringify(sampleMemories));
+    displayMemories();
+    showNotification('Demo data reset successfully!', 'success');
+}
+
+// Make it available in console for emergency use during demo
+window.demoReset = resetToSampleMemories;
 
 // Add some CSS for notifications
 const style = document.createElement('style');
