@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Vault - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="memory-vault.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="memory-vault.html" class="active">Memory Vault</a>
+            <a href="resources.html">Resources</a>
+            <a href="login.html">Logout</a>
+        </nav>
+    </header>
+
+    <main class="memory-vault-container">
+        <!-- Full Edge-to-Edge Header -->
+        <section class="vault-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Memory Vault 💖</h1>
+                    <p>Your digital memory album - preserving precious moments and relationships</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="totalMemories">2</span>
+                        <span class="stat-label">Memories</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="totalPeople">2</span>
+                        <span class="stat-label">People</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="recentAdded">2</span>
+                        <span class="stat-label">Recently Added</span>
+                    </div>
+                </div>
+                <div class="header-animation">
+                    <div class="floating-photos">
+                        <div class="photo-frame frame-1">📸</div>
+                        <div class="photo-frame frame-2">👨‍👩‍👧</div>
+                        <div class="photo-frame frame-3">🎂</div>
+                        <div class="photo-frame frame-4">🏖️</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content - Side by Side Layout -->
+        <div class="main-content">
+            <!-- Left Side - Memories Grid -->
+            <div class="memories-section">
+                <!-- Quick Actions -->
+                <section class="quick-actions">
+                    <button class="action-btn primary" id="addMemoryBtn">
+                        <span class="btn-icon">➕</span>
+                        Add New Memory
+                    </button>
+                    <button class="action-btn secondary" id="cameraBtn">
+                        <span class="btn-icon">📷</span>
+                        Take Photo to Recognize
+                    </button>
+                    <button class="action-btn tertiary" id="voiceRecordBtn">
+                        <span class="btn-icon">🎤</span>
+                        Add Voice Note
+                    </button>
+                </section>
+
+                <!-- Memory Grid -->
+                <section class="memory-grid-section">
+                    <h2>Your Precious Memories</h2>
+                    <div class="filter-options">
+                        <button class="filter-btn active" data-filter="all">All Memories</button>
+                        <button class="filter-btn" data-filter="family">Family</button>
+                        <button class="filter-btn" data-filter="friends">Friends</button>
+                        <button class="filter-btn" data-filter="events">Special Events</button>
+                    </div>
+
+                    <div class="memory-grid" id="memoryGrid">
+                        <!-- Memory cards will be dynamically added here -->
+                    </div>
+                </section>
+
+                <!-- Camera Recognition Section -->
+                <section class="camera-section" id="cameraSection" style="display: none;">
+                    <div class="camera-header">
+                        <h2>Photo Recognition</h2>
+                        <button class="cancel-camera-btn" id="cancelCameraBtn">✕</button>
+                    </div>
+                    <div class="camera-container">
+                        <div class="camera-preview" id="cameraPreview">
+                            <div class="camera-placeholder">
+                                <div class="camera-icon">📷</div>
+                                <p>Camera preview will appear here</p>
+                            </div>
+                        </div>
+                        <div class="camera-controls">
+                            <button class="camera-btn" id="startCamera">Start Camera</button>
+                            <button class="camera-btn capture" id="captureBtn" disabled>Capture Photo</button>
+                            <button class="camera-btn" id="uploadPhoto">Upload Photo Instead</button>
+                        </div>
+                    </div>
+                    <div class="recognition-result" id="recognitionResult" style="display: none;">
+                        <h3>Recognition Result</h3>
+                        <div class="result-card">
+                            <div class="matched-person">
+                                <img src="" alt="Matched person" id="matchedImage">
+                                <div class="person-info">
+                                    <h4 id="matchedName">John Doe</h4>
+                                    <p id="matchedDescription">This is John, your grandson. He loves playing basketball.</p>
+                                    <div class="match-confidence">
+                                        <span class="confidence-label">Match Confidence:</span>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: 85%"></div>
+                                        </div>
+                                        <span class="confidence-percent">85%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Side - Initially shows animated illustration, form appears after clicking Add Memory -->
+            <aside class="add-memory-sidebar" id="addMemorySidebar">
+                <div class="welcome-illustration" id="welcomeIllustration">
+                    <div class="elderly-scene">
+                        <div class="elderly-person">
+                            <div class="head"></div>
+                            <div class="body"></div>
+                            <div class="arm-left"></div>
+                            <div class="arm-right"></div>
+                        </div>
+                        <div class="family-member family-1">
+                            <div class="head"></div>
+                            <div class="body"></div>
+                        </div>
+                        <div class="family-member family-2">
+                            <div class="head"></div>
+                            <div class="body"></div>
+                        </div>
+                        
+                        <div class="floating-heart heart-1">❤️</div>
+                        <div class="floating-heart heart-2">❤️</div>
+                        <div class="floating-heart heart-3">❤️</div>
+                    </div>
+                    <div class="illustration-text">
+                        <h3>Welcome to Your Memory Vault</h3>
+                        <p>Click "Add New Memory" to start preserving your precious moments with loved ones</p>
+                    </div>
+                </div>
+                
+                <!-- Add Memory Form (Initially Hidden) -->
+                <div class="memory-form-container" id="memoryFormContainer" style="display: none;">
+                    <h2>Add New Memory</h2>
+                    <form id="addMemoryForm" class="memory-form">
+                        <div class="form-group">
+                            <label for="personName">Person's Name *</label>
+                            <input type="text" id="personName" name="personName" required placeholder="Enter full name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="relationship">Relationship *</label>
+                            <select id="relationship" name="relationship" required>
+                                <option value="">Select relationship</option>
+                                <option value="spouse">Spouse/Partner</option>
+                                <option value="child">Child</option>
+                                <option value="grandchild">Grandchild</option>
+                                <option value="sibling">Brother/Sister</option>
+                                <option value="friend">Friend</option>
+                                <option value="caregiver">Caregiver</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="memoryDescription">Memory Description *</label>
+                            <textarea id="memoryDescription" name="memoryDescription" required 
+                                      placeholder="E.g., This is Ankit, grandson. His birthday was on 19th June. He loves playing football and visiting the beach..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="memoryPhoto">Upload Photo *</label>
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-placeholder">
+                                    <span class="upload-icon">📸</span>
+                                    <p>Click to upload photo or drag & drop</p>
+                                    <span class="upload-hint">JPEG, PNG - Max 5MB</span>
+                                </div>
+                                <input type="file" id="memoryPhoto" name="memoryPhoto" accept="image/*" hidden>
+                            </div>
+                            <div class="image-preview" id="imagePreview" style="display: none;">
+                                <img id="previewImage" src="" alt="Preview">
+                                <button type="button" class="remove-image" id="removeImage">Remove</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="voiceNote">Add Voice Note (Optional)</label>
+                            <div class="voice-recorder">
+                                <button type="button" class="voice-btn" id="startRecording">
+                                    <span class="voice-icon">🎤</span>
+                                    Start Recording
+                                </button>
+                                <div class="recording-controls" id="recordingControls" style="display: none;">
+                                    <span class="recording-indicator">🔴 Recording...</span>
+                                    <span class="recording-timer" id="recordingTimer">00:00</span>
+                                    <button type="button" class="voice-btn stop" id="stopRecording">Stop</button>
+                                </div>
+                                <audio id="voicePreview" controls style="display: none;"></audio>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" id="cancelAddMemory">Cancel</button>
+                            <button type="submit" class="btn-primary">Save Memory</button>
+                        </div>
+                    </form>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="memory-vault.js"></script>
+</body>
+</html>
