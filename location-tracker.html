@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Safety - Alzheimer's Support</title>
+    <link rel="stylesheet" href="location-tracker.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="memory-vault.html">Memory Vault</a>
+            <a href="journal.html">Journal</a>
+            <a href="location-tracker.html" class="active">Location Safety</a>
+            <a href="resources.html">Resources</a>
+            <a href="login.html">Logout</a>
+        </nav>
+    </header>
+
+    <main class="location-container">
+        <!-- Full Edge-to-Edge Header -->
+        <section class="location-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Location Safety 🗺️</h1>
+                    <p>Real-time location tracking and safety monitoring for peace of mind</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="locationStatus">Active</span>
+                        <span class="stat-label">Status</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="safeZones">3</span>
+                        <span class="stat-label">Safe Zones</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="guardiansCount">2</span>
+                        <span class="stat-label">Guardians</span>
+                    </div>
+                </div>
+                <div class="header-animation">
+                    <div class="floating-icons">
+                        <div class="location-icon icon-1">📍</div>
+                        <div class="location-icon icon-2">🏠</div>
+                        <div class="location-icon icon-3">👥</div>
+                        <div class="location-icon icon-4">🛡️</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content - Side by Side Layout -->
+        <div class="main-content">
+            <!-- Left Side - Map and Controls -->
+            <div class="map-section">
+                <!-- Quick Actions -->
+                <section class="quick-actions">
+                    <button class="action-btn primary" id="startTrackingBtn">
+                        <span class="btn-icon">📍</span>
+                        Start Live Tracking
+                    </button>
+                    <button class="action-btn secondary" id="addSafeZoneBtn">
+                        <span class="btn-icon">🏠</span>
+                        Add Safe Zone
+                    </button>
+                    <button class="action-btn tertiary" id="shareLocationBtn">
+                        <span class="btn-icon">👥</span>
+                        Share with Guardians
+                    </button>
+                </section>
+
+                <!-- Map Container -->
+                <section class="map-container-section">
+                    <div class="section-header">
+                        <h2>Live Location Map</h2>
+                        <div class="location-controls">
+                            <button class="control-btn" id="refreshLocation">
+                                <span class="btn-icon">🔄</span>
+                                Refresh
+                            </button>
+                            <button class="control-btn" id="centerMap">
+                                <span class="btn-icon">🎯</span>
+                                Center
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="map-container">
+                        <div id="locationMap"></div>
+                        <div class="map-overlay">
+                            <div class="location-info-card">
+                                <h3>Current Location</h3>
+                                <div class="location-details">
+                                    <div class="detail-item">
+                                        <span class="label">Status:</span>
+                                        <span class="value" id="currentStatus">Tracking Active</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Last Updated:</span>
+                                        <span class="value" id="lastUpdated">Just now</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Battery:</span>
+                                        <span class="value" id="batteryLevel">85%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Safe Zones Section -->
+                <section class="safe-zones-section" id="safeZonesSection">
+                    <div class="section-header">
+                        <h2>Safe Zones</h2>
+                    </div>
+                    
+                    <!-- Safe Zones List (default view) -->
+                    <div class="safe-zones-list" id="safeZonesList">
+                        <!-- Safe zones will be dynamically added here -->
+                    </div>
+                    
+                    <!-- Add Safe Zone Form (hidden by default) -->
+                    <div id="addSafeZoneForm" class="add-safe-zone-form" style="display: none;">
+                        <div class="form-header">
+                            <h3>Add New Safe Zone</h3>
+                            <button class="close-form-btn" id="closeSafeZoneForm">✕</button>
+                        </div>
+                        <form id="safeZoneForm" class="location-form">
+                            <div class="form-group">
+                                <label for="zoneName">Zone Name</label>
+                                <input type="text" id="zoneName" name="zoneName" placeholder="E.g., Home, Park, Grocery Store" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="zoneAddress">Address</label>
+                                <input type="text" id="zoneAddress" name="zoneAddress" placeholder="Enter address or drag marker on map" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="zoneRadius">Safe Radius (meters)</label>
+                                <input type="range" id="zoneRadius" name="zoneRadius" min="100" max="2000" value="500">
+                                <div class="radius-display">
+                                    <span id="radiusValue">500 meters</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="zoneType">Zone Type</label>
+                                <select id="zoneType" name="zoneType">
+                                    <option value="home">Home</option>
+                                    <option value="family">Family/Friend's House</option>
+                                    <option value="park">Park/Recreation</option>
+                                    <option value="store">Store/Shopping</option>
+                                    <option value="medical">Medical Facility</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" id="cancelSafeZone">Cancel</button>
+                                <button type="submit" class="btn-primary">Save Safe Zone</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Side - Guardians and Alerts -->
+            <aside class="location-sidebar">
+                <!-- Guardians Section -->
+                <div class="guardians-section">
+                    <div class="section-header">
+                        <h3>Guardians</h3>
+                        <button class="add-btn" id="addGuardianBtn">
+                            <span class="btn-icon">👤</span>
+                            Add
+                        </button>
+                    </div>
+                    <div class="guardians-list" id="guardiansList">
+                        <!-- Guardians will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Recent Alerts Section -->
+                <div class="alerts-section">
+                    <div class="section-header">
+                        <h3>Recent Alerts</h3>
+                        <span class="alert-badge" id="alertsCount">2</span>
+                    </div>
+                    <div class="alerts-list" id="alertsList">
+                        <!-- Alerts will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Location History -->
+                <div class="history-section">
+                    <div class="section-header">
+                        <h3>Recent Locations</h3>
+                        <button class="view-all-btn" id="viewHistoryBtn">View All</button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <!-- Location history will be dynamically added here -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Add Guardian Modal -->
+    <div id="guardianModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add Guardian</h2>
+            <form id="guardianForm" class="location-form">
+                <div class="form-group">
+                    <label for="guardianName">Guardian Name</label>
+                    <input type="text" id="guardianName" name="guardianName" placeholder="Enter full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardianEmail">Email Address</label>
+                    <input type="email" id="guardianEmail" name="guardianEmail" placeholder="Enter email address" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardianPhone">Phone Number</label>
+                    <input type="tel" id="guardianPhone" name="guardianPhone" placeholder="Enter phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardianRelationship">Relationship</label>
+                    <select id="guardianRelationship" name="guardianRelationship">
+                        <option value="family">Family Member</option>
+                        <option value="friend">Friend</option>
+                        <option value="caregiver">Caregiver</option>
+                        <option value="neighbor">Neighbor</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="sendNotifications" checked>
+                        <span>Send location alerts to this guardian</span>
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelGuardian">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Guardian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Location History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close">&times;</span>
+            <h2>Location History</h2>
+            <div class="history-filters">
+                <button class="filter-btn active" data-filter="today">Today</button>
+                <button class="filter-btn" data-filter="week">This Week</button>
+                <button class="filter-btn" data-filter="month">This Month</button>
+            </div>
+            <div class="history-timeline" id="historyTimeline">
+                <!-- Timeline items will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="location-tracker.js"></script>
+</body>
+</html>
