@@ -8,7 +8,7 @@
 
 /* Full Edge-to-Edge Header */
 .vault-header {
-    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    background: linear-gradient(135deg, #ff9a9e 0%, #fac5b6 100%);
     color: white;
     position: relative;
     overflow: hidden;
@@ -110,7 +110,7 @@
     top: 10px;
     left: 20px;
     animation-delay: 0s;
-    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+    background: linear-gradient(135deg, #e760ac 0%, #ece85b 100%);
     z-index: 4;
 }
 
@@ -118,7 +118,7 @@
     top: 10px;
     right: 20px;
     animation-delay: 1.5s;
-    background: linear-gradient(135deg, #ffd3b6 0%, #ffaaa5 100%);
+    background: linear-gradient(135deg, #5ffcc3 0%, #eaa88f 100%);
     z-index: 3;
 }
 
@@ -126,7 +126,7 @@
     bottom: 10px;
     left: 30px;
     animation-delay: 3s;
-    background: linear-gradient(135deg, #ff8b94 0%, #ffaaa5 100%);
+    background: linear-gradient(135deg,  #42b0e3 0%, #eb6f90 100%);
     z-index: 2;
 }
 
@@ -134,7 +134,7 @@
     bottom: 10px;
     right: 30px;
     animation-delay: 4.5s;
-    background: linear-gradient(135deg, #a8e6cf 0%, #88d8b0 100%);
+    background: linear-gradient(135deg, #a8e6cf 0%, #73df53 100%);
     z-index: 1;
 }
 
