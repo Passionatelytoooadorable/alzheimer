@@ -5,28 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize basic functionality
     setupBasicEventListeners();
     initializeMap();
+    setupSafeZoneForm();
 });
 
 function setupBasicEventListeners() {
     console.log('Setting up event listeners...');
-    
-    // Add Safe Zone Button
-    const addSafeZoneBtn = document.getElementById('addSafeZoneBtn');
-    if (addSafeZoneBtn) {
-        addSafeZoneBtn.addEventListener('click', function() {
-            console.log('Add Safe Zone button clicked!');
-            showNotification('Safe zone feature coming soon!', 'info');
-        });
-    }
-    
-    // Show Safe Zone Form Button
-    const showSafeZoneForm = document.getElementById('showSafeZoneForm');
-    if (showSafeZoneForm) {
-        showSafeZoneForm.addEventListener('click', function() {
-            console.log('Show Safe Zone Form button clicked!');
-            showNotification('Safe zone form will appear here!', 'info');
-        });
-    }
     
     // Start Tracking Button
     const startTrackingBtn = document.getElementById('startTrackingBtn');
@@ -86,7 +69,10 @@ function setupBasicEventListeners() {
     deleteButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             console.log('Delete zone button clicked!');
-            showNotification('Delete zone feature coming soon!', 'info');
+            const zoneCard = this.closest('.safe-zone-card');
+            zoneCard.remove();
+            showNotification('Safe zone deleted!', 'success');
+            updateStats();
         });
     });
     
@@ -97,6 +83,156 @@ function setupBasicEventListeners() {
             console.log('View All History button clicked!');
             showNotification('Full history view coming soon!', 'info');
         });
+    }
+}
+
+function setupSafeZoneForm() {
+    const addSafeZoneBtn = document.getElementById('addSafeZoneBtn');
+    const safeZonesList = document.querySelector('.safe-zones-list');
+    const safeZonesSection = document.getElementById('safeZonesSection');
+    
+    // Create form HTML
+    const formHTML = `
+        <div class="safe-zone-form" id="safeZoneForm" style="display: none;">
+            <h3>Add New Safe Zone</h3>
+            <form id="safeZoneFormElement">
+                <div class="form-group">
+                    <label for="zoneName">Zone Name</label>
+                    <input type="text" id="zoneName" name="zoneName" placeholder="Enter zone name" required>
+                </div>
+                <div class="form-group">
+                    <label for="zoneType">Zone Type</label>
+                    <select id="zoneType" name="zoneType" required>
+                        <option value="">Select zone type</option>
+                        <option value="home">Home</option>
+                        <option value="park">Park</option>
+                        <option value="store">Store</option>
+                        <option value="work">Work</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="zoneAddress">Address</label>
+                    <textarea id="zoneAddress" name="zoneAddress" placeholder="Enter full address" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="zoneRadius">Safe Radius (meters)</label>
+                    <input type="number" id="zoneRadius" name="zoneRadius" placeholder="Enter radius in meters" min="100" max="5000" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn secondary" id="cancelSafeZone">Cancel</button>
+                    <button type="submit" class="form-btn primary">Save Safe Zone</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    // Insert form after the safe zones list
+    safeZonesSection.insertAdjacentHTML('beforeend', formHTML);
+    
+    const safeZoneForm = document.getElementById('safeZoneForm');
+    const safeZoneFormElement = document.getElementById('safeZoneFormElement');
+    const cancelSafeZone = document.getElementById('cancelSafeZone');
+    
+    // Show form from quick actions button with smooth scroll
+    if (addSafeZoneBtn) {
+        addSafeZoneBtn.addEventListener('click', function() {
+            console.log('Add Safe Zone button clicked!');
+            showSafeZoneFormFunc();
+            
+            // Smooth scroll to the form
+            safeZonesSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+            });
+        });
+    }
+    
+    // Cancel form
+    if (cancelSafeZone) {
+        cancelSafeZone.addEventListener('click', function() {
+            console.log('Cancel Safe Zone button clicked!');
+            hideSafeZoneForm();
+        });
+    }
+    
+    // Handle form submission
+    if (safeZoneFormElement) {
+        safeZoneFormElement.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Safe Zone form submitted!');
+            saveSafeZone();
+        });
+    }
+    
+    function showSafeZoneFormFunc() {
+        safeZonesList.style.display = 'none';
+        safeZoneForm.style.display = 'block';
+    }
+    
+    function hideSafeZoneForm() {
+        safeZonesList.style.display = 'flex';
+        safeZoneForm.style.display = 'none';
+        safeZoneFormElement.reset();
+    }
+    
+    function saveSafeZone() {
+        const zoneName = document.getElementById('zoneName').value;
+        const zoneType = document.getElementById('zoneType').value;
+        const zoneAddress = document.getElementById('zoneAddress').value;
+        const zoneRadius = document.getElementById('zoneRadius').value;
+        
+        // Create new safe zone card
+        const newZoneCard = document.createElement('div');
+        newZoneCard.className = 'safe-zone-card';
+        newZoneCard.innerHTML = `
+            <div class="zone-header">
+                <div class="zone-name">${zoneName}</div>
+                <div class="zone-type">${zoneType.charAt(0).toUpperCase() + zoneType.slice(1)}</div>
+            </div>
+            <div class="zone-details">
+                <div class="zone-address">${zoneAddress}</div>
+                <div class="zone-radius">
+                    <span class="radius-icon">📏</span>
+                    Safe radius: ${zoneRadius} meters
+                </div>
+            </div>
+            <div class="zone-actions">
+                <button class="zone-btn edit">Edit</button>
+                <button class="zone-btn delete">Delete</button>
+            </div>
+        `;
+        
+        // Add event listeners to new buttons
+        newZoneCard.querySelector('.zone-btn.edit').addEventListener('click', function() {
+            showNotification('Edit zone feature coming soon!', 'info');
+        });
+        
+        newZoneCard.querySelector('.zone-btn.delete').addEventListener('click', function() {
+            newZoneCard.remove();
+            showNotification('Safe zone deleted!', 'success');
+            updateStats();
+        });
+        
+        // Add to the beginning of the list
+        safeZonesList.insertBefore(newZoneCard, safeZonesList.firstChild);
+        
+        // Hide form and show list
+        hideSafeZoneForm();
+        
+        // Show success message
+        showNotification('Safe zone added successfully!', 'success');
+        
+        // Update stats
+        updateStats();
+    }
+    
+    function updateStats() {
+        const zoneCount = document.querySelectorAll('.safe-zone-card').length;
+        const statNumber = document.querySelector('.header-stats .stat:nth-child(2) .stat-number');
+        if (statNumber) {
+            statNumber.textContent = zoneCount;
+        }
     }
 }
 
@@ -182,6 +318,23 @@ function showNotification(message, type) {
         notification.remove();
     }, 3000);
 }
+
+function resetLocationTracker() {
+    // Clear any stored data
+    localStorage.removeItem('safeZones');
+    localStorage.removeItem('guardians');
+    
+    // Reset form fields
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.value = '';
+    });
+    
+    // Reload to get fresh state
+    location.reload();
+}
+
+// Make it available globally for console access
+window.resetLocationTracker = resetLocationTracker;
 
 // Add CSS for notification animation
 const style = document.createElement('style');
