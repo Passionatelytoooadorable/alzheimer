@@ -103,7 +103,7 @@
     animation-delay: 1s;
 }
 .floating-icon:nth-child(4) { 
-    background: linear-gradient(135deg,  #b8a9c9 0%, #bda1dc 100%);
+    background: linear-gradient(135deg,  #a483c9 0%, #aa8bce 100%);
     animation-delay: 1.5s;
 }
 
