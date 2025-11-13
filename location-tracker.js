@@ -29,21 +29,59 @@ function setupBasicEventListeners() {
         });
     }
     
-    // Refresh Location Button
+    // Refresh Location Button - ACTUAL FUNCTIONALITY
     const refreshLocation = document.getElementById('refreshLocation');
     if (refreshLocation) {
         refreshLocation.addEventListener('click', function() {
             console.log('Refresh Location button clicked!');
-            showNotification('Location refreshed!', 'info');
+            
+            // Update the "Last Updated" time
+            const lastUpdated = document.querySelector('.detail-item:nth-child(2) .value');
+            if (lastUpdated) {
+                const now = new Date();
+                lastUpdated.textContent = now.toLocaleTimeString();
+            }
+            
+            // Update battery level
+            const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
+            if (batteryValue) {
+                const currentBattery = parseInt(batteryValue.textContent);
+                const newBattery = Math.max(5, currentBattery - Math.floor(Math.random() * 3));
+                batteryValue.textContent = newBattery + '%';
+                
+                // Change battery color if low
+                if (newBattery <= 20) {
+                    batteryValue.style.color = '#ff6b6b';
+                    batteryValue.style.fontWeight = 'bold';
+                }
+            }
+            
+            // Update location on map
+            updateLocationOnMap();
+            
+            showNotification('Location refreshed! Battery: ' + (batteryValue ? batteryValue.textContent : '85%'), 'success');
         });
     }
     
-    // Center Map Button
+    // Center Map Button - ACTUAL FUNCTIONALITY  
     const centerMap = document.getElementById('centerMap');
     if (centerMap) {
         centerMap.addEventListener('click', function() {
             console.log('Center Map button clicked!');
-            showNotification('Map centered!', 'info');
+            
+            // Re-center the map on current location
+            if (window.locationMap && window.currentLocationMarker) {
+                const currentLatLng = window.currentLocationMarker.getLatLng();
+                window.locationMap.setView(currentLatLng, 13);
+                
+                // Add a nice zoom animation
+                window.locationMap.flyTo(currentLatLng, 15, {
+                    duration: 1,
+                    easeLinearity: 0.25
+                });
+            }
+            
+            showNotification('Map centered on current location!', 'success');
         });
     }
     
@@ -83,6 +121,27 @@ function setupBasicEventListeners() {
             console.log('View All History button clicked!');
             showNotification('Full history view coming soon!', 'info');
         });
+    }
+}
+
+// Function to update location on map
+function updateLocationOnMap() {
+    if (window.locationMap && window.currentLocationMarker) {
+        // Add slight random movement to simulate location update (within 500m radius)
+        const baseLat = 19.0760;
+        const baseLng = 72.8777;
+        const lat = baseLat + (Math.random() - 0.5) * 0.005;  // ~500m variation
+        const lng = baseLng + (Math.random() - 0.5) * 0.005;  // ~500m variation
+        
+        // Smoothly move the marker to new position
+        window.currentLocationMarker.setLatLng([lat, lng]);
+        
+        // Update the marker popup with new coordinates
+        window.currentLocationMarker.setPopupContent(
+            `Current Location<br>Tracking Active<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`
+        );
+        
+        console.log('Location updated to:', lat, lng);
     }
 }
 
@@ -240,6 +299,7 @@ function initializeMap() {
     try {
         // Initialize the map centered on Mumbai
         const map = L.map('locationMap').setView([19.0760, 72.8777], 13);
+        window.locationMap = map; // Store reference globally
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -248,8 +308,9 @@ function initializeMap() {
         
         // Add a marker for current location
         const marker = L.marker([19.0760, 72.8777]).addTo(map)
-            .bindPopup('Current Location<br>Tracking Active')
+            .bindPopup('Current Location<br>Tracking Active<br>Lat: 19.076000<br>Lng: 72.877700')
             .openPopup();
+        window.currentLocationMarker = marker; // Store reference
         
         // Add sample safe zones as circles
         const homeZone = L.circle([19.0760, 72.8777], {
@@ -319,23 +380,6 @@ function showNotification(message, type) {
     }, 3000);
 }
 
-function resetLocationTracker() {
-    // Clear any stored data
-    localStorage.removeItem('safeZones');
-    localStorage.removeItem('guardians');
-    
-    // Reset form fields
-    document.querySelectorAll('input, select, textarea').forEach(element => {
-        element.value = '';
-    });
-    
-    // Reload to get fresh state
-    location.reload();
-}
-
-// Make it available globally for console access
-window.resetLocationTracker = resetLocationTracker;
-
 // Add CSS for notification animation
 const style = document.createElement('style');
 style.textContent = `
@@ -345,3 +389,143 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Hidden reset function for debugging - run from console
+function resetLocationTracker() {
+    console.log('🧠 Alzheimer\'s Support - Location Tracker Reset');
+    
+    // Reset all form fields
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.value = '';
+    });
+    
+    // Reset battery to 85% and time to "Just now"
+    const lastUpdated = document.querySelector('.detail-item:nth-child(2) .value');
+    const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
+    
+    if (lastUpdated) lastUpdated.textContent = 'Just now';
+    if (batteryValue) {
+        batteryValue.textContent = '85%';
+        batteryValue.style.color = '';
+        batteryValue.style.fontWeight = '';
+    }
+    
+    // Reset safe zones to original 3
+    const safeZonesList = document.querySelector('.safe-zones-list');
+    if (safeZonesList) {
+        safeZonesList.innerHTML = `
+            <div class="safe-zone-card">
+                <div class="zone-header">
+                    <div class="zone-name">Home</div>
+                    <div class="zone-type">Home</div>
+                </div>
+                <div class="zone-details">
+                    <div class="zone-address">123 Main Street, Mumbai</div>
+                    <div class="zone-radius">
+                        <span class="radius-icon">📏</span>
+                        Safe radius: 500 meters
+                    </div>
+                </div>
+                <div class="zone-actions">
+                    <button class="zone-btn edit">Edit</button>
+                    <button class="zone-btn delete">Delete</button>
+                </div>
+            </div>
+            <div class="safe-zone-card">
+                <div class="zone-header">
+                    <div class="zone-name">Local Park</div>
+                    <div class="zone-type">Park</div>
+                </div>
+                <div class="zone-details">
+                    <div class="zone-address">Central Park, Bandra West</div>
+                    <div class="zone-radius">
+                        <span class="radius-icon">📏</span>
+                        Safe radius: 800 meters
+                    </div>
+                </div>
+                <div class="zone-actions">
+                    <button class="zone-btn edit">Edit</button>
+                    <button class="zone-btn delete">Delete</button>
+                </div>
+            </div>
+            <div class="safe-zone-card">
+                <div class="zone-header">
+                    <div class="zone-name">Grocery Store</div>
+                    <div class="zone-type">Store</div>
+                </div>
+                <div class="zone-details">
+                    <div class="zone-address">456 Market Road, Andheri</div>
+                    <div class="zone-radius">
+                        <span class="radius-icon">📏</span>
+                        Safe radius: 300 meters
+                    </div>
+                </div>
+                <div class="zone-actions">
+                    <button class="zone-btn edit">Edit</button>
+                    <button class="zone-btn delete">Delete</button>
+                </div>
+            </div>
+        `;
+        
+        // Re-attach event listeners to delete buttons
+        const deleteButtons = safeZonesList.querySelectorAll('.zone-btn.delete');
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const zoneCard = this.closest('.safe-zone-card');
+                zoneCard.remove();
+                showNotification('Safe zone deleted!', 'success');
+                updateStats();
+            });
+        });
+    }
+    
+    // Reset stats
+    const statNumber = document.querySelector('.header-stats .stat:nth-child(2) .stat-number');
+    if (statNumber) {
+        statNumber.textContent = '3';
+    }
+    
+    // Reset map to original position if available
+    if (window.locationMap && window.currentLocationMarker) {
+        window.locationMap.setView([19.0760, 72.8777], 13);
+        window.currentLocationMarker.setLatLng([19.0760, 72.8777]);
+        window.currentLocationMarker.setPopupContent('Current Location<br>Tracking Active<br>Lat: 19.076000<br>Lng: 72.877700');
+    }
+    
+    // Hide any open form
+    const safeZoneForm = document.getElementById('safeZoneForm');
+    if (safeZoneForm) {
+        safeZoneForm.style.display = 'none';
+    }
+    
+    // Show the safe zones list
+    if (safeZonesList) {
+        safeZonesList.style.display = 'flex';
+    }
+    
+    showNotification('Location tracker has been reset!', 'success');
+    console.log('✅ Reset complete! All data restored to initial state.');
+}
+
+// Make it available globally for console access
+window.resetLocationTracker = resetLocationTracker;
+window.resetApp = resetLocationTracker; // Alias for convenience
+
+// Also add a quick status function
+window.appStatus = function() {
+    console.log('🧠 Alzheimer\'s Support App Status:');
+    console.log('📍 Safe Zones:', document.querySelectorAll('.safe-zone-card').length);
+    console.log('👥 Guardians:', document.querySelectorAll('.guardian-card').length);
+    console.log('🔋 Battery:', document.querySelector('.detail-item:nth-child(3) .value')?.textContent || 'Unknown');
+    console.log('🗺️ Map:', window.locationMap ? 'Loaded' : 'Not loaded');
+    console.log('📍 Marker:', window.currentLocationMarker ? 'Active' : 'Not active');
+};
+
+// Help function
+window.help = function() {
+    console.log('🧠 Alzheimer\'s Support - Available Console Commands:');
+    console.log('resetLocationTracker() - Reset everything to initial state');
+    console.log('resetApp() - Alias for resetLocationTracker');
+    console.log('appStatus() - Check current app status');
+    console.log('help() - Show this help message');
+};
