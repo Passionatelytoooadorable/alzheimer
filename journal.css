@@ -110,7 +110,7 @@
     top: 10px;
     left: 20px;
     animation-delay: 0s;
-    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+    background: linear-gradient(135deg, #e39fcb 0%, #b1e858 100%);
     z-index: 4;
 }
 
@@ -118,7 +118,7 @@
     top: 10px;
     right: 20px;
     animation-delay: 1.5s;
-    background: linear-gradient(135deg, #ffd3b6 0%, #ffaaa5 100%);
+    background: linear-gradient(135deg, #f3c09d 0%, #deac4a 100%);
     z-index: 3;
 }
 
@@ -134,7 +134,7 @@
     bottom: 10px;
     right: 30px;
     animation-delay: 4.5s;
-    background: linear-gradient(135deg, #a8e6cf 0%, #88d8b0 100%);
+    background: linear-gradient(135deg, #a8e6cf 0%, #6b8ddb 100%);
     z-index: 1;
 }
 
