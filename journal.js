@@ -69,14 +69,14 @@ function loadSampleData() {
             id: 3,
             title: "Call family member",
             date: new Date().toISOString().split('T')[0],
-            time: "19:00",
+            time: "17:00",
             completed: false
         },
         {
             id: 4,
             title: "Evening walk",
             date: new Date().toISOString().split('T')[0],
-            time: "20:00",
+            time: "19:00",
             completed: false
         }
     ];
@@ -739,3 +739,4 @@ function debugData() {
 
 // Call debug on load for troubleshooting
 setTimeout(debugData, 1000);
+
