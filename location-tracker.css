@@ -177,7 +177,7 @@ body {
     top: 8px;
     right: 15px;
     animation-delay: 1.5s;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(135deg, #79bfee 0%, #ee9ee7 100%);
     z-index: 3;
 }
 
@@ -926,3 +926,4 @@ body {
         text-align: center;
     }
 }
+
