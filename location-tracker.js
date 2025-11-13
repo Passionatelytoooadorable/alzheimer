@@ -42,17 +42,28 @@ function setupBasicEventListeners() {
                 lastUpdated.textContent = now.toLocaleTimeString();
             }
             
-            // Update battery level
+            // Update battery level in both map overlay and orange header
             const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
-            if (batteryValue) {
+            const headerBattery = document.querySelector('.header-stats .stat:nth-child(4) .stat-number');
+            
+            if (batteryValue && headerBattery) {
                 const currentBattery = parseInt(batteryValue.textContent);
                 const newBattery = Math.max(5, currentBattery - Math.floor(Math.random() * 3));
-                batteryValue.textContent = newBattery + '%';
+                const batteryText = newBattery + '%';
+                
+                // Update both battery displays
+                batteryValue.textContent = batteryText;
+                headerBattery.textContent = batteryText;
                 
                 // Change battery color if low
                 if (newBattery <= 20) {
                     batteryValue.style.color = '#ff6b6b';
                     batteryValue.style.fontWeight = 'bold';
+                    headerBattery.style.color = '#ff6b6b';
+                } else {
+                    batteryValue.style.color = '';
+                    batteryValue.style.fontWeight = '';
+                    headerBattery.style.color = '';
                 }
             }
             
@@ -399,15 +410,20 @@ function resetLocationTracker() {
         element.value = '';
     });
     
-    // Reset battery to 85% and time to "Just now"
+    // Reset battery to 85% and time to "Just now" in both locations
     const lastUpdated = document.querySelector('.detail-item:nth-child(2) .value');
     const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
+    const headerBattery = document.querySelector('.header-stats .stat:nth-child(4) .stat-number');
     
     if (lastUpdated) lastUpdated.textContent = 'Just now';
     if (batteryValue) {
         batteryValue.textContent = '85%';
         batteryValue.style.color = '';
         batteryValue.style.fontWeight = '';
+    }
+    if (headerBattery) {
+        headerBattery.textContent = '85%';
+        headerBattery.style.color = '';
     }
     
     // Reset safe zones to original 3
@@ -516,7 +532,8 @@ window.appStatus = function() {
     console.log('🧠 Alzheimer\'s Support App Status:');
     console.log('📍 Safe Zones:', document.querySelectorAll('.safe-zone-card').length);
     console.log('👥 Guardians:', document.querySelectorAll('.guardian-card').length);
-    console.log('🔋 Battery:', document.querySelector('.detail-item:nth-child(3) .value')?.textContent || 'Unknown');
+    console.log('🔋 Battery (Map):', document.querySelector('.detail-item:nth-child(3) .value')?.textContent || 'Unknown');
+    console.log('🔋 Battery (Header):', document.querySelector('.header-stats .stat:nth-child(4) .stat-number')?.textContent || 'Unknown');
     console.log('🗺️ Map:', window.locationMap ? 'Loaded' : 'Not loaded');
     console.log('📍 Marker:', window.currentLocationMarker ? 'Active' : 'Not active');
 };
