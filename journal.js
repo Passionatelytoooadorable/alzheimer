@@ -220,12 +220,11 @@ function displayReminders() {
 }
 
 function formatTime(timeString) {
-    // Convert 24-hour format to 12-hour format with AM/PM
+    // Keep 24-hour format but add AM/PM
     const [hours, minutes] = timeString.split(':');
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? 'PM' : 'AM';
-    const formattedHour = hour % 12 || 12;
-    return `${formattedHour}:${minutes} ${ampm}`;
+    return `${hour}:${minutes} ${ampm}`;
 }
 
 function setupEventListeners() {
