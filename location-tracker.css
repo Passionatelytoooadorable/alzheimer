@@ -96,6 +96,7 @@ body {
 .header-text {
     text-align: left;
     flex: 1;
+    min-width: 0;
 }
 
 .header-text h1 {
@@ -113,9 +114,9 @@ body {
 
 .header-stats {
     display: flex;
-    gap: 3rem;
-    margin-left: 1rem; 
-    margin-right: 2rem; 
+    gap: 2rem;
+    margin: 0 2rem;
+    flex-shrink: 0;
 }
 
 .stat {
@@ -138,10 +139,9 @@ body {
 
 /* FLOATING ANIMATION */
 .floating-animation {
-    position: absolute;
-    right: 3rem; 
-    top: 50%;
-    transform: translateY(-50%);
+    position: relative;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .floating-icons {
@@ -487,6 +487,75 @@ body {
     transform: translateY(-1px);
 }
 
+/* SAFE ZONE FORM */
+.safe-zone-form {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374785;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.form-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-btn.primary {
+    background: #3498db;
+    color: white;
+}
+
+.form-btn.secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.form-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
 /* RIGHT SIDEBAR */
 .location-sidebar {
     display: flex;
@@ -757,6 +826,17 @@ body {
     .floating-animation {
         display: none;
     }
+    
+    .location-header-content {
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    
+    .header-stats {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 768px) {
@@ -772,7 +852,7 @@ body {
     
     .header-stats {
         gap: 2rem;
-        margin-left: 0;
+        margin: 0;
     }
     
     .quick-actions {
@@ -804,6 +884,10 @@ body {
         flex-wrap: wrap;
         justify-content: center;
         gap: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
     }
 }
 
