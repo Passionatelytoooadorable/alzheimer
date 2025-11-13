@@ -343,7 +343,7 @@ class Dashboard {
             localStorage.setItem('journalCount', '2');
         }
         if (!localStorage.getItem('userName')) {
-            localStorage.setItem('userName', 'Alex');
+            localStorage.setItem('userName', 'Charlie');
         }
         if (!localStorage.getItem('isLoggedIn')) {
             localStorage.setItem('isLoggedIn', 'true');
