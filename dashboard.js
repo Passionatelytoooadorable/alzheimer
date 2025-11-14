@@ -13,6 +13,7 @@ class Dashboard {
         this.setupEventListeners();
         this.loadUserData(); // Then load it
         this.updateActivityBadges();
+        this.setupStorageListener(); // Listen for storage changes
     }
 
     checkAuthentication() {
@@ -116,6 +117,28 @@ class Dashboard {
         this.checkLocationStatus();
         this.setupRealTimeUpdates();
         this.setupReminderInteractions();
+    }
+
+    setupStorageListener() {
+        // Listen for storage changes from other tabs/pages
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'journalCount' || e.key === 'weeklyCount' || e.key === 'memoryCount') {
+                console.log('Storage updated:', e.key, e.newValue);
+                this.loadUserData();
+            }
+        });
+        
+        // Also listen for custom events from the same page
+        window.addEventListener('dataUpdated', (e) => {
+            console.log('Data updated event received:', e.detail);
+            this.loadUserData();
+        });
+
+        // Listen for journal updates specifically
+        window.addEventListener('journalUpdated', (e) => {
+            console.log('Journal updated event received:', e.detail);
+            this.loadUserData();
+        });
     }
 
     setupEmergencyModal() {
@@ -271,18 +294,29 @@ class Dashboard {
     }
 
     loadUserData() {
-        // Always use the initialized values
-        const memoryCount = localStorage.getItem('memoryCount');
-        const journalCount = localStorage.getItem('journalCount');
+        // Get memory count from memories array in localStorage
+        const memories = JSON.parse(localStorage.getItem('memories')) || [];
+        const memoryCount = memories.length.toString();
         
-        console.log('Loading user data - Memory:', memoryCount, 'Journal:', journalCount);
+        // Use existing values for journal and weekly counts
+        const journalCount = localStorage.getItem('journalCount') || '2';
+        const weeklyCount = localStorage.getItem('weeklyCount') || '2';
         
+        console.log('Loading user data - Memory:', memoryCount, 'Journal:', journalCount, 'Weekly:', weeklyCount);
+        
+        // Update all memory count elements
         document.getElementById('memoryCount').textContent = memoryCount;
         document.getElementById('memoryCount2').textContent = memoryCount;
+        
+        // Update all journal count elements
         document.getElementById('journalCount').textContent = journalCount;
         document.getElementById('journalCount2').textContent = journalCount;
         
+        // Update weekly count
+        document.getElementById('weeklyCount').textContent = weeklyCount;
+        
         this.updateMemoryBadge(memoryCount);
+        this.updateJournalBadge(journalCount, weeklyCount);
     }
 
     updateMemoryBadge(count) {
@@ -296,10 +330,18 @@ class Dashboard {
         }
     }
 
+    updateJournalBadge(journalCount, weeklyCount) {
+        const journalBadge = document.getElementById('journalBadge');
+        const prompts = ['"What made you smile today?"', '"Who did you talk to today?"'];
+        journalBadge.textContent = `${journalCount} entries, ${prompts.length} prompts`;
+    }
+
     updateActivityBadges() {
         const journalBadge = document.getElementById('journalBadge');
         const prompts = ['"What made you smile today?"', '"Who did you talk to today?"'];
-        journalBadge.textContent = `${prompts.length} new prompts`;
+        const journalCount = localStorage.getItem('journalCount') || '2';
+        const weeklyCount = localStorage.getItem('weeklyCount') || '2';
+        journalBadge.textContent = `${journalCount} entries, ${prompts.length} prompts`;
         
         const aiBadge = document.getElementById('aiBadge');
         aiBadge.style.background = '#96ceb4';
@@ -307,13 +349,60 @@ class Dashboard {
     }
 
     initializeSampleData() {
-        // Force reset to ensure consistency - 4 memories, 2 journals
-        console.log('Initializing sample data...');
-        localStorage.setItem('memoryCount', '4');
-        localStorage.setItem('journalCount', '2');
-        localStorage.setItem('userName', 'Demo User');
-        localStorage.setItem('isLoggedIn', 'true');
-        console.log('Sample data initialized - Memory: 4, Journal: 2');
+        // Only initialize if data doesn't exist
+        if (!localStorage.getItem('memories')) {
+            const sampleMemories = [
+                {
+                    id: 1,
+                    name: "Alex",
+                    relationship: "grandchild",
+                    description: "This is Ankit, grandson. His birthday was on 19th June. He loves playing football and visiting the beach with us every summer.",
+                    image: "👦",
+                    color: "#4ecdc4"
+                },
+                {
+                    id: 2,
+                    name: "Ella Johnson",
+                    relationship: "daughter",
+                    description: "My wonderful daughter Priya. She's a doctor and visits every weekend with her family. She makes the best chocolate cake!",
+                    image: "👩",
+                    color: "#ff6b6b"
+                },
+                {
+                    id: 3,
+                    name: "Robert Johnson",
+                    relationship: "spouse",
+                    description: "My loving husband Robert. We've been married for 45 years. He loves gardening and reading mystery novels together.",
+                    image: "👴",
+                    color: "#a8d0e6"
+                },
+                {
+                    id: 4,
+                    name: "Sarah & Mike",
+                    relationship: "friends",
+                    description: "Our dear friends from the book club. We meet every Thursday for tea and discuss our latest reads. 30 years of friendship!",
+                    image: "👫",
+                    color: "#ffd166"
+                }
+            ];
+            localStorage.setItem('memories', JSON.stringify(sampleMemories));
+        }
+        
+        if (!localStorage.getItem('journalCount')) {
+            localStorage.setItem('journalCount', '2');
+        }
+        if (!localStorage.getItem('weeklyCount')) {
+            localStorage.setItem('weeklyCount', '2');
+        }
+        if (!localStorage.getItem('userName')) {
+            localStorage.setItem('userName', 'Demo User');
+        }
+        if (!localStorage.getItem('isLoggedIn')) {
+            localStorage.setItem('isLoggedIn', 'true');
+        }
+        
+        const memories = JSON.parse(localStorage.getItem('memories')) || [];
+        console.log('Sample data initialized - Memory:', memories.length, 'Journal: 2, Weekly: 2');
     }
 }
 
@@ -364,22 +453,55 @@ window.dashboardFunctions = {
     updateUserData: function() {
         const dashboard = new Dashboard();
         dashboard.loadUserData();
+        
+        // Dispatch custom event for same-page updates
+        window.dispatchEvent(new CustomEvent('dataUpdated', {
+            detail: { type: 'userData' }
+        }));
     },
     
     addMemory: function() {
-        let count = parseInt(localStorage.getItem('memoryCount') || '4');
-        count++;
-        localStorage.setItem('memoryCount', count.toString());
+        // This function is now handled by memory vault directly
+        // Keeping it for backward compatibility
         const dashboard = new Dashboard();
         dashboard.loadUserData();
+        window.dispatchEvent(new CustomEvent('dataUpdated', {
+            detail: { type: 'memory' }
+        }));
     },
     
     addJournalEntry: function() {
         let count = parseInt(localStorage.getItem('journalCount') || '2');
         count++;
         localStorage.setItem('journalCount', count.toString());
+        
+        // Calculate weekly count
+        const entries = JSON.parse(localStorage.getItem('journalEntries')) || [];
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const weeklyCount = entries.filter(entry => entry.date >= oneWeekAgo).length;
+        localStorage.setItem('weeklyCount', weeklyCount.toString());
+        
+        // Update dashboard and dispatch events
         const dashboard = new Dashboard();
         dashboard.loadUserData();
+        window.dispatchEvent(new CustomEvent('dataUpdated', {
+            detail: { type: 'journal', count: count, weeklyCount: weeklyCount }
+        }));
+        
+        console.log('Journal entry added. Total:', count, 'Weekly:', weeklyCount);
+    },
+    
+    getJournalCount: function() {
+        return parseInt(localStorage.getItem('journalCount') || '2');
+    },
+    
+    getWeeklyCount: function() {
+        return parseInt(localStorage.getItem('weeklyCount') || '2');
+    },
+    
+   getMemoryCount: function() {
+        const memories = JSON.parse(localStorage.getItem('memories')) || [];
+        return memories.length;
     }
 };
 

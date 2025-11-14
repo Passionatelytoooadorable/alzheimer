@@ -104,6 +104,9 @@ function displayMemories(filter = 'all') {
             </div>
         `;
     }
+    
+    // Update dashboard stats
+    updateDashboardMemoryStats();
 }
 
 function createMemoryCard(memory) {
@@ -120,6 +123,7 @@ function createMemoryCard(memory) {
             <div class="memory-actions">
                 <button class="memory-btn primary" onclick="viewMemory(${memory.id})">View Details</button>
                 <button class="memory-btn secondary" onclick="editMemory(${memory.id})">Edit</button>
+                <button class="memory-btn danger" onclick="deleteMemory(${memory.id})">Delete</button>
             </div>
         </div>
     `;
@@ -307,9 +311,7 @@ function handleMemorySubmit(e) {
     localStorage.setItem('memories', JSON.stringify(memories));
     
     // Update dashboard stats
-    if (typeof window.dashboardFunctions !== 'undefined') {
-        window.dashboardFunctions.addMemory();
-    }
+    updateDashboardMemoryStats();
     
     // Close form and reset
     closeAddMemoryForm();
@@ -347,6 +349,48 @@ function viewMemory(id) {
 
 function editMemory(id) {
     showNotification('Edit feature coming soon!', 'info');
+}
+
+function deleteMemory(id) {
+    if (confirm('Are you sure you want to delete this memory?')) {
+        const memories = JSON.parse(localStorage.getItem('memories')) || [];
+        const updatedMemories = memories.filter(memory => memory.id !== id);
+        localStorage.setItem('memories', JSON.stringify(updatedMemories));
+        
+        // Update dashboard stats
+        updateDashboardMemoryStats();
+        
+        // Refresh display
+        displayMemories();
+        
+        showNotification('Memory deleted successfully!', 'success');
+    }
+}
+
+function updateDashboardMemoryStats() {
+    const memories = JSON.parse(localStorage.getItem('memories')) || [];
+    const memoryCount = memories.length;
+    
+    // Update localStorage for backward compatibility
+    localStorage.setItem('memoryCount', memoryCount.toString());
+    
+    // Dispatch storage event to update dashboard
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: 'memoryCount',
+        newValue: memoryCount.toString()
+    }));
+    
+    // Also dispatch custom event
+    window.dispatchEvent(new CustomEvent('dataUpdated', {
+        detail: { type: 'memory', count: memoryCount }
+    }));
+    
+    // If dashboard functions are available, update directly
+    if (typeof window.dashboardFunctions !== 'undefined') {
+        window.dashboardFunctions.updateUserData();
+    }
+    
+    console.log('Dashboard memory stats updated:', memoryCount);
 }
 
 function showNotification(message, type) {
@@ -412,6 +456,7 @@ function resetToSampleMemories() {
     
     localStorage.setItem('memories', JSON.stringify(sampleMemories));
     displayMemories();
+    updateDashboardMemoryStats();
     showNotification('Demo data reset successfully!', 'success');
 }
 
@@ -445,6 +490,15 @@ style.textContent = `
     .empty-state p {
         color: #6c757d;
         margin-bottom: 2rem;
+    }
+    
+    .memory-btn.danger {
+        background: #ff6b6b;
+        color: white;
+    }
+    
+    .memory-btn.danger:hover {
+        background: #ff5252;
     }
 `;
 document.head.appendChild(style);
