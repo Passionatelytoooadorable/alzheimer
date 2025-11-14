@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentReminders = [];
 let chatHistory = [];
 let aiResponses = {};
+let stream = null;
+let capturedPhoto = null;
+let chatBackups = [];
 
 // Initialize the application
 async function initializeApp() {
@@ -22,7 +25,11 @@ async function initializeApp() {
     loadReminders();
     initializeChat();
     updateStats();
-    setupConsoleCommands(); // Only console commands, no UI button
+    setupConsoleCommands();
+    loadChatBackups();
+    
+    // Show welcome greeting on every visit
+    showWelcomeGreeting();
 }
 
 // Load AI responses from JSON file
@@ -71,6 +78,24 @@ function getFallbackResponses() {
             "I'd love to hear about your family. Sharing memories can be a wonderful way to connect.",
             "Thinking about family can bring such warm feelings. Who would you like to talk about today?"
         ],
+        photos: [
+            "What a wonderful photo! Thank you for sharing this with me.",
+            "I love seeing photos! This one looks special.",
+            "Thanks for sharing this photo! Would you like to tell me more about it?",
+            "What a great picture! It's always nice to see visual memories."
+        ],
+        welcome_greetings: [
+            "Welcome! I'm your AI Care Companion. I'm here to chat with you, help with reminders, and provide support.",
+            "Hello there! I'm here to help with conversation, reminders, and support whenever you need it.",
+            "Good to see you! I'm your companion for chatting, reminders, and emotional support.",
+            "Welcome back! I'm here to keep you company and help with anything you need."
+        ],
+        daily_greetings: [
+            "How are you feeling today?",
+            "What would you like to talk about today?",
+            "How can I assist you today?",
+            "What's on your mind today?"
+        ],
         default: [
             "That's interesting! Tell me more about that.",
             "I understand. How does that make you feel?",
@@ -118,6 +143,18 @@ function setupEventListeners() {
         addReminderBtn.addEventListener('click', openReminderModal);
     }
     
+    // Camera functionality
+    const cameraToggle = document.getElementById('cameraToggle');
+    if (cameraToggle) {
+        cameraToggle.addEventListener('click', openCameraModal);
+    }
+    
+    // Settings functionality
+    const settingsToggle = document.getElementById('settingsToggle');
+    if (settingsToggle) {
+        settingsToggle.addEventListener('click', openSettingsModal);
+    }
+    
     // Modal functionality
     const closeButtons = document.querySelectorAll('.close');
     closeButtons.forEach(button => {
@@ -134,6 +171,44 @@ function setupEventListeners() {
     const cancelReminderBtn = document.getElementById('cancelReminder');
     if (cancelReminderBtn) {
         cancelReminderBtn.addEventListener('click', closeModal);
+    }
+    
+    // Camera control buttons
+    const capturePhotoBtn = document.getElementById('capturePhoto');
+    const retakePhotoBtn = document.getElementById('retakePhoto');
+    const uploadPhotoBtn = document.getElementById('uploadPhoto');
+    
+    if (capturePhotoBtn) {
+        capturePhotoBtn.addEventListener('click', capturePhoto);
+    }
+    if (retakePhotoBtn) {
+        retakePhotoBtn.addEventListener('click', retakePhoto);
+    }
+    if (uploadPhotoBtn) {
+        uploadPhotoBtn.addEventListener('click', uploadPhotoToChat);
+    }
+    
+    // Settings buttons
+    const restoreChatsBtn = document.getElementById('restoreChats');
+    const clearChatBtn = document.getElementById('clearChat');
+    const exportChatsBtn = document.getElementById('exportChats');
+    const importChatsBtn = document.getElementById('importChats');
+    const chatImportFile = document.getElementById('chatImportFile');
+    
+    if (restoreChatsBtn) {
+        restoreChatsBtn.addEventListener('click', restorePreviousChats);
+    }
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', clearCurrentChat);
+    }
+    if (exportChatsBtn) {
+        exportChatsBtn.addEventListener('click', exportChatHistory);
+    }
+    if (importChatsBtn) {
+        importChatsBtn.addEventListener('click', () => chatImportFile.click());
+    }
+    if (chatImportFile) {
+        chatImportFile.addEventListener('change', importChatHistory);
     }
     
     // Close modal when clicking outside
@@ -153,6 +228,403 @@ function setupEventListeners() {
             updateStats();
         }
     });
+    
+    // Update days active stat periodically
+    setInterval(updateDaysActiveStat, 60000);
+}
+
+// NEW: Show welcome greeting every time user visits the page
+function showWelcomeGreeting() {
+    const timeBasedGreeting = getTimeBasedGreeting();
+    const welcomeMessages = aiResponses.welcome_greetings || [
+        "Welcome! I'm your AI Care Companion. I'm here to chat with you, help with reminders, and provide support.",
+        "Hello there! I'm here to help with conversation, reminders, and support whenever you need it.",
+        "Good to see you! I'm your companion for chatting, reminders, and emotional support.",
+        "Welcome back! I'm here to keep you company and help with anything you need."
+    ];
+    
+    const dailyGreetings = aiResponses.daily_greetings || [
+        "How are you feeling today?",
+        "What would you like to talk about today?",
+        "How can I assist you today?",
+        "What's on your mind today?"
+    ];
+    
+    const randomWelcome = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+    const randomDaily = dailyGreetings[Math.floor(Math.random() * dailyGreetings.length)];
+    
+    const fullGreeting = `${timeBasedGreeting} ${randomWelcome} ${randomDaily}`;
+    
+    const greetingMessage = {
+        type: 'companion',
+        text: fullGreeting,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isWelcomeGreeting: true,
+        timestamp: new Date().getTime()
+    };
+    
+    // Check if we already showed a welcome greeting in the last minute to avoid duplicates
+    const recentWelcome = chatHistory.find(msg => 
+        msg.isWelcomeGreeting && 
+        (new Date().getTime() - msg.timestamp) < 60000
+    );
+    
+    if (!recentWelcome) {
+        // Add new greeting
+        chatHistory.push(greetingMessage);
+        
+        // Save and render
+        saveChatToStorage();
+        renderChatHistory();
+    }
+    
+    // Update days active stat on visit
+    updateDaysActiveStat();
+}
+
+// NEW: Get time-appropriate greeting based on current time
+function getTimeBasedGreeting() {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Good morning!";
+    if (hour >= 12 && hour < 17) return "Good afternoon!";
+    if (hour >= 17 && hour < 22) return "Good evening!";
+    return "Hello!"; // For late night hours
+}
+
+// NEW: Update days active statistic
+function updateDaysActiveStat() {
+    const firstVisit = localStorage.getItem('firstCompanionVisit');
+    if (!firstVisit) {
+        localStorage.setItem('firstCompanionVisit', new Date().toDateString());
+        return;
+    }
+    
+    const firstDate = new Date(firstVisit);
+    const today = new Date();
+    const diffTime = Math.abs(today - firstDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Update the days active stat
+    const daysStat = document.querySelector('.stat-number');
+    if (daysStat && daysStat.nextElementSibling.textContent.toLowerCase().includes('day')) {
+        daysStat.textContent = diffDays;
+    }
+}
+
+// Settings Modal Functions
+function openSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+function restorePreviousChats() {
+    if (chatBackups.length === 0) {
+        showNotification('No previous chat backups found.', 'info');
+        return;
+    }
+    
+    // Show backup selection (for simplicity, using the most recent backup)
+    const mostRecentBackup = chatBackups[chatBackups.length - 1];
+    
+    if (confirm('Restore most recent chat backup? This will replace your current chat.')) {
+        chatHistory = JSON.parse(JSON.stringify(mostRecentBackup.chats));
+        localStorage.setItem('aiCompanionChat', JSON.stringify(chatHistory));
+        renderChatHistory();
+        showNotification('Chat restored successfully!', 'success');
+        closeModal();
+    }
+}
+
+function clearCurrentChat() {
+    if (confirm('Are you sure you want to clear the current chat? This action cannot be undone.')) {
+        // Create backup before clearing
+        createChatBackup();
+        
+        // Clear current chat
+        chatHistory = [];
+        localStorage.setItem('aiCompanionChat', JSON.stringify(chatHistory));
+        renderChatHistory();
+        
+        // Show new welcome greeting after clearing
+        setTimeout(() => {
+            showWelcomeGreeting();
+        }, 500);
+        
+        showNotification('Chat cleared successfully!', 'success');
+        closeModal();
+    }
+}
+
+function exportChatHistory() {
+    if (chatHistory.length === 0) {
+        showNotification('No chat history to export.', 'info');
+        return;
+    }
+    
+    const chatData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        chats: chatHistory
+    };
+    
+    const dataStr = JSON.stringify(chatData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ai-companion-chat-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Chat history exported successfully!', 'success');
+    closeModal();
+}
+
+function importChatHistory(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            let chatsToImport = [];
+            
+            // Handle different import formats
+            if (Array.isArray(importedData)) {
+                chatsToImport = importedData;
+            } else if (importedData.chats && Array.isArray(importedData.chats)) {
+                chatsToImport = importedData.chats;
+            } else {
+                throw new Error('Invalid chat file format');
+            }
+            
+            if (chatsToImport.length === 0) {
+                showNotification('No valid chat data found in the file.', 'error');
+                return;
+            }
+            
+            if (confirm(`Import ${chatsToImport.length} chat messages? This will replace your current chat.`)) {
+                // Create backup before importing
+                createChatBackup();
+                
+                chatHistory = chatsToImport;
+                localStorage.setItem('aiCompanionChat', JSON.stringify(chatHistory));
+                renderChatHistory();
+                showNotification('Chat history imported successfully!', 'success');
+                closeModal();
+            }
+        } catch (error) {
+            console.error('Error importing chat:', error);
+            showNotification('Error importing chat file. Please check the file format.', 'error');
+        }
+    };
+    reader.readAsText(file);
+    
+    // Reset file input
+    event.target.value = '';
+}
+
+function createChatBackup() {
+    if (chatHistory.length > 0) {
+        const backup = {
+            timestamp: new Date().toISOString(),
+            chats: JSON.parse(JSON.stringify(chatHistory))
+        };
+        
+        chatBackups.push(backup);
+        
+        // Keep only last 5 backups
+        if (chatBackups.length > 5) {
+            chatBackups = chatBackups.slice(-5);
+        }
+        
+        localStorage.setItem('aiCompanionChatBackups', JSON.stringify(chatBackups));
+    }
+}
+
+function loadChatBackups() {
+    const savedBackups = localStorage.getItem('aiCompanionChatBackups');
+    if (savedBackups) {
+        chatBackups = JSON.parse(savedBackups);
+    }
+}
+
+// Camera functionality
+async function openCameraModal() {
+    const modal = document.getElementById('cameraModal');
+    if (!modal) return;
+    
+    modal.style.display = 'block';
+    
+    try {
+        // Request camera access
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }, 
+            audio: false 
+        });
+        
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = stream;
+        
+        // Reset camera UI
+        document.getElementById('capturePhoto').style.display = 'block';
+        document.getElementById('retakePhoto').style.display = 'none';
+        document.getElementById('uploadPhoto').style.display = 'none';
+        document.getElementById('photoPreview').style.display = 'none';
+        video.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        showNotification('Unable to access camera. Please check permissions.', 'error');
+    }
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const preview = document.getElementById('previewImage');
+    const photoPreview = document.getElementById('photoPreview');
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw current video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Get image data URL
+    capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
+    
+    // Show preview
+    preview.src = capturedPhoto;
+    photoPreview.style.display = 'block';
+    video.style.display = 'none';
+    
+    // Update button visibility
+    document.getElementById('capturePhoto').style.display = 'none';
+    document.getElementById('retakePhoto').style.display = 'block';
+    document.getElementById('uploadPhoto').style.display = 'block';
+}
+
+function retakePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const photoPreview = document.getElementById('photoPreview');
+    
+    // Show video again
+    video.style.display = 'block';
+    photoPreview.style.display = 'none';
+    
+    // Update button visibility
+    document.getElementById('capturePhoto').style.display = 'block';
+    document.getElementById('retakePhoto').style.display = 'none';
+    document.getElementById('uploadPhoto').style.display = 'none';
+    
+    capturedPhoto = null;
+}
+
+function uploadPhotoToChat() {
+    if (!capturedPhoto) return;
+    
+    // Create photo message
+    const photoMessage = {
+        type: 'user',
+        photo: capturedPhoto,
+        text: "I shared a photo",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    addPhotoMessageToChat(photoMessage);
+    chatHistory.push(photoMessage);
+    
+    // Generate AI response about the photo
+    showTypingIndicator();
+    setTimeout(() => {
+        generatePhotoResponse();
+    }, 1500);
+    
+    saveChatToStorage();
+    closeModal();
+    
+    // Stop camera stream
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+}
+
+function addPhotoMessageToChat(message) {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (!chatMessages) return;
+    
+    // Remove typing indicator if present
+    const typingIndicator = document.querySelector('.typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+    
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${message.type}-message photo-message`;
+    
+    const avatar = message.type === 'user' ? '👤' : '🤖';
+    
+    messageElement.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="photo-content">
+            <img src="${message.photo}" alt="Shared photo">
+            <p class="photo-caption">${message.text}</p>
+            <span class="message-time">${message.time}</span>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function generatePhotoResponse() {
+    const photoResponses = aiResponses.photos || [
+        "What a wonderful photo! Thank you for sharing this with me.",
+        "I love seeing photos! This one looks special.",
+        "Thanks for sharing this photo! Would you like to tell me more about it?",
+        "What a great picture! It's always nice to see visual memories."
+    ];
+    
+    const randomResponse = photoResponses[Math.floor(Math.random() * photoResponses.length)];
+    
+    const aiMessage = {
+        type: 'companion',
+        text: randomResponse,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    addMessageToChat(aiMessage);
+    chatHistory.push(aiMessage);
+    saveChatToStorage();
+}
+
+function closeModal() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+    
+    // Stop camera stream when closing modal
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    capturedPhoto = null;
 }
 
 // Reset reminders to default
@@ -214,6 +686,8 @@ function setupConsoleCommands() {
         console.log('💬 Chat History Length:', chatHistory.length);
         console.log('📊 LocalStorage Reminders:', JSON.parse(localStorage.getItem('reminders') || '[]'));
         console.log('🎮 AI Responses Loaded:', Object.keys(aiResponses).length > 0);
+        console.log('💾 Chat Backups:', chatBackups.length);
+        console.log('📅 First Visit:', localStorage.getItem('firstCompanionVisit'));
         
         const today = new Date().toISOString().split('T')[0];
         const todayReminders = currentReminders.filter(reminder => reminder.date === today);
@@ -227,17 +701,19 @@ function setupConsoleCommands() {
     
     // Clear chat history
     window.clearAIChat = function() {
-        chatHistory = [];
-        localStorage.removeItem('aiCompanionChat');
-        renderChatHistory();
-        showNotification('Chat history cleared!', 'success');
-        console.log('💬 Chat history cleared!');
+        clearCurrentChat();
+    };
+    
+    // Force welcome greeting
+    window.forceWelcomeGreeting = function() {
+        showWelcomeGreeting();
     };
     
     console.log('🎮 AI Companion Console Commands Available:');
     console.log('   resetAICompanionReminders() - Reset reminders to default');
     console.log('   quickResetReminders() - Quick reset without confirmation');
     console.log('   clearAIChat() - Clear chat history');
+    console.log('   forceWelcomeGreeting() - Force show welcome greeting');
     console.log('   debugAICompanion() - Show debug information');
 }
 
@@ -309,17 +785,9 @@ function updateDailyTip() {
 
 // Initialize chat
 function initializeChat() {
-    // Add welcome message if no chat history exists
+    // If no chat history exists (first visit ever), set first visit date
     if (chatHistory.length === 0) {
-        const welcomeMessage = {
-            type: 'companion',
-            text: "Hello! I'm your AI Care Companion. I'm here to chat with you, help with reminders, and provide support whenever you need it. How are you feeling today?",
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        
-        chatHistory.push(welcomeMessage);
-        addMessageToChat(welcomeMessage);
-        saveChatToStorage();
+        localStorage.setItem('firstCompanionVisit', new Date().toDateString());
     }
 }
 
@@ -512,13 +980,6 @@ function openReminderModal() {
     }
 }
 
-function closeModal() {
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-        modal.style.display = 'none';
-    });
-}
-
 function saveReminder() {
     const title = document.getElementById('reminderTitle').value;
     const time = document.getElementById('reminderTime').value;
@@ -623,8 +1084,18 @@ function updateStats() {
     const today = new Date().toISOString().split('T')[0];
     const todayReminders = currentReminders.filter(reminder => reminder.date === today);
     
+    // Calculate days active
+    const firstVisit = localStorage.getItem('firstCompanionVisit');
+    let daysActive = 0;
+    if (firstVisit) {
+        const firstDate = new Date(firstVisit);
+        const today = new Date();
+        const diffTime = Math.abs(today - firstDate);
+        daysActive = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
     const stats = {
-        days: Math.floor(Math.random() * 100) + 50,
+        days: daysActive,
         reminders: todayReminders.length,
         chats: chatHistory.filter(msg => msg.type === 'user').length
     };
@@ -664,7 +1135,11 @@ function renderChatHistory() {
     chatMessages.innerHTML = '';
     
     chatHistory.forEach(message => {
-        addMessageToChat(message);
+        if (message.photo) {
+            addPhotoMessageToChat(message);
+        } else {
+            addMessageToChat(message);
+        }
     });
 }
 
@@ -735,5 +1210,8 @@ window.AICompanion = {
     closeModal,
     saveReminder,
     startGame,
-    showNotification
+    showNotification,
+    openCameraModal,
+    openSettingsModal,
+    showWelcomeGreeting
 };
