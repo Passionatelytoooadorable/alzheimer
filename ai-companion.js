@@ -17,6 +17,7 @@ let aiResponses = {};
 let stream = null;
 let capturedPhoto = null;
 let chatBackups = [];
+let hasShownWelcome = false;
 
 // Initialize the application
 async function initializeApp() {
@@ -28,8 +29,11 @@ async function initializeApp() {
     setupConsoleCommands();
     loadChatBackups();
     
-    // Show welcome greeting on every visit
-    showWelcomeGreeting();
+    // Show welcome greeting only if not already shown in this session
+    if (!hasShownWelcome) {
+        showWelcomeGreeting();
+        hasShownWelcome = true;
+    }
 }
 
 // Load AI responses from JSON file
@@ -233,7 +237,7 @@ function setupEventListeners() {
     setInterval(updateDaysActiveStat, 60000);
 }
 
-// NEW: Show welcome greeting every time user visits the page
+// NEW: Show welcome greeting only once per session
 function showWelcomeGreeting() {
     const timeBasedGreeting = getTimeBasedGreeting();
     const welcomeMessages = aiResponses.welcome_greetings || [
@@ -263,19 +267,24 @@ function showWelcomeGreeting() {
         timestamp: new Date().getTime()
     };
     
-    // Check if we already showed a welcome greeting in the last minute to avoid duplicates
+    // Check if we already have a recent welcome message in chat history (within last 10 minutes)
+    const tenMinutesAgo = new Date().getTime() - (10 * 60 * 1000);
     const recentWelcome = chatHistory.find(msg => 
         msg.isWelcomeGreeting && 
-        (new Date().getTime() - msg.timestamp) < 60000
+        msg.timestamp > tenMinutesAgo
     );
     
     if (!recentWelcome) {
-        // Add new greeting
+        // Add new greeting to chat history
         chatHistory.push(greetingMessage);
         
         // Save and render
         saveChatToStorage();
         renderChatHistory();
+        
+        console.log('👋 Welcome message shown:', fullGreeting);
+    } else {
+        console.log('👋 Welcome message already shown recently, skipping...');
     }
     
     // Update days active stat on visit
@@ -334,6 +343,9 @@ function restorePreviousChats() {
         renderChatHistory();
         showNotification('Chat restored successfully!', 'success');
         closeModal();
+        
+        // Reset welcome flag so greeting can show again
+        hasShownWelcome = false;
     }
 }
 
@@ -346,6 +358,9 @@ function clearCurrentChat() {
         chatHistory = [];
         localStorage.setItem('aiCompanionChat', JSON.stringify(chatHistory));
         renderChatHistory();
+        
+        // Reset welcome flag so greeting will show again
+        hasShownWelcome = false;
         
         // Show new welcome greeting after clearing
         setTimeout(() => {
@@ -418,6 +433,9 @@ function importChatHistory(event) {
                 renderChatHistory();
                 showNotification('Chat history imported successfully!', 'success');
                 closeModal();
+                
+                // Reset welcome flag
+                hasShownWelcome = false;
             }
         } catch (error) {
             console.error('Error importing chat:', error);
@@ -688,6 +706,7 @@ function setupConsoleCommands() {
         console.log('🎮 AI Responses Loaded:', Object.keys(aiResponses).length > 0);
         console.log('💾 Chat Backups:', chatBackups.length);
         console.log('📅 First Visit:', localStorage.getItem('firstCompanionVisit'));
+        console.log('👋 Welcome Shown:', hasShownWelcome);
         
         const today = new Date().toISOString().split('T')[0];
         const todayReminders = currentReminders.filter(reminder => reminder.date === today);
@@ -706,6 +725,7 @@ function setupConsoleCommands() {
     
     // Force welcome greeting
     window.forceWelcomeGreeting = function() {
+        hasShownWelcome = false;
         showWelcomeGreeting();
     };
     
