@@ -7,12 +7,12 @@ class Dashboard {
 
     init() {
         this.checkAuthentication();
+        this.initializeSampleData(); // Initialize data FIRST
         this.initializeDashboard();
         this.initFloatingPuzzle();
         this.setupEventListeners();
-        this.loadUserData();
+        this.loadUserData(); // Then load it
         this.updateActivityBadges();
-        this.initializeSampleData();
     }
 
     checkAuthentication() {
@@ -25,7 +25,7 @@ class Dashboard {
 
     initializeDashboard() {
         console.log('Dashboard initialized');
-        const userName = localStorage.getItem('userName') || 'User';
+        const userName = localStorage.getItem('userName') || 'Demo User';
         document.getElementById('userName').textContent = userName;
         this.updateDateDisplay();
     }
@@ -111,30 +111,6 @@ class Dashboard {
         }, 300);
     }
 
-    highlightConnections(activePiece) {
-        const pieces = document.querySelectorAll('.puzzle-piece');
-        const activeFeature = activePiece.getAttribute('data-feature');
-        
-        pieces.forEach(piece => {
-            const feature = piece.getAttribute('data-feature');
-            if (feature !== activeFeature) {
-                piece.style.filter = 'brightness(1.2)';
-                piece.style.zIndex = '5';
-            }
-        });
-        
-        activePiece.style.filter = 'brightness(1.3)';
-        activePiece.style.zIndex = '15';
-    }
-
-    removeConnectionHighlights() {
-        const pieces = document.querySelectorAll('.puzzle-piece');
-        pieces.forEach(piece => {
-            piece.style.filter = '';
-            piece.style.zIndex = '';
-        });
-    }
-
     setupEventListeners() {
         this.setupEmergencyModal();
         this.checkLocationStatus();
@@ -151,7 +127,6 @@ class Dashboard {
             emergencyBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 emergencyModal.style.display = 'block';
-                // Add emergency animation
                 emergencyBtn.style.animation = 'pulse 0.5s ease-in-out';
                 setTimeout(() => {
                     emergencyBtn.style.animation = '';
@@ -180,7 +155,6 @@ class Dashboard {
             });
         }
 
-        // Make reminders clickable
         const reminderItems = document.querySelectorAll('.reminder-item');
         reminderItems.forEach((item, index) => {
             item.addEventListener('click', () => {
@@ -193,7 +167,7 @@ class Dashboard {
         const remindersList = document.querySelector('.reminders-list');
         const newReminder = document.createElement('li');
         newReminder.className = 'reminder-item';
-        newReminner.innerHTML = `
+        newReminder.innerHTML = `
             <span class="reminder-time">Now</span>
             <span class="reminder-text">New reminder - click to edit</span>
             <span class="reminder-status pending">New</span>
@@ -201,12 +175,10 @@ class Dashboard {
         
         remindersList.appendChild(newReminder);
         
-        // Add click event to new reminder
         newReminder.addEventListener('click', () => {
             this.editReminder(newReminder);
         });
         
-        // Animate the new reminder
         newReminder.style.animation = 'slideIn 0.3s ease-out';
         setTimeout(() => {
             newReminder.style.animation = '';
@@ -229,7 +201,6 @@ class Dashboard {
             reminder.style.textDecoration = 'none';
         }
         
-        // Add completion animation
         reminder.style.animation = 'bounce 0.3s ease-in-out';
         setTimeout(() => {
             reminder.style.animation = '';
@@ -243,8 +214,6 @@ class Dashboard {
             locationStatus.textContent = 'Ready to track';
             locationStatus.style.background = '#96ceb4';
             locationStatus.style.color = 'white';
-            
-            // Simulate location update
             this.simulateLocationUpdate();
         } else {
             locationStatus.textContent = 'Not supported';
@@ -272,7 +241,6 @@ class Dashboard {
     }
 
     updateRealTimeData() {
-        // Update reminder status based on current time
         const now = new Date();
         const reminders = document.querySelectorAll('.reminder-item');
         
@@ -303,8 +271,11 @@ class Dashboard {
     }
 
     loadUserData() {
-        const memoryCount = localStorage.getItem('memoryCount') || '0';
-        const journalCount = localStorage.getItem('journalCount') || '0';
+        // Always use the initialized values
+        const memoryCount = localStorage.getItem('memoryCount');
+        const journalCount = localStorage.getItem('journalCount');
+        
+        console.log('Loading user data - Memory:', memoryCount, 'Journal:', journalCount);
         
         document.getElementById('memoryCount').textContent = memoryCount;
         document.getElementById('memoryCount2').textContent = memoryCount;
@@ -336,18 +307,13 @@ class Dashboard {
     }
 
     initializeSampleData() {
-        if (!localStorage.getItem('memoryCount')) {
-            localStorage.setItem('memoryCount', '4');
-        }
-        if (!localStorage.getItem('journalCount')) {
-            localStorage.setItem('journalCount', '2');
-        }
-        if (!localStorage.getItem('userName')) {
-            localStorage.setItem('userName', 'Charlie');
-        }
-        if (!localStorage.getItem('isLoggedIn')) {
-            localStorage.setItem('isLoggedIn', 'true');
-        }
+        // Force reset to ensure consistency - 4 memories, 2 journals
+        console.log('Initializing sample data...');
+        localStorage.setItem('memoryCount', '4');
+        localStorage.setItem('journalCount', '2');
+        localStorage.setItem('userName', 'Demo User');
+        localStorage.setItem('isLoggedIn', 'true');
+        console.log('Sample data initialized - Memory: 4, Journal: 2');
     }
 }
 
@@ -401,7 +367,7 @@ window.dashboardFunctions = {
     },
     
     addMemory: function() {
-        let count = parseInt(localStorage.getItem('memoryCount') || '0');
+        let count = parseInt(localStorage.getItem('memoryCount') || '4');
         count++;
         localStorage.setItem('memoryCount', count.toString());
         const dashboard = new Dashboard();
@@ -409,7 +375,7 @@ window.dashboardFunctions = {
     },
     
     addJournalEntry: function() {
-        let count = parseInt(localStorage.getItem('journalCount') || '0');
+        let count = parseInt(localStorage.getItem('journalCount') || '2');
         count++;
         localStorage.setItem('journalCount', count.toString());
         const dashboard = new Dashboard();
