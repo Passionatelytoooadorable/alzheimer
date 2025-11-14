@@ -13,13 +13,72 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global variables
 let currentReminders = [];
 let chatHistory = [];
+let aiResponses = {};
 
 // Initialize the application
-function initializeApp() {
+async function initializeApp() {
+    await loadAIResponses();
     updateDailyTip();
     loadReminders();
     initializeChat();
     updateStats();
+}
+
+// Load AI responses from JSON file
+async function loadAIResponses() {
+    try {
+        const response = await fetch('ai-responses.json');
+        aiResponses = await response.json();
+        console.log('AI responses loaded successfully');
+    } catch (error) {
+        console.error('Failed to load AI responses:', error);
+        // Fallback to hardcoded responses if JSON fails
+        aiResponses = getFallbackResponses();
+    }
+}
+
+// Fallback responses in case JSON loading fails
+function getFallbackResponses() {
+    return {
+        greetings: [
+            "Hello! I'm your AI Care Companion. How are you feeling today?",
+            "Hi there! It's nice to see you. What would you like to talk about?",
+            "Good day! I'm here to chat and help with anything you need."
+        ],
+        feelings: [
+            "I understand. It's completely normal to feel that way sometimes.",
+            "Thank you for sharing how you're feeling. I'm here to listen.",
+            "Your feelings are valid. Would you like to talk more about what's on your mind?"
+        ],
+        reminders: [
+            "Let me check your reminders... You have medication at 2 PM and a video call at 4 PM.",
+            "Here are your reminders for today: Take your morning pills, call your daughter, and water the plants.",
+            "I see you have a few things scheduled today. Would you like me to go through them one by one?"
+        ],
+        games: [
+            "I'd love to play a game with you! How about a memory game?",
+            "Games are great for keeping our minds active. Let's play one together!",
+            "Playing games can be so much fun. Would you like to try a simple memory challenge?"
+        ],
+        stories: [
+            "Once upon a time, in a peaceful village surrounded by rolling hills, there lived a kind baker who made the most delicious bread. Every morning, the scent of fresh bread would wake the villagers, bringing smiles to their faces.",
+            "There was an old oak tree in the middle of a meadow that had seen generations of children play beneath its branches. It whispered stories of laughter and joy to anyone who would listen.",
+            "In a little cottage by the sea, an elderly painter captured the beauty of each sunset. His paintings told stories of calm waters and sailing ships returning home."
+        ],
+        family: [
+            "Family is so important. Would you like to tell me about your loved ones?",
+            "I'd love to hear about your family. Sharing memories can be a wonderful way to connect.",
+            "Thinking about family can bring such warm feelings. Who would you like to talk about today?"
+        ],
+        default: [
+            "That's interesting! Tell me more about that.",
+            "I understand. How does that make you feel?",
+            "I'd love to hear more about that. Could you elaborate?",
+            "That sounds important. Would you like to discuss it further?",
+            "I'm here to listen. What else is on your mind today?",
+            "Thank you for sharing that with me. Is there anything specific you'd like help with?"
+        ]
+    };
 }
 
 // Set up all event listeners
@@ -251,44 +310,30 @@ function showTypingIndicator() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Generate AI response
+// Generate AI response using JSON data
 function generateAIResponse(userMessage) {
-    const responses = {
-        greetings: [
-            "Hello! How are you feeling today?",
-            "Hi there! It's good to hear from you.",
-            "Greetings! How can I support you today?"
-        ],
-        feelings: [
-            "I understand how you might be feeling. Would you like to talk more about it?",
-            "Thank you for sharing that with me. Remember, it's okay to feel this way.",
-            "I'm here to listen. Sometimes just talking about our feelings can help."
-        ],
-        help: [
-            "I'm here to help! You can ask me about setting reminders, playing games, or just chat.",
-            "How can I assist you today? I can help with reminders, games, or just have a conversation.",
-            "I'm glad you reached out. What would you like help with today?"
-        ],
-        default: [
-            "That's interesting! Tell me more about that.",
-            "I appreciate you sharing that with me.",
-            "I'm here to listen and support you. Would you like to continue talking about this?",
-            "Thank you for the conversation. Is there anything specific you'd like to do today?"
-        ]
-    };
-    
     let responseCategory = 'default';
     const lowerMessage = userMessage.toLowerCase();
     
+    // Determine response category based on user input
     if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
         responseCategory = 'greetings';
     } else if (lowerMessage.includes('feel') || lowerMessage.includes('sad') || lowerMessage.includes('happy') || lowerMessage.includes('anxious')) {
         responseCategory = 'feelings';
+    } else if (lowerMessage.includes('remind') || lowerMessage.includes('medication') || lowerMessage.includes('appointment')) {
+        responseCategory = 'reminders';
+    } else if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('memory')) {
+        responseCategory = 'games';
+    } else if (lowerMessage.includes('story') || lowerMessage.includes('tell me') || lowerMessage.includes('narrate')) {
+        responseCategory = 'stories';
+    } else if (lowerMessage.includes('family') || lowerMessage.includes('child') || lowerMessage.includes('parent') || lowerMessage.includes('son') || lowerMessage.includes('daughter')) {
+        responseCategory = 'family';
     } else if (lowerMessage.includes('help') || lowerMessage.includes('support') || lowerMessage.includes('assist')) {
-        responseCategory = 'help';
+        responseCategory = 'default';
     }
     
-    const possibleResponses = responses[responseCategory];
+    // Get responses for the determined category
+    const possibleResponses = aiResponses[responseCategory] || aiResponses.default;
     const randomResponse = possibleResponses[Math.floor(Math.random() * possibleResponses.length)];
     
     const aiMessage = {
@@ -306,13 +351,17 @@ function generateAIResponse(userMessage) {
 function handleQuickAction(event) {
     const actionType = event.currentTarget.classList[1]; // medication, games, or stories
     
-    const actions = {
-        medication: "Let me help you with medication reminders. Would you like to set one now?",
-        games: "Great choice! Games can be wonderful for mental exercise and relaxation.",
-        stories: "I'd love to share a story with you! What kind of story would you like to hear?"
-    };
-    
-    const response = actions[actionType] || "I'm here to help! What would you like to do?";
+    // Use JSON responses for quick actions
+    let response;
+    if (actionType === 'medication' && aiResponses.reminders) {
+        response = aiResponses.reminders[0]; // Use first reminder response
+    } else if (actionType === 'games' && aiResponses.games) {
+        response = aiResponses.games[0]; // Use first game response
+    } else if (actionType === 'stories' && aiResponses.stories) {
+        response = aiResponses.stories[0]; // Use first story response
+    } else {
+        response = "I'm here to help! What would you like to do?";
+    }
     
     const quickActionMessage = {
         type: 'companion',
@@ -340,10 +389,14 @@ function startGame(event) {
     
     showNotification(`Starting ${gameName}...`, 'info');
     
-    // Add game message to chat
+    // Use JSON game responses
+    const gameResponse = aiResponses.games ? 
+        aiResponses.games[Math.floor(Math.random() * aiResponses.games.length)] : 
+        `I've started ${gameName} for you! This looks like a fun one. Would you like me to explain the rules?`;
+    
     const gameMessage = {
         type: 'companion',
-        text: `I've started ${gameName} for you! This looks like a fun one. Would you like me to explain the rules?`,
+        text: gameResponse,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     
