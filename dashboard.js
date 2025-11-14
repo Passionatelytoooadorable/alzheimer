@@ -1,19 +1,16 @@
 class Dashboard {
     constructor() {
-        this.puzzleAnimationInterval = null;
-        this.puzzleState = 'connected';
         this.init();
     }
 
     init() {
         this.checkAuthentication();
-        this.initializeSampleData(); // Initialize data FIRST
+        this.initializeSampleData();
         this.initializeDashboard();
-        this.initFloatingPuzzle();
         this.setupEventListeners();
-        this.loadUserData(); // Then load it
+        this.loadUserData();
         this.updateActivityBadges();
-        this.setupStorageListener(); // Listen for storage changes
+        this.setupStorageListener();
     }
 
     checkAuthentication() {
@@ -43,75 +40,6 @@ class Dashboard {
         document.getElementById('currentDate').textContent = dateString;
     }
 
-    initFloatingPuzzle() {
-        const puzzleContainer = document.querySelector('.puzzle-container');
-        this.startPuzzleAnimation();
-        
-        const puzzlePieces = document.querySelectorAll('.puzzle-piece');
-        puzzlePieces.forEach(piece => {
-            piece.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const feature = piece.getAttribute('data-feature');
-                this.navigateToFeature(feature);
-                this.animatePieceClick(piece);
-            });
-        });
-    }
-
-    startPuzzleAnimation() {
-        this.puzzleAnimationInterval = setInterval(() => {
-            if (this.puzzleState === 'connected') {
-                this.animateSeparation();
-            } else if (this.puzzleState === 'separated') {
-                this.animateConnection();
-            }
-        }, 3000);
-    }
-
-    animateSeparation() {
-        const puzzleContainer = document.querySelector('.puzzle-container');
-        this.puzzleState = 'separating';
-        
-        puzzleContainer.classList.remove('connected');
-        puzzleContainer.classList.add('separated');
-        
-        setTimeout(() => {
-            this.puzzleState = 'separated';
-        }, 600);
-    }
-
-    animateConnection() {
-        const puzzleContainer = document.querySelector('.puzzle-container');
-        this.puzzleState = 'connecting';
-        
-        puzzleContainer.classList.remove('separated');
-        puzzleContainer.classList.add('connected');
-        
-        setTimeout(() => {
-            this.puzzleState = 'connected';
-        }, 600);
-    }
-
-    navigateToFeature(feature) {
-        const featureUrls = {
-            'memory': 'memory-vault.html',
-            'journal': 'journal.html',
-            'location': 'location-tracker.html',
-            'ai': 'ai-companion.html'
-        };
-        
-        if (featureUrls[feature]) {
-            window.location.href = featureUrls[feature];
-        }
-    }
-
-    animatePieceClick(piece) {
-        piece.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-            piece.style.transform = '';
-        }, 300);
-    }
-
     setupEventListeners() {
         this.setupEmergencyModal();
         this.checkLocationStatus();
@@ -122,7 +50,7 @@ class Dashboard {
     setupStorageListener() {
         // Listen for storage changes from other tabs/pages
         window.addEventListener('storage', (e) => {
-            if (e.key === 'journalCount' || e.key === 'weeklyCount' || e.key === 'memoryCount') {
+            if (e.key === 'journalCount' || e.key === 'weeklyCount' || e.key === 'memoryCount' || e.key === 'reminders') {
                 console.log('Storage updated:', e.key, e.newValue);
                 this.loadUserData();
             }
@@ -177,57 +105,11 @@ class Dashboard {
                 this.addNewReminder();
             });
         }
-
-        const reminderItems = document.querySelectorAll('.reminder-item');
-        reminderItems.forEach((item, index) => {
-            item.addEventListener('click', () => {
-                this.toggleReminderStatus(item, index);
-            });
-        });
     }
 
     addNewReminder() {
-        const remindersList = document.querySelector('.reminders-list');
-        const newReminder = document.createElement('li');
-        newReminder.className = 'reminder-item';
-        newReminder.innerHTML = `
-            <span class="reminder-time">Now</span>
-            <span class="reminder-text">New reminder - click to edit</span>
-            <span class="reminder-status pending">New</span>
-        `;
-        
-        remindersList.appendChild(newReminder);
-        
-        newReminder.addEventListener('click', () => {
-            this.editReminder(newReminder);
-        });
-        
-        newReminder.style.animation = 'slideIn 0.3s ease-out';
-        setTimeout(() => {
-            newReminder.style.animation = '';
-        }, 300);
-    }
-
-    toggleReminderStatus(reminder, index) {
-        const statusElement = reminder.querySelector('.reminder-status');
-        const currentStatus = statusElement.textContent.toLowerCase();
-        
-        if (currentStatus === 'pending') {
-            statusElement.textContent = 'Completed';
-            statusElement.className = 'reminder-status completed';
-            reminder.style.opacity = '0.7';
-            reminder.style.textDecoration = 'line-through';
-        } else if (currentStatus === 'completed') {
-            statusElement.textContent = 'Pending';
-            statusElement.className = 'reminder-status pending';
-            reminder.style.opacity = '1';
-            reminder.style.textDecoration = 'none';
-        }
-        
-        reminder.style.animation = 'bounce 0.3s ease-in-out';
-        setTimeout(() => {
-            reminder.style.animation = '';
-        }, 300);
+        // Redirect to journal page to add reminder
+        window.location.href = 'journal.html';
     }
 
     checkLocationStatus() {
@@ -267,7 +149,7 @@ class Dashboard {
         const now = new Date();
         const reminders = document.querySelectorAll('.reminder-item');
         
-        reminders.forEach((reminder, index) => {
+        reminders.forEach((reminder) => {
             const timeElement = reminder.querySelector('.reminder-time');
             const statusElement = reminder.querySelector('.reminder-status');
             const timeText = timeElement.textContent;
@@ -302,7 +184,13 @@ class Dashboard {
         const journalCount = localStorage.getItem('journalCount') || '2';
         const weeklyCount = localStorage.getItem('weeklyCount') || '2';
         
-        console.log('Loading user data - Memory:', memoryCount, 'Journal:', journalCount, 'Weekly:', weeklyCount);
+        // Get reminder count from shared reminders
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        const today = new Date().toISOString().split('T')[0];
+        const todayReminders = reminders.filter(reminder => reminder.date === today);
+        const reminderCount = todayReminders.length.toString();
+        
+        console.log('Loading user data - Memory:', memoryCount, 'Journal:', journalCount, 'Weekly:', weeklyCount, 'Reminders:', reminderCount);
         
         // Update all memory count elements
         document.getElementById('memoryCount').textContent = memoryCount;
@@ -315,8 +203,81 @@ class Dashboard {
         // Update weekly count
         document.getElementById('weeklyCount').textContent = weeklyCount;
         
+        // Update reminder count
+        document.getElementById('reminderCount').textContent = reminderCount;
+        
+        // Update reminders list in dashboard
+        this.updateRemindersList(todayReminders);
+        
         this.updateMemoryBadge(memoryCount);
         this.updateJournalBadge(journalCount, weeklyCount);
+    }
+
+    updateRemindersList(todayReminders) {
+        const remindersList = document.getElementById('remindersList');
+        if (!remindersList) return;
+        
+        remindersList.innerHTML = '';
+        
+        // Sort reminders by time
+        todayReminders.sort((a, b) => a.time.localeCompare(b.time));
+        
+        todayReminders.forEach(reminder => {
+            const reminderItem = document.createElement('li');
+            reminderItem.className = 'reminder-item';
+            
+            const status = reminder.completed ? 'completed' : 'pending';
+            const statusText = reminder.completed ? 'Completed' : 'Pending';
+            
+            reminderItem.innerHTML = `
+                <span class="reminder-time">${this.formatTime(reminder.time)}</span>
+                <span class="reminder-text">${reminder.title}</span>
+                <span class="reminder-status ${status}">${statusText}</span>
+            `;
+            
+            reminderItem.addEventListener('click', () => {
+                this.toggleReminderStatus(reminder.id);
+            });
+            
+            remindersList.appendChild(reminderItem);
+        });
+        
+        // Add the "Add Reminder" button
+        const addButton = document.createElement('button');
+        addButton.className = 'add-reminder-btn';
+        addButton.textContent = '+ Add Reminder';
+        addButton.addEventListener('click', () => {
+            this.addNewReminder();
+        });
+        
+        remindersList.appendChild(addButton);
+    }
+
+    formatTime(timeString) {
+        // Keep 24-hour format
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        return `${hour}:${minutes} ${ampm}`;
+    }
+
+    toggleReminderStatus(id) {
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        const reminder = reminders.find(r => r.id === id);
+        
+        if (reminder) {
+            reminder.completed = !reminder.completed;
+            localStorage.setItem('reminders', JSON.stringify(reminders));
+            
+            // Update display
+            this.loadUserData();
+            
+            // Dispatch storage event to sync with other pages
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'reminders',
+                newValue: JSON.stringify(reminders)
+            }));
+        }
     }
 
     updateMemoryBadge(count) {
@@ -388,6 +349,45 @@ class Dashboard {
             localStorage.setItem('memories', JSON.stringify(sampleMemories));
         }
         
+        // Initialize shared reminders if they don't exist
+        if (!localStorage.getItem('reminders')) {
+            const sampleReminders = [
+                {
+                    id: 1,
+                    title: "Take morning medication",
+                    date: new Date().toISOString().split('T')[0],
+                    time: "09:00",
+                    completed: false,
+                    type: "medication"
+                },
+                {
+                    id: 2,
+                    title: "Doctor appointment",
+                    date: new Date().toISOString().split('T')[0],
+                    time: "14:00",
+                    completed: false,
+                    type: "normal"
+                },
+                {
+                    id: 3,
+                    title: "Call family member",
+                    date: new Date().toISOString().split('T')[0],
+                    time: "17:00",
+                    completed: false,
+                    type: "normal"
+                },
+                {
+                    id: 4,
+                    title: "Evening walk",
+                    date: new Date().toISOString().split('T')[0],
+                    time: "19:00",
+                    completed: false,
+                    type: "normal"
+                }
+            ];
+            localStorage.setItem('reminders', JSON.stringify(sampleReminders));
+        }
+        
         if (!localStorage.getItem('journalCount')) {
             localStorage.setItem('journalCount', '2');
         }
@@ -402,7 +402,8 @@ class Dashboard {
         }
         
         const memories = JSON.parse(localStorage.getItem('memories')) || [];
-        console.log('Sample data initialized - Memory:', memories.length, 'Journal: 2, Weekly: 2');
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        console.log('Sample data initialized - Memory:', memories.length, 'Reminders:', reminders.length, 'Journal: 2, Weekly: 2');
     }
 }
 
@@ -461,8 +462,6 @@ window.dashboardFunctions = {
     },
     
     addMemory: function() {
-        // This function is now handled by memory vault directly
-        // Keeping it for backward compatibility
         const dashboard = new Dashboard();
         dashboard.loadUserData();
         window.dispatchEvent(new CustomEvent('dataUpdated', {
@@ -499,9 +498,16 @@ window.dashboardFunctions = {
         return parseInt(localStorage.getItem('weeklyCount') || '2');
     },
     
-   getMemoryCount: function() {
+    getMemoryCount: function() {
         const memories = JSON.parse(localStorage.getItem('memories')) || [];
         return memories.length;
+    },
+    
+    getReminderCount: function() {
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        const today = new Date().toISOString().split('T')[0];
+        const todayReminders = reminders.filter(reminder => reminder.date === today);
+        return todayReminders.length;
     }
 };
 

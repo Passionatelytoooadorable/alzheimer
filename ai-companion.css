@@ -786,8 +786,8 @@
     flex-direction: column;
     gap: 0.75rem;
     margin-bottom: 1rem;
-    max-height: 200px;
-    overflow-y: auto;
+    max-height: none !important;
+    overflow: visible !important;
 }
 
 .reminder-item {
@@ -801,6 +801,7 @@
     gap: 1rem;
     box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .reminder-item:hover {
@@ -811,6 +812,15 @@
 .reminder-item.urgent {
     border-left-color: #ff4757;
     background: linear-gradient(135deg, #fff5f5, #fffafa);
+}
+
+.reminder-item.completed {
+    opacity: 0.7;
+    background: #f1f3f4;
+}
+
+.reminder-item.completed .reminder-text {
+    text-decoration: line-through;
 }
 
 .reminder-time {
@@ -831,24 +841,33 @@
     font-weight: 500;
 }
 
+.reminder-status {
+    color: #4ecdc4;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.reminder-item.urgent .reminder-status {
+    color: #ff6b6b;
+}
+
 .add-reminder-btn {
     width: 100%;
-    padding: 0.875rem;
-    background: #f8f9fa;
-    border: 2px dashed #c4b5fd;
+    padding: 0.75rem;
+    background: #4ecdc4;
+    color: white;
+    border: none;
     border-radius: 8px;
-    cursor: pointer;
-    color: #a78bfa;
-    font-weight: 600;
-    transition: all 0.3s ease;
     font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
 }
 
 .add-reminder-btn:hover {
-    background: #e3f2fd;
-    border-style: solid;
-    border-color: #a78bfa;
-    color: #8b5cf6;
+    background: #3dbab0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
 }
 
 /* Modal Styles */
@@ -1152,5 +1171,106 @@
     .feature-card,
     .game-card {
         padding: 1.25rem;
+    }
+}
+
+/* Enhanced Reminders Section*/
+.reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.reminder-item {
+    background: linear-gradient(135deg, #fff9f9, #ffffff);
+    border-left: 4px solid #ff6b6b;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.reminder-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15);
+}
+
+.reminder-item.urgent {
+    border-left-color: #ff4757;
+    background: linear-gradient(135deg, #fff5f5, #fffafa);
+}
+
+.reminder-item.completed {
+    opacity: 0.7;
+    background: #f1f3f4;
+}
+
+.reminder-item.completed .reminder-text {
+    text-decoration: line-through;
+}
+
+.reminder-time {
+    background: #ff6b6b;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    min-width: 70px;
+    text-align: center;
+}
+
+.reminder-text {
+    flex: 1;
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.reminder-status {
+    color: #4ecdc4;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.reminder-item.urgent .reminder-status {
+    color: #ff6b6b;
+}
+
+/* Ensure the companion features section doesn't have scroll */
+.companion-features {
+    height: auto;
+    overflow: visible;
+}
+
+.feature-section {
+    max-height: none;
+    overflow: visible;
+}
+
+.reminders-section {
+    max-height: none;
+    overflow: visible;
+}
+
+/* Responsive adjustments for reminders */
+@media (max-width: 768px) {
+    .reminder-item {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .reminder-time {
+        min-width: auto;
+        width: 100%;
     }
 }

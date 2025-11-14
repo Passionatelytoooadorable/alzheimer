@@ -22,6 +22,7 @@ async function initializeApp() {
     loadReminders();
     initializeChat();
     updateStats();
+    setupConsoleCommands(); // Only console commands, no UI button
 }
 
 // Load AI responses from JSON file
@@ -144,12 +145,106 @@ function setupEventListeners() {
             }
         });
     });
+
+    // Listen for reminder updates from other pages
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'reminders') {
+            loadReminders();
+            updateStats();
+        }
+    });
+}
+
+// Reset reminders to default
+function resetRemindersToDefault() {
+    const defaultReminders = [
+        {
+            id: 1,
+            title: "Take morning medication",
+            date: new Date().toISOString().split('T')[0],
+            time: "09:00",
+            completed: false,
+            type: "medication"
+        },
+        {
+            id: 2,
+            title: "Doctor appointment",
+            date: new Date().toISOString().split('T')[0],
+            time: "14:00",
+            completed: false,
+            type: "normal"
+        },
+        {
+            id: 3,
+            title: "Call family member",
+            date: new Date().toISOString().split('T')[0],
+            time: "17:00",
+            completed: false,
+            type: "normal"
+        },
+        {
+            id: 4,
+            title: "Evening walk",
+            date: new Date().toISOString().split('T')[0],
+            time: "19:00",
+            completed: false,
+            type: "normal"
+        }
+    ];
+    
+    localStorage.setItem('reminders', JSON.stringify(defaultReminders));
+    currentReminders = defaultReminders;
+    renderReminders();
+    updateStats();
+    updateDashboardStats();
+    
+    showNotification('Reminders reset to default!', 'success');
+    console.log('✅ Reminders reset to default successfully!');
+}
+
+// Add hidden console commands
+function setupConsoleCommands() {
+    // Make reset function available globally for console access
+    window.resetAICompanionReminders = resetRemindersToDefault;
+    
+    // Add debug function to check current state
+    window.debugAICompanion = function() {
+        console.log('🤖 AI Companion Debug Info:');
+        console.log('📋 Current Reminders:', currentReminders);
+        console.log('💬 Chat History Length:', chatHistory.length);
+        console.log('📊 LocalStorage Reminders:', JSON.parse(localStorage.getItem('reminders') || '[]'));
+        console.log('🎮 AI Responses Loaded:', Object.keys(aiResponses).length > 0);
+        
+        const today = new Date().toISOString().split('T')[0];
+        const todayReminders = currentReminders.filter(reminder => reminder.date === today);
+        console.log('📅 Today\'s Reminders:', todayReminders.length);
+    };
+    
+    // Quick reset command without confirmation
+    window.quickResetReminders = function() {
+        resetRemindersToDefault();
+    };
+    
+    // Clear chat history
+    window.clearAIChat = function() {
+        chatHistory = [];
+        localStorage.removeItem('aiCompanionChat');
+        renderChatHistory();
+        showNotification('Chat history cleared!', 'success');
+        console.log('💬 Chat history cleared!');
+    };
+    
+    console.log('🎮 AI Companion Console Commands Available:');
+    console.log('   resetAICompanionReminders() - Reset reminders to default');
+    console.log('   quickResetReminders() - Quick reset without confirmation');
+    console.log('   clearAIChat() - Clear chat history');
+    console.log('   debugAICompanion() - Show debug information');
 }
 
 // Load initial data
 function loadInitialData() {
     // Load any saved data from localStorage
-    const savedReminders = localStorage.getItem('aiCompanionReminders');
+    const savedReminders = localStorage.getItem('reminders');
     const savedChat = localStorage.getItem('aiCompanionChat');
     
     if (savedReminders) {
@@ -274,7 +369,6 @@ function addMessageToChat(message) {
     messageElement.className = `message ${message.type}-message`;
     
     const avatar = message.type === 'user' ? '👤' : '🤖';
-    const avatarClass = message.type === 'user' ? 'user-message' : 'companion-message';
     
     messageElement.innerHTML = `
         <div class="message-avatar">${avatar}</div>
@@ -440,18 +534,39 @@ function saveReminder() {
         title: title,
         time: time,
         type: type,
-        completed: false
+        completed: false,
+        date: new Date().toISOString().split('T')[0] // Add date for compatibility
     };
     
-    currentReminders.push(newReminder);
+    // Get existing reminders from localStorage (shared with journal)
+    const existingReminders = JSON.parse(localStorage.getItem('reminders')) || [];
+    existingReminders.push(newReminder);
+    
+    // Save to shared localStorage
+    localStorage.setItem('reminders', JSON.stringify(existingReminders));
+    
+    // Update local state
+    currentReminders = existingReminders;
     renderReminders();
-    saveRemindersToStorage();
+    
     closeModal();
     
     showNotification('Reminder added successfully!', 'success');
     
     // Clear form
     document.getElementById('reminderTitle').value = '';
+    
+    // Update dashboard stats
+    updateDashboardStats();
+}
+
+function loadReminders() {
+    // Load reminders from shared localStorage
+    const savedReminders = localStorage.getItem('reminders');
+    if (savedReminders) {
+        currentReminders = JSON.parse(savedReminders);
+        renderReminders();
+    }
 }
 
 function renderReminders() {
@@ -465,26 +580,52 @@ function renderReminders() {
         return;
     }
     
+    // Remove any max-height or overflow styles that cause scrolling
+    remindersList.style.maxHeight = 'none';
+    remindersList.style.overflow = 'visible';
+    
     // Sort reminders by time
     currentReminders.sort((a, b) => a.time.localeCompare(b.time));
     
     currentReminders.forEach(reminder => {
         const reminderElement = document.createElement('div');
-        reminderElement.className = `reminder-item ${reminder.type === 'urgent' ? 'urgent' : ''}`;
+        reminderElement.className = `reminder-item ${reminder.type === 'urgent' ? 'urgent' : ''} ${reminder.completed ? 'completed' : ''}`;
         reminderElement.innerHTML = `
             <div class="reminder-time">${reminder.time}</div>
             <div class="reminder-text">${reminder.title}</div>
+            <div class="reminder-status">${reminder.completed ? '✓' : ''}</div>
         `;
+        
+        reminderElement.addEventListener('click', () => {
+            toggleReminderCompletion(reminder.id);
+        });
         
         remindersList.appendChild(reminderElement);
     });
 }
 
+// Toggle reminder completion
+function toggleReminderCompletion(id) {
+    const reminder = currentReminders.find(r => r.id === id);
+    if (reminder) {
+        reminder.completed = !reminder.completed;
+        localStorage.setItem('reminders', JSON.stringify(currentReminders));
+        renderReminders();
+        updateStats();
+        updateDashboardStats();
+        
+        showNotification(`Reminder ${reminder.completed ? 'completed' : 'reopened'}!`, 'success');
+    }
+}
+
 // Update stats
 function updateStats() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayReminders = currentReminders.filter(reminder => reminder.date === today);
+    
     const stats = {
         days: Math.floor(Math.random() * 100) + 50,
-        reminders: currentReminders.length,
+        reminders: todayReminders.length,
         chats: chatHistory.filter(msg => msg.type === 'user').length
     };
     
@@ -500,6 +641,21 @@ function updateStats() {
     });
 }
 
+// Update dashboard stats
+function updateDashboardStats() {
+    // Trigger storage event to update dashboard
+    const event = new StorageEvent('storage', {
+        key: 'reminders',
+        newValue: localStorage.getItem('reminders')
+    });
+    window.dispatchEvent(event);
+    
+    // Also update reminder count in localStorage for dashboard
+    const today = new Date().toISOString().split('T')[0];
+    const todayReminders = currentReminders.filter(reminder => reminder.date === today);
+    localStorage.setItem('reminderCount', todayReminders.length.toString());
+}
+
 // Render chat history
 function renderChatHistory() {
     const chatMessages = document.querySelector('.chat-messages');
@@ -513,11 +669,6 @@ function renderChatHistory() {
 }
 
 // Save data to localStorage
-function saveRemindersToStorage() {
-    localStorage.setItem('aiCompanionReminders', JSON.stringify(currentReminders));
-    updateStats();
-}
-
 function saveChatToStorage() {
     localStorage.setItem('aiCompanionChat', JSON.stringify(chatHistory));
     updateStats();
@@ -554,6 +705,9 @@ function checkDueReminders() {
             
             // Mark as completed for today
             reminder.completed = true;
+            
+            // Update localStorage
+            localStorage.setItem('reminders', JSON.stringify(currentReminders));
         }
     });
     
@@ -566,7 +720,7 @@ function checkDueReminders() {
         currentReminders.forEach(reminder => {
             reminder.completed = false;
         });
-        saveRemindersToStorage();
+        localStorage.setItem('reminders', JSON.stringify(currentReminders));
     }, timeUntilMidnight);
 }
 
