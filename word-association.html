@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Association - Alzheimer's Support</title>
+    <style>
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #4ecdc4 0%, #44b3ab 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .game-container {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .game-header {
+        margin-bottom: 30px;
+    }
+
+    .game-header h1 {
+        color: #374785;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .game-header p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    .stats {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .stat {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #374785;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .game-area {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin: 30px 0;
+    }
+
+    .word-pool, .association-area {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 15px;
+        min-height: 400px;
+        max-height: 400px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        position: relative;
+    }
+
+    /* Custom scrollbar styling */
+    .word-pool::-webkit-scrollbar, 
+    .association-area::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .word-pool::-webkit-scrollbar-track,
+    .association-area::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .word-pool::-webkit-scrollbar-thumb,
+    .association-area::-webkit-scrollbar-thumb {
+        background: #c4b5fd;
+        border-radius: 4px;
+    }
+
+    .word-pool::-webkit-scrollbar-thumb:hover,
+    .association-area::-webkit-scrollbar-thumb:hover {
+        background: #a78bfa;
+    }
+
+    .word-pool h3, .association-area h3 {
+        color: #374785;
+        margin-bottom: 15px;
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        padding: 10px 0;
+        z-index: 1;
+    }
+
+    .word-item {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        cursor: grab;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        user-select: none;
+        position: relative;
+    }
+
+    .word-item:hover {
+        border-color: #4ecdc4;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+    }
+
+    .word-item.dragging {
+        opacity: 0.7;
+        transform: scale(0.95) rotate(2deg);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #4ecdc4;
+        z-index: 10;
+    }
+
+    .word-item:active {
+        cursor: grabbing;
+    }
+
+    .association-pair {
+        background: white;
+        border: 2px dashed #4ecdc4;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        flex-wrap: nowrap; /* Prevent wrapping to second line */
+        white-space: nowrap; /* Prevent text wrapping */
+        overflow: hidden; /* Hide any overflow */
+    }
+
+    .association-pair.matched {
+        border-style: solid;
+        background: #f0fff4;
+        border-color: #4ecdc4;
+    }
+
+    .association-pair.drag-hover {
+        border-color: #ff6b6b !important;
+        background: #fff0f0 !important;
+        transform: scale(1.02);
+        border-style: solid;
+    }
+
+    .word-match {
+        background: #4ecdc4;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+        flex-shrink: 0; /* Prevent shrinking */
+        min-width: fit-content; /* Ensure content fits */
+    }
+
+    .connector {
+        color: #666;
+        font-weight: bold;
+        font-size: 1.2rem;
+        flex-shrink: 0; /* Prevent connector from shrinking */
+        margin: 0 5px; /* Add some spacing */
+    }
+
+    .drop-zone {
+        min-width: 120px;
+        color: #666;
+        padding: 10px 15px;
+        border: 2px dashed #ccc;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        background: #fafafa;
+        flex-shrink: 0; /* Prevent drop zone from shrinking */
+        text-align: center;
+        white-space: nowrap; /* Prevent text wrapping */
+        overflow: hidden; /* Hide overflow text */
+        text-overflow: ellipsis; /* Show ellipsis if text overflows */
+    }
+
+    .association-pair.drag-hover .drop-zone {
+        border-color: #ff6b6b !important;
+        background: #ffe6e6 !important;
+        color: #374785 !important;
+        transform: scale(1.05);
+    }
+
+    .ai-message {
+        background: #f0f4ff;
+        border-left: 4px solid #c4b5fd;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-style: italic;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .controls {
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        background: #4ecdc4;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn:hover:before {
+        left: 100%;
+    }
+
+    .btn:hover {
+        background: #3dbab0;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+    }
+
+    .celebration {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .celebration-content {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        animation: popIn 0.5s ease;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    @keyframes popIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: #e9ecef;
+        border-radius: 6px;
+        margin: 20px 0;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, #4ecdc4, #44b3ab, #3dbab0);
+        transition: width 0.5s ease;
+        border-radius: 6px;
+    }
+
+    .hint {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 15px;
+        font-style: italic;
+    }
+
+    /* Auto-scroll indicators */
+    .word-pool.auto-scroll-up::before,
+    .association-area.auto-scroll-up::before {
+        content: "↑";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #4ecdc4;
+        font-size: 1.5rem;
+        font-weight: bold;
+        z-index: 2;
+        animation: bounce 1s infinite;
+    }
+
+    .word-pool.auto-scroll-down::after,
+    .association-area.auto-scroll-down::after {
+        content: "↓";
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #4ecdc4;
+        font-size: 1.5rem;
+        font-weight: bold;
+        z-index: 2;
+        animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-3px); }
+    }
+
+    /* Success animation for matched pairs */
+    @keyframes matchSuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .association-pair.matched {
+        animation: matchSuccess 0.5s ease;
+    }
+
+    /* Ensure all association pair content fits in one line */
+    .association-pair-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .game-container {
+            padding: 20px;
+            margin: 10px;
+        }
+        
+        .game-header h1 {
+            font-size: 2rem;
+        }
+        
+        .game-area {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .word-pool, .association-area {
+            min-height: 250px;
+            max-height: 250px;
+        }
+        
+        .association-pair {
+            min-height: 60px;
+            gap: 8px;
+            padding: 12px;
+        }
+        
+        .word-item {
+            padding: 12px;
+            font-size: 1rem;
+        }
+        
+        .word-match, .drop-zone {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            min-width: 80px;
+        }
+        
+        .connector {
+            font-size: 1rem;
+            margin: 0 3px;
+        }
+        
+        .controls {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 200px;
+            margin: 5px 0;
+        }
+        
+        .stats {
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .game-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .word-pool, .association-area {
+            min-height: 200px;
+            max-height: 200px;
+            padding: 15px;
+        }
+        
+        .association-pair {
+            min-height: 55px;
+            padding: 10px;
+        }
+        
+        .word-match, .drop-zone {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            min-width: 70px;
+        }
+        
+        .connector {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Touch device improvements */
+    @media (hover: none) and (pointer: coarse) {
+        .word-item {
+            padding: 18px 15px;
+            margin: 8px 0;
+        }
+        
+        .word-item:active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .word-item {
+            border-width: 3px;
+        }
+        
+        .association-pair {
+            border-width: 3px;
+        }
+        
+        .btn {
+            border: 2px solid transparent;
+        }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+        
+        .word-item:hover {
+            transform: none;
+        }
+        
+        .btn:hover {
+            transform: none;
+        }
+    }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🔗 Word Association</h1>
+            <p>Connect related words by dragging and dropping!</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="matchedPairs">0</div>
+                <div class="stat-label">Matched</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalPairs">0</div>
+                <div class="stat-label">Total Pairs</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="score">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <div class="ai-message" id="aiMessage">
+            Welcome! Drag words from the left to their matches on the right. Let's connect some ideas! 🧠
+        </div>
+
+        <div class="game-area">
+            <div class="word-pool">
+                <h3>Words to Match</h3>
+                <div id="wordPool">
+                    <!-- Words will be generated here -->
+                </div>
+            </div>
+            
+            <div class="association-area">
+                <h3>Association Pairs</h3>
+                <div id="associationPairs">
+                    <!-- Association pairs will be generated here -->
+                </div>
+                <div class="hint">Drag words here to create matches</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="checkMatches()">✓ Check Matches</button>
+            <button class="btn" onclick="startGame()">🔄 New Game</button>
+            <button class="btn btn-secondary" onclick="window.close()">← Back to Companion</button>
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration">
+        <div class="celebration-content">
+            <h1>🎉 Word Wizard! 🎉</h1>
+            <p>You mastered the word associations!</p>
+            <p id="finalStats"></p>
+            <button class="btn" onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="word-association.js"></script>
+</body>
+</html>

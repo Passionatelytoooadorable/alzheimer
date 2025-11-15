@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match - Alzheimer's Support</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .game-header {
+            margin-bottom: 20px;
+        }
+
+        .game-header h1 {
+            color: #374785;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .difficulty-selector {
+            margin: 20px 0;
+        }
+
+        .difficulty-btn {
+            background: #e9ecef;
+            border: 2px solid #dee2e6;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .difficulty-btn.active {
+            background: #4ecdc4;
+            color: white;
+            border-color: #4ecdc4;
+        }
+
+        .difficulty-btn.easy { border-color: #4ecdc4; }
+        .difficulty-btn.medium { border-color: #ffd166; }
+        .difficulty-btn.hard { border-color: #ff6b6b; }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #374785;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .game-board {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped {
+            background: white;
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            background: #4ecdc4;
+            cursor: default;
+            transform: scale(0.95);
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: #3dbab0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .ai-message {
+            background: #f0f4ff;
+            border-left: 4px solid #c4b5fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .celebration-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: popIn 0.5s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: fall 5s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .winning-gif {
+            max-width: 200px;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🧠 Memory Match</h1>
+            <p>Find matching pairs to test your memory!</p>
+        </div>
+
+        <div class="difficulty-selector">
+            <button class="difficulty-btn easy active" onclick="setDifficulty('easy')">Easy (6 Pairs)</button>
+            <button class="difficulty-btn medium" onclick="setDifficulty('medium')">Medium (9 Pairs)</button>
+            <button class="difficulty-btn hard" onclick="setDifficulty('hard')">Hard (12 Pairs)</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="moves">0</div>
+                <div class="stat-label">Moves</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="matches">0</div>
+                <div class="stat-label">Matches</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="timer">00:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+        </div>
+
+        <div class="ai-message" id="aiMessage">
+            Choose a difficulty and let's start! You can do this! 🌟
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Cards will be generated here -->
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="startGame()">🔄 New Game</button>
+            <button class="btn btn-secondary" onclick="window.close()">← Back to Companion</button>
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration">
+        <div class="celebration-content">
+            <h1>🎉 Amazing! 🎉</h1>
+            <div class="winning-gif">⭐🏆🌟🎯🔥💫</div>
+            <p>You completed the Memory Match game!</p>
+            <p id="finalStats"></p>
+            <button class="btn" onclick="closeCelebration()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="memory-match.js"></script>
+</body>
+</html>
