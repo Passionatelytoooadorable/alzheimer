@@ -1,4 +1,4 @@
-// AI Companion JavaScript
+// Enhanced AI Companion JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the application
     initializeApp();
@@ -34,6 +34,14 @@ async function initializeApp() {
         showWelcomeGreeting();
         hasShownWelcome = true;
     }
+    
+    // Log tips statistics
+    setTimeout(() => {
+        if (window.dailyTips && window.dailyTips.showStatistics) {
+            console.log('📊 Initial Tips Statistics:');
+            window.dailyTips.showStatistics();
+        }
+    }, 2000);
 }
 
 // Load AI responses from JSON file
@@ -41,15 +49,16 @@ async function loadAIResponses() {
     try {
         const response = await fetch('ai-responses.json');
         aiResponses = await response.json();
-        console.log('AI responses loaded successfully');
+        console.log('✅ AI responses loaded successfully');
+        console.log(`📝 Response categories: ${Object.keys(aiResponses).join(', ')}`);
     } catch (error) {
-        console.error('Failed to load AI responses:', error);
+        console.error('❌ Failed to load AI responses:', error);
         // Fallback to hardcoded responses if JSON fails
         aiResponses = getFallbackResponses();
     }
 }
 
-// Fallback responses in case JSON loading fails
+// Enhanced fallback responses
 function getFallbackResponses() {
     return {
         greetings: [
@@ -68,45 +77,42 @@ function getFallbackResponses() {
             "I see you have a few things scheduled today. Would you like me to go through them one by one?"
         ],
         games: [
-            "I'd love to play a game with you! How about a memory game?",
-            "Games are great for keeping our minds active. Let's play one together!",
-            "Playing games can be so much fun. Would you like to try a simple memory challenge?"
+            "🎮 Ready to play? I'll open a fun game for you! Let's exercise that amazing brain of yours!",
+            "🧠 Game time! This will be great for your cognitive skills. You're going to love this!"
         ],
         stories: [
-            "Once upon a time, in a peaceful village surrounded by rolling hills, there lived a kind baker who made the most delicious bread. Every morning, the scent of fresh bread would wake the villagers, bringing smiles to their faces.",
-            "There was an old oak tree in the middle of a meadow that had seen generations of children play beneath its branches. It whispered stories of laughter and joy to anyone who would listen.",
-            "In a little cottage by the sea, an elderly painter captured the beauty of each sunset. His paintings told stories of calm waters and sailing ships returning home."
+            "Once upon a time, in a peaceful village surrounded by rolling hills, there lived a kind baker who made the most delicious bread.",
+            "There was an old oak tree in the middle of a meadow that had seen generations of children play beneath its branches."
         ],
         family: [
             "Family is so important. Would you like to tell me about your loved ones?",
-            "I'd love to hear about your family. Sharing memories can be a wonderful way to connect.",
-            "Thinking about family can bring such warm feelings. Who would you like to talk about today?"
+            "I'd love to hear about your family. Sharing memories can be a wonderful way to connect."
         ],
         photos: [
             "What a wonderful photo! Thank you for sharing this with me.",
-            "I love seeing photos! This one looks special.",
-            "Thanks for sharing this photo! Would you like to tell me more about it?",
-            "What a great picture! It's always nice to see visual memories."
+            "I love seeing photos! This one looks special."
         ],
         welcome_greetings: [
             "Welcome! I'm your AI Care Companion. I'm here to chat with you, help with reminders, and provide support.",
-            "Hello there! I'm here to help with conversation, reminders, and support whenever you need it.",
-            "Good to see you! I'm your companion for chatting, reminders, and emotional support.",
-            "Welcome back! I'm here to keep you company and help with anything you need."
+            "Hello there! I'm here to help with conversation, reminders, and support whenever you need it."
         ],
         daily_greetings: [
             "How are you feeling today?",
             "What would you like to talk about today?",
-            "How can I assist you today?",
-            "What's on your mind today?"
+            "How can I assist you today?"
+        ],
+        brain_health: [
+            "Did you know that learning new things creates new neural pathways in your brain?",
+            "Staying socially active is wonderful for maintaining cognitive health!"
+        ],
+        encouragement: [
+            "You're doing an amazing job taking care of your brain health!",
+            "Every small step you take for your wellbeing matters and adds up!"
         ],
         default: [
             "That's interesting! Tell me more about that.",
             "I understand. How does that make you feel?",
-            "I'd love to hear more about that. Could you elaborate?",
-            "That sounds important. Would you like to discuss it further?",
-            "I'm here to listen. What else is on your mind today?",
-            "Thank you for sharing that with me. Is there anything specific you'd like help with?"
+            "I'd love to hear more about that. Could you elaborate?"
         ]
     };
 }
@@ -237,22 +243,11 @@ function setupEventListeners() {
     setInterval(updateDaysActiveStat, 60000);
 }
 
-// NEW: Show welcome greeting only once per session
+// Enhanced welcome greeting system
 function showWelcomeGreeting() {
     const timeBasedGreeting = getTimeBasedGreeting();
-    const welcomeMessages = aiResponses.welcome_greetings || [
-        "Welcome! I'm your AI Care Companion. I'm here to chat with you, help with reminders, and provide support.",
-        "Hello there! I'm here to help with conversation, reminders, and support whenever you need it.",
-        "Good to see you! I'm your companion for chatting, reminders, and emotional support.",
-        "Welcome back! I'm here to keep you company and help with anything you need."
-    ];
-    
-    const dailyGreetings = aiResponses.daily_greetings || [
-        "How are you feeling today?",
-        "What would you like to talk about today?",
-        "How can I assist you today?",
-        "What's on your mind today?"
-    ];
+    const welcomeMessages = aiResponses.welcome_greetings || getFallbackResponses().welcome_greetings;
+    const dailyGreetings = aiResponses.daily_greetings || getFallbackResponses().daily_greetings;
     
     const randomWelcome = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
     const randomDaily = dailyGreetings[Math.floor(Math.random() * dailyGreetings.length)];
@@ -267,11 +262,11 @@ function showWelcomeGreeting() {
         timestamp: new Date().getTime()
     };
     
-    // Check if we already have a recent welcome message in chat history (within last 10 minutes)
-    const tenMinutesAgo = new Date().getTime() - (10 * 60 * 1000);
+    // Check if we already have a recent welcome message in chat history (within last 15 minutes)
+    const fifteenMinutesAgo = new Date().getTime() - (15 * 60 * 1000);
     const recentWelcome = chatHistory.find(msg => 
         msg.isWelcomeGreeting && 
-        msg.timestamp > tenMinutesAgo
+        msg.timestamp > fifteenMinutesAgo
     );
     
     if (!recentWelcome) {
@@ -282,7 +277,7 @@ function showWelcomeGreeting() {
         saveChatToStorage();
         renderChatHistory();
         
-        console.log('👋 Welcome message shown:', fullGreeting);
+        console.log('👋 Welcome message shown');
     } else {
         console.log('👋 Welcome message already shown recently, skipping...');
     }
@@ -291,7 +286,7 @@ function showWelcomeGreeting() {
     updateDaysActiveStat();
 }
 
-// NEW: Get time-appropriate greeting based on current time
+// Get time-appropriate greeting based on current time
 function getTimeBasedGreeting() {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return "Good morning!";
@@ -300,7 +295,7 @@ function getTimeBasedGreeting() {
     return "Hello!"; // For late night hours
 }
 
-// NEW: Update days active statistic
+// Update days active statistic
 function updateDaysActiveStat() {
     const firstVisit = localStorage.getItem('firstCompanionVisit');
     if (!firstVisit) {
@@ -692,12 +687,12 @@ function resetRemindersToDefault() {
     console.log('✅ Reminders reset to default successfully!');
 }
 
-// Add hidden console commands
+// Enhanced console commands
 function setupConsoleCommands() {
     // Make reset function available globally for console access
     window.resetAICompanionReminders = resetRemindersToDefault;
     
-    // Add debug function to check current state
+    // Enhanced debug function
     window.debugAICompanion = function() {
         console.log('🤖 AI Companion Debug Info:');
         console.log('📋 Current Reminders:', currentReminders);
@@ -711,6 +706,11 @@ function setupConsoleCommands() {
         const today = new Date().toISOString().split('T')[0];
         const todayReminders = currentReminders.filter(reminder => reminder.date === today);
         console.log('📅 Today\'s Reminders:', todayReminders.length);
+        
+        // Show tips statistics if available
+        if (window.dailyTips && window.dailyTips.showStatistics) {
+            window.dailyTips.showStatistics();
+        }
     };
     
     // Quick reset command without confirmation
@@ -729,11 +729,30 @@ function setupConsoleCommands() {
         showWelcomeGreeting();
     };
     
-    console.log('🎮 AI Companion Console Commands Available:');
+    // Tips management
+    window.showTipsStats = function() {
+        if (window.dailyTips && window.dailyTips.showStatistics) {
+            window.dailyTips.showStatistics();
+        }
+    };
+    
+    window.forceNewTip = function() {
+        if (window.dailyTips && window.dailyTips.displayDailyTip) {
+            // Temporarily clear today's tip to force a new one
+            const today = new Date().toDateString();
+            delete window.dailyTips.usedTips[today];
+            window.dailyTips.displayDailyTip();
+            console.log('🔄 Forced new daily tip');
+        }
+    };
+
+    console.log('🎮 Enhanced AI Companion Console Commands Available:');
     console.log('   resetAICompanionReminders() - Reset reminders to default');
     console.log('   quickResetReminders() - Quick reset without confirmation');
     console.log('   clearAIChat() - Clear chat history');
     console.log('   forceWelcomeGreeting() - Force show welcome greeting');
+    console.log('   showTipsStats() - Show tips statistics');
+    console.log('   forceNewTip() - Force a new daily tip');
     console.log('   debugAICompanion() - Show debug information');
 }
 
@@ -754,49 +773,18 @@ function loadInitialData() {
     }
 }
 
-// Update daily tip
+// Enhanced update daily tip function
 function updateDailyTip() {
-    const tips = [
-        {
-            icon: "🌞",
-            text: "Start your day with a few minutes of deep breathing. It can help set a positive tone for the entire day.",
-            category: "Mindfulness"
-        },
-        {
-            icon: "💧",
-            text: "Stay hydrated! Drinking enough water helps with concentration and overall well-being.",
-            category: "Health"
-        },
-        {
-            icon: "🚶",
-            text: "Take short walking breaks throughout the day. Even 5 minutes can refresh your mind.",
-            category: "Activity"
-        },
-        {
-            icon: "📝",
-            text: "Write down three things you're grateful for today. Gratitude boosts happiness.",
-            category: "Mindfulness"
-        },
-        {
-            icon: "🎵",
-            text: "Listen to calming music during breaks. Music can significantly improve your mood.",
-            category: "Relaxation"
-        }
-    ];
-    
-    const today = new Date();
-    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const tipIndex = dayOfYear % tips.length;
-    const currentTip = tips[tipIndex];
-    
+    // This function is now handled by the DailyTips class
+    // We'll just ensure the tips container is properly initialized
     const tipsContainer = document.getElementById('tipsContainer');
-    if (tipsContainer) {
+    if (tipsContainer && !tipsContainer.innerHTML.trim()) {
         tipsContainer.innerHTML = `
             <div class="daily-tip">
-                <div class="tip-icon">${currentTip.icon}</div>
+                <div class="tip-icon">🌞</div>
                 <div class="tip-content">
-                    <p class="tip-text">${currentTip.text}</p>
-                    <span class="tip-date">${today.toLocaleDateString()} • ${currentTip.category}</span>
+                    <p class="tip-text">Loading your daily tip...</p>
+                    <span class="tip-date">Today's Tip</span>
                 </div>
             </div>
         `;
@@ -892,24 +880,30 @@ function showTypingIndicator() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Generate AI response using JSON data
+// Enhanced AI response generation with more categories
 function generateAIResponse(userMessage) {
     let responseCategory = 'default';
     const lowerMessage = userMessage.toLowerCase();
     
-    // Determine response category based on user input
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+    // Enhanced category detection
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey') || lowerMessage.includes('good morning') || lowerMessage.includes('good afternoon') || lowerMessage.includes('good evening')) {
         responseCategory = 'greetings';
-    } else if (lowerMessage.includes('feel') || lowerMessage.includes('sad') || lowerMessage.includes('happy') || lowerMessage.includes('anxious')) {
+    } else if (lowerMessage.includes('feel') || lowerMessage.includes('sad') || lowerMessage.includes('happy') || lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('excited')) {
         responseCategory = 'feelings';
-    } else if (lowerMessage.includes('remind') || lowerMessage.includes('medication') || lowerMessage.includes('appointment')) {
+    } else if (lowerMessage.includes('remind') || lowerMessage.includes('medication') || lowerMessage.includes('appointment') || lowerMessage.includes('schedule')) {
         responseCategory = 'reminders';
-    } else if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('memory')) {
+    } else if (lowerMessage.includes('game') || lowerMessage.includes('play') || lowerMessage.includes('memory') || lowerMessage.includes('puzzle')) {
         responseCategory = 'games';
-    } else if (lowerMessage.includes('story') || lowerMessage.includes('tell me') || lowerMessage.includes('narrate')) {
+    } else if (lowerMessage.includes('story') || lowerMessage.includes('tell me') || lowerMessage.includes('narrate') || lowerMessage.includes('once upon')) {
         responseCategory = 'stories';
-    } else if (lowerMessage.includes('family') || lowerMessage.includes('child') || lowerMessage.includes('parent') || lowerMessage.includes('son') || lowerMessage.includes('daughter')) {
+    } else if (lowerMessage.includes('family') || lowerMessage.includes('child') || lowerMessage.includes('parent') || lowerMessage.includes('son') || lowerMessage.includes('daughter') || lowerMessage.includes('grand')) {
         responseCategory = 'family';
+    } else if (lowerMessage.includes('photo') || lowerMessage.includes('picture') || lowerMessage.includes('image')) {
+        responseCategory = 'photos';
+    } else if (lowerMessage.includes('brain') || lowerMessage.includes('memory') || lowerMessage.includes('cognitive') || lowerMessage.includes('health')) {
+        responseCategory = 'brain_health';
+    } else if (lowerMessage.includes('thank') || lowerMessage.includes('appreciate') || lowerMessage.includes('grateful')) {
+        responseCategory = 'encouragement';
     } else if (lowerMessage.includes('help') || lowerMessage.includes('support') || lowerMessage.includes('assist')) {
         responseCategory = 'default';
     }
@@ -921,8 +915,11 @@ function generateAIResponse(userMessage) {
     const aiMessage = {
         type: 'companion',
         text: randomResponse,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        category: responseCategory
     };
+    
+    console.log(`🤖 AI Response (${responseCategory}): ${randomResponse.substring(0, 50)}...`);
     
     addMessageToChat(aiMessage);
     chatHistory.push(aiMessage);
@@ -969,16 +966,31 @@ function startGame(event) {
     const gameCard = event.currentTarget.closest('.game-card-horizontal');
     const gameName = gameCard.querySelector('h4').textContent;
     
-    showNotification(`Starting ${gameName}...`, 'info');
+    showNotification(`Opening ${gameName}...`, 'info');
     
-    // Use JSON game responses
-    const gameResponse = aiResponses.games ? 
-        aiResponses.games[Math.floor(Math.random() * aiResponses.games.length)] : 
-        `I've started ${gameName} for you! This looks like a fun one. Would you like me to explain the rules?`;
+    // Open game in new window
+    let gameWindow;
+    switch(gameName) {
+        case 'Memory Match':
+            gameWindow = window.open('memory-match.html', 'MemoryMatch', 'width=900,height=800');
+            break;
+        case 'Simple Trivia':
+            gameWindow = window.open('simple-trivia.html', 'SimpleTrivia', 'width=700,height=900');
+            break;
+        case 'Word Association':
+            gameWindow = window.open('word-association.html', 'WordAssociation', 'width=900,height=800');
+            break;
+    }
+    
+    // Use game responses
+    const gameResponses = aiResponses.games || [
+        "🎮 Ready to play? I'll open a fun game for you! Let's exercise that amazing brain of yours!",
+        "🧠 Game time! This will be great for your cognitive skills. You're going to love this!"
+    ];
     
     const gameMessage = {
         type: 'companion',
-        text: gameResponse,
+        text: gameResponses[Math.floor(Math.random() * gameResponses.length)],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     
