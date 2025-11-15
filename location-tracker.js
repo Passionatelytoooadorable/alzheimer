@@ -11,12 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupBasicEventListeners() {
     console.log('Setting up event listeners...');
     
-    // Start Tracking Button
+    // Start Tracking Button - NOW WITH REAL LOCATION
     const startTrackingBtn = document.getElementById('startTrackingBtn');
     if (startTrackingBtn) {
         startTrackingBtn.addEventListener('click', function() {
             console.log('Start Tracking button clicked!');
-            showNotification('Live tracking started!', 'success');
+            startRealTimeTracking();
+            showNotification('Live tracking started with real location!', 'success');
         });
     }
     
@@ -25,74 +26,25 @@ function setupBasicEventListeners() {
     if (shareLocationBtn) {
         shareLocationBtn.addEventListener('click', function() {
             console.log('Share Location button clicked!');
-            showNotification('Location shared with guardians!', 'success');
+            shareRealTimeLocation();
         });
     }
     
-    // Refresh Location Button - ACTUAL FUNCTIONALITY
+    // Refresh Location Button - NOW WITH REAL LOCATION
     const refreshLocation = document.getElementById('refreshLocation');
     if (refreshLocation) {
         refreshLocation.addEventListener('click', function() {
             console.log('Refresh Location button clicked!');
-            
-            // Update the "Last Updated" time
-            const lastUpdated = document.querySelector('.detail-item:nth-child(2) .value');
-            if (lastUpdated) {
-                const now = new Date();
-                lastUpdated.textContent = now.toLocaleTimeString();
-            }
-            
-            // Update battery level in both map overlay and orange header
-            const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
-            const headerBattery = document.querySelector('.header-stats .stat:nth-child(4) .stat-number');
-            
-            if (batteryValue && headerBattery) {
-                const currentBattery = parseInt(batteryValue.textContent);
-                const newBattery = Math.max(5, currentBattery - Math.floor(Math.random() * 3));
-                const batteryText = newBattery + '%';
-                
-                // Update both battery displays
-                batteryValue.textContent = batteryText;
-                headerBattery.textContent = batteryText;
-                
-                // Change battery color if low
-                if (newBattery <= 20) {
-                    batteryValue.style.color = '#ff6b6b';
-                    batteryValue.style.fontWeight = 'bold';
-                    headerBattery.style.color = '#ff6b6b';
-                } else {
-                    batteryValue.style.color = '';
-                    batteryValue.style.fontWeight = '';
-                    headerBattery.style.color = '';
-                }
-            }
-            
-            // Update location on map
-            updateLocationOnMap();
-            
-            showNotification('Location refreshed! Battery: ' + (batteryValue ? batteryValue.textContent : '85%'), 'success');
+            refreshRealLocation();
         });
     }
     
-    // Center Map Button - ACTUAL FUNCTIONALITY  
+    // Center Map Button - NOW CENTERS ON USER'S REAL LOCATION  
     const centerMap = document.getElementById('centerMap');
     if (centerMap) {
         centerMap.addEventListener('click', function() {
             console.log('Center Map button clicked!');
-            
-            // Re-center the map on current location
-            if (window.locationMap && window.currentLocationMarker) {
-                const currentLatLng = window.currentLocationMarker.getLatLng();
-                window.locationMap.setView(currentLatLng, 13);
-                
-                // Add a nice zoom animation
-                window.locationMap.flyTo(currentLatLng, 15, {
-                    duration: 1,
-                    easeLinearity: 0.25
-                });
-            }
-            
-            showNotification('Map centered on current location!', 'success');
+            centerOnUserLocation();
         });
     }
     
@@ -135,28 +87,307 @@ function setupBasicEventListeners() {
     }
 }
 
-// Function to update location on map
-function updateLocationOnMap() {
-    if (window.locationMap && window.currentLocationMarker) {
-        // Add slight random movement to simulate location update (within 500m radius)
-        const baseLat = 19.0760;
-        const baseLng = 72.8777;
-        const lat = baseLat + (Math.random() - 0.5) * 0.005;  // ~500m variation
-        const lng = baseLng + (Math.random() - 0.5) * 0.005;  // ~500m variation
+// REAL-TIME LOCATION TRACKING FUNCTIONS
+let watchId = null;
+let userCurrentLocation = null;
+
+function startRealTimeTracking() {
+    if (!navigator.geolocation) {
+        showNotification('Geolocation is not supported by this browser.', 'error');
+        return;
+    }
+
+    // Request high accuracy for better results
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    };
+
+    // Start watching position
+    watchId = navigator.geolocation.watchPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            userCurrentLocation = { lat, lng, accuracy };
+            
+            // Update map with real location
+            updateMapWithRealLocation(lat, lng, accuracy);
+            
+            // Update location info card
+            updateLocationInfoCard(lat, lng, accuracy);
+            
+            // Simulate battery update (in real app, this would come from device)
+            updateBatteryLevel();
+            
+            console.log('Real location updated:', { lat, lng, accuracy });
+        },
+        function(error) {
+            console.error('Error getting location:', error);
+            handleLocationError(error);
+        },
+        options
+    );
+    
+    showNotification('Real-time tracking activated!', 'success');
+}
+
+function refreshRealLocation() {
+    if (!navigator.geolocation) {
+        showNotification('Geolocation is not supported by this browser.', 'error');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            userCurrentLocation = { lat, lng, accuracy };
+            
+            // Update map with real location
+            updateMapWithRealLocation(lat, lng, accuracy);
+            
+            // Update location info card
+            updateLocationInfoCard(lat, lng, accuracy);
+            
+            // Update battery
+            updateBatteryLevel();
+            
+            showNotification('Location refreshed with real coordinates!', 'success');
+        },
+        function(error) {
+            console.error('Error refreshing location:', error);
+            handleLocationError(error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+function centerOnUserLocation() {
+    if (userCurrentLocation) {
+        const { lat, lng } = userCurrentLocation;
+        window.locationMap.setView([lat, lng], 15);
         
-        // Smoothly move the marker to new position
-        window.currentLocationMarker.setLatLng([lat, lng]);
+        // Add smooth animation
+        window.locationMap.flyTo([lat, lng], 16, {
+            duration: 1,
+            easeLinearity: 0.25
+        });
         
-        // Update the marker popup with new coordinates
-        window.currentLocationMarker.setPopupContent(
-            `Current Location<br>Tracking Active<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`
-        );
-        
-        console.log('Location updated to:', lat, lng);
+        showNotification('Map centered on your real location!', 'success');
+    } else {
+        showNotification('No location data available. Click "Refresh" first.', 'error');
     }
 }
 
+function shareRealTimeLocation() {
+    if (userCurrentLocation) {
+        const { lat, lng } = userCurrentLocation;
+        
+        // Create shareable message
+        const message = `My current location: https://maps.google.com/?q=${lat},${lng}`;
+        
+        // In a real app, this would send to backend/guardians
+        console.log('Sharing location:', message);
+        
+        // Simulate sharing (in real app, this would be API call)
+        showNotification('Your real location has been shared with guardians!', 'success');
+        
+        // Add to history (simulated)
+        addToLocationHistory(lat, lng);
+    } else {
+        showNotification('No location available to share. Please enable tracking.', 'error');
+    }
+}
+
+function updateMapWithRealLocation(lat, lng, accuracy) {
+    if (window.locationMap && window.currentLocationMarker) {
+        // Update marker position
+        window.currentLocationMarker.setLatLng([lat, lng]);
+        
+        // Update popup with real coordinates
+        window.currentLocationMarker.setPopupContent(
+            `Your Real Location<br>Tracking Active<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}<br>Accuracy: ±${Math.round(accuracy)}m`
+        );
+        
+        // Add accuracy circle if it doesn't exist
+        if (!window.accuracyCircle) {
+            window.accuracyCircle = L.circle([lat, lng], {
+                color: '#3498db',
+                fillColor: '#3498db',
+                fillOpacity: 0.1,
+                radius: accuracy
+            }).addTo(window.locationMap);
+        } else {
+            window.accuracyCircle.setLatLng([lat, lng]);
+            window.accuracyCircle.setRadius(accuracy);
+        }
+        
+        // Center map on new location if it's the first update
+        if (!window.mapInitialized) {
+            window.locationMap.setView([lat, lng], 15);
+            window.mapInitialized = true;
+        }
+    }
+}
+
+function updateLocationInfoCard(lat, lng, accuracy) {
+    const lastUpdated = document.querySelector('.detail-item:nth-child(2) .value');
+    const statusValue = document.querySelector('.detail-item:nth-child(1) .value');
+    
+    if (lastUpdated) {
+        const now = new Date();
+        lastUpdated.textContent = now.toLocaleTimeString();
+    }
+    
+    if (statusValue) {
+        statusValue.textContent = 'Real-time Tracking';
+        statusValue.style.color = '#27ae60';
+        statusValue.style.fontWeight = 'bold';
+    }
+}
+
+function updateBatteryLevel() {
+    const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
+    const headerBattery = document.querySelector('.header-stats .stat:nth-child(4) .stat-number');
+    
+    if (batteryValue && headerBattery) {
+        // Simulate realistic battery drain (85% to 20% range)
+        const currentBattery = parseInt(batteryValue.textContent) || 85;
+        const newBattery = Math.max(20, currentBattery - Math.floor(Math.random() * 2));
+        const batteryText = newBattery + '%';
+        
+        // Update both battery displays
+        batteryValue.textContent = batteryText;
+        headerBattery.textContent = batteryText;
+        
+        // Change battery color if low
+        if (newBattery <= 20) {
+            batteryValue.style.color = '#ff6b6b';
+            batteryValue.style.fontWeight = 'bold';
+            headerBattery.style.color = '#ff6b6b';
+        } else if (newBattery <= 50) {
+            batteryValue.style.color = '#f39c12';
+            headerBattery.style.color = '#f39c12';
+        } else {
+            batteryValue.style.color = '#27ae60';
+            headerBattery.style.color = '#27ae60';
+        }
+    }
+}
+
+function handleLocationError(error) {
+    let message = 'Unknown location error';
+    
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            message = 'Location access denied. Please enable location permissions.';
+            break;
+        case error.POSITION_UNAVAILABLE:
+            message = 'Location information unavailable.';
+            break;
+        case error.TIMEOUT:
+            message = 'Location request timed out.';
+            break;
+    }
+    
+    showNotification(message, 'error');
+    console.error('Location Error:', error);
+}
+
+function addToLocationHistory(lat, lng) {
+    // This would normally save to database
+    // For now, we'll just log it
+    console.log('Location saved to history:', { lat, lng, timestamp: new Date() });
+}
+
+function stopRealTimeTracking() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        showNotification('Real-time tracking stopped', 'info');
+    }
+}
+
+// Update the existing updateLocationOnMap function to use real location
+function updateLocationOnMap() {
+    // This function is now replaced by real location tracking
+    refreshRealLocation();
+}
+
+function initializeMap() {
+    try {
+        // Initialize the map with a generic center (will be updated with user's location)
+        const map = L.map('locationMap').setView([20.5937, 78.9629], 5); // Center of India
+        window.locationMap = map;
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add a marker that will be updated with real location
+        const marker = L.marker([20.5937, 78.9629]).addTo(map)
+            .bindPopup('Waiting for location...<br>Click "Start Live Tracking"')
+            .openPopup();
+        window.currentLocationMarker = marker;
+        
+        // Add sample safe zones (these would be dynamic in real app)
+        addDynamicSafeZones();
+        
+        console.log('Map initialized - ready for real location tracking');
+        
+        // Auto-start tracking if permissions are already granted
+        setTimeout(() => {
+            refreshRealLocation();
+        }, 1000);
+        
+    } catch (error) {
+        console.log('Map could not be initialized:', error);
+        // Fallback: Show message if map fails
+        const mapContainer = document.getElementById('locationMap');
+        if (mapContainer) {
+            mapContainer.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f9fa; color: #6c757d;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                        <h3>Map Loading</h3>
+                        <p>Interactive map will appear here</p>
+                        <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Reload Map
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+function addDynamicSafeZones() {
+    // In a real app, these would come from database based on user's location
+    // For demo, we'll create generic zones that would be replaced with real data
+    
+    const homeZone = L.circle([20.5937, 78.9629], {
+        color: '#3498db',
+        fillColor: '#3498db',
+        fillOpacity: 0.1,
+        radius: 500
+    }).addTo(window.locationMap).bindPopup('Home Safe Zone<br>500m radius<br>Location will update when tracking starts');
+    
+    console.log('Dynamic safe zones added - will update with real locations');
+}
+
+// Rest of the existing functions remain the same...
 function setupSafeZoneForm() {
+    // ... (keep all existing safe zone form code exactly as is) ...
     const addSafeZoneBtn = document.getElementById('addSafeZoneBtn');
     const safeZonesList = document.querySelector('.safe-zones-list');
     const safeZonesSection = document.getElementById('safeZonesSection');
@@ -306,65 +537,6 @@ function setupSafeZoneForm() {
     }
 }
 
-function initializeMap() {
-    try {
-        // Initialize the map centered on Mumbai
-        const map = L.map('locationMap').setView([19.0760, 72.8777], 13);
-        window.locationMap = map; // Store reference globally
-        
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-        
-        // Add a marker for current location
-        const marker = L.marker([19.0760, 72.8777]).addTo(map)
-            .bindPopup('Current Location<br>Tracking Active<br>Lat: 19.076000<br>Lng: 72.877700')
-            .openPopup();
-        window.currentLocationMarker = marker; // Store reference
-        
-        // Add sample safe zones as circles
-        const homeZone = L.circle([19.0760, 72.8777], {
-            color: '#3498db',
-            fillColor: '#3498db',
-            fillOpacity: 0.1,
-            radius: 500
-        }).addTo(map).bindPopup('Home Safe Zone<br>500m radius');
-        
-        const parkZone = L.circle([19.0720, 72.8700], {
-            color: '#27ae60',
-            fillColor: '#27ae60',
-            fillOpacity: 0.1,
-            radius: 800
-        }).addTo(map).bindPopup('Park Safe Zone<br>800m radius');
-        
-        const storeZone = L.circle([19.0800, 72.8850], {
-            color: '#e74c3c',
-            fillColor: '#e74c3c',
-            fillOpacity: 0.1,
-            radius: 300
-        }).addTo(map).bindPopup('Store Safe Zone<br>300m radius');
-        
-        console.log('Map initialized successfully with safe zones');
-    } catch (error) {
-        console.log('Map could not be initialized:', error);
-        // Fallback: Show message if map fails
-        const mapContainer = document.getElementById('locationMap');
-        if (mapContainer) {
-            mapContainer.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f9fa; color: #6c757d;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
-                        <h3>Map Loading</h3>
-                        <p>Interactive map will appear here</p>
-                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Safe zones: Home, Park, Store</p>
-                    </div>
-                </div>
-            `;
-        }
-    }
-}
-
 // Notification function
 function showNotification(message, type) {
     const notification = document.createElement('div');
@@ -401,21 +573,30 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Hidden reset function for debugging - run from console
+// Enhanced reset function for debugging
 function resetLocationTracker() {
     console.log('🧠 Alzheimer\'s Support - Location Tracker Reset');
+    
+    // Stop real-time tracking
+    stopRealTimeTracking();
     
     // Reset all form fields
     document.querySelectorAll('input, select, textarea').forEach(element => {
         element.value = '';
     });
     
-    // Reset battery to 85% and time to "Just now" in both locations
+    // Reset location info
     const lastUpdated = document.querySelector('.detail-item:nth-child(2) .value');
+    const statusValue = document.querySelector('.detail-item:nth-child(1) .value');
     const batteryValue = document.querySelector('.detail-item:nth-child(3) .value');
     const headerBattery = document.querySelector('.header-stats .stat:nth-child(4) .stat-number');
     
     if (lastUpdated) lastUpdated.textContent = 'Just now';
+    if (statusValue) {
+        statusValue.textContent = 'Tracking Active';
+        statusValue.style.color = '';
+        statusValue.style.fontWeight = '';
+    }
     if (batteryValue) {
         batteryValue.textContent = '85%';
         batteryValue.style.color = '';
@@ -436,7 +617,7 @@ function resetLocationTracker() {
                     <div class="zone-type">Home</div>
                 </div>
                 <div class="zone-details">
-                    <div class="zone-address">123 Main Street, Mumbai</div>
+                    <div class="zone-address">Your Current Location</div>
                     <div class="zone-radius">
                         <span class="radius-icon">📏</span>
                         Safe radius: 500 meters
@@ -453,7 +634,7 @@ function resetLocationTracker() {
                     <div class="zone-type">Park</div>
                 </div>
                 <div class="zone-details">
-                    <div class="zone-address">Central Park, Bandra West</div>
+                    <div class="zone-address">Nearby Park Area</div>
                     <div class="zone-radius">
                         <span class="radius-icon">📏</span>
                         Safe radius: 800 meters
@@ -470,7 +651,7 @@ function resetLocationTracker() {
                     <div class="zone-type">Store</div>
                 </div>
                 <div class="zone-details">
-                    <div class="zone-address">456 Market Road, Andheri</div>
+                    <div class="zone-address">Local Shopping Area</div>
                     <div class="zone-radius">
                         <span class="radius-icon">📏</span>
                         Safe radius: 300 meters
@@ -501,12 +682,22 @@ function resetLocationTracker() {
         statNumber.textContent = '3';
     }
     
-    // Reset map to original position if available
+    // Reset map to generic center
     if (window.locationMap && window.currentLocationMarker) {
-        window.locationMap.setView([19.0760, 72.8777], 13);
-        window.currentLocationMarker.setLatLng([19.0760, 72.8777]);
-        window.currentLocationMarker.setPopupContent('Current Location<br>Tracking Active<br>Lat: 19.076000<br>Lng: 72.877700');
+        window.locationMap.setView([20.5937, 78.9629], 5);
+        window.currentLocationMarker.setLatLng([20.5937, 78.9629]);
+        window.currentLocationMarker.setPopupContent('Waiting for location...<br>Click "Start Live Tracking"');
+        
+        // Remove accuracy circle if exists
+        if (window.accuracyCircle) {
+            window.locationMap.removeLayer(window.accuracyCircle);
+            window.accuracyCircle = null;
+        }
     }
+    
+    // Reset tracking state
+    userCurrentLocation = null;
+    window.mapInitialized = false;
     
     // Hide any open form
     const safeZoneForm = document.getElementById('safeZoneForm');
@@ -519,15 +710,17 @@ function resetLocationTracker() {
         safeZonesList.style.display = 'flex';
     }
     
-    showNotification('Location tracker has been reset!', 'success');
-    console.log('✅ Reset complete! All data restored to initial state.');
+    showNotification('Location tracker has been reset! Click "Start Live Tracking" for real location.', 'success');
+    console.log('✅ Reset complete! Ready for real location tracking.');
 }
 
 // Make it available globally for console access
 window.resetLocationTracker = resetLocationTracker;
-window.resetApp = resetLocationTracker; // Alias for convenience
+window.resetApp = resetLocationTracker;
+window.stopRealTimeTracking = stopRealTimeTracking;
+window.startRealTimeTracking = startRealTimeTracking;
 
-// Also add a quick status function
+// Enhanced status function
 window.appStatus = function() {
     console.log('🧠 Alzheimer\'s Support App Status:');
     console.log('📍 Safe Zones:', document.querySelectorAll('.safe-zone-card').length);
@@ -535,7 +728,8 @@ window.appStatus = function() {
     console.log('🔋 Battery (Map):', document.querySelector('.detail-item:nth-child(3) .value')?.textContent || 'Unknown');
     console.log('🔋 Battery (Header):', document.querySelector('.header-stats .stat:nth-child(4) .stat-number')?.textContent || 'Unknown');
     console.log('🗺️ Map:', window.locationMap ? 'Loaded' : 'Not loaded');
-    console.log('📍 Marker:', window.currentLocationMarker ? 'Active' : 'Not active');
+    console.log('📍 Real Location:', userCurrentLocation ? `Lat: ${userCurrentLocation.lat.toFixed(6)}, Lng: ${userCurrentLocation.lng.toFixed(6)}` : 'Not available');
+    console.log('📍 Tracking Active:', watchId ? 'Yes' : 'No');
 };
 
 // Help function
@@ -543,6 +737,8 @@ window.help = function() {
     console.log('🧠 Alzheimer\'s Support - Available Console Commands:');
     console.log('resetLocationTracker() - Reset everything to initial state');
     console.log('resetApp() - Alias for resetLocationTracker');
+    console.log('startRealTimeTracking() - Start real-time location tracking');
+    console.log('stopRealTimeTracking() - Stop real-time location tracking');
     console.log('appStatus() - Check current app status');
     console.log('help() - Show this help message');
 };
