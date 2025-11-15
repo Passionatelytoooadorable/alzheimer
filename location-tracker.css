@@ -848,8 +848,9 @@ body {
         justify-content: center;
     }
     
-    .map-container {
-        height: 500px;
+    .map-container { 
+    height: 60vh; 
+    min-height: 400px; 
     }
 }
 
@@ -868,7 +869,18 @@ body {
     }
     
     .floating-animation {
-        display: none;
+        transform: scale(0.7);
+        margin-left: 1rem;
+    }
+    .floating-icons {
+        width: 120px;
+        height: 80px;
+    }
+    
+    .location-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
     }
 }
 
@@ -921,6 +933,10 @@ body {
     
     .form-actions {
         flex-direction: column;
+    }
+
+    .floating-animation {
+        display: none; 
     }
 }
 
