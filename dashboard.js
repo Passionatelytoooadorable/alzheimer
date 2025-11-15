@@ -22,11 +22,11 @@ class Dashboard {
     }
 
     initializeDashboard() {
-        console.log('Dashboard initialized');
-        const userName = localStorage.getItem('userName') || 'Demo User';
-        document.getElementById('userName').textContent = userName;
-        this.updateDateDisplay();
-    }
+    console.log('Dashboard initialized');
+    const userName = localStorage.getItem('userName') || 'Demo User';
+    document.getElementById('userName').textContent = userName;
+    this.updateDateDisplay();
+}
 
     updateDateDisplay() {
         const now = new Date();
