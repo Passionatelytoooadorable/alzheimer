@@ -14,9 +14,9 @@
             <div class="logo-text">Alzheimer's Support</div>
         </div>
         <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="resources.html">Resources</a>
+            <a href="#">Home</a>
+            <a href="#">Dashboard</a>
+            <a href="#">Resources</a>
             <a href="login.html">Login</a>
         </nav>
     </header>
@@ -53,43 +53,47 @@
                 <h1>Create Account</h1>
                 <p>Join our supportive community today</p>
             </div>
-            
-            <form id="signup-form" class="login-form">
+            <form id="signupForm" class="login-form">
                 <div class="form-group">
-                    <label for="name" class="input-label">Full Name</label>
-                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="email" class="input-label">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                    <div class="input-hint">Must be unique</div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="username" class="input-label">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                    <div class="input-hint">Must be unique</div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone" class="input-label">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password" class="input-label">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Create a password" required>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                    <div class="password-strength">
+                        <div class="strength-bar"></div>
+                        <div class="strength-text">Password strength</div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="confirmPassword" class="input-label">Confirm Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
                 </div>
                 
-                <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 10px; margin: 1.5rem 0;">
-                    <input type="checkbox" id="terms" name="terms" required style="margin: 0;">
-                    <label for="terms" style="margin: 0; color: #0066cc; font-weight: 500;">
-                        I agree to the <a href="terms.html" style="color: #0066cc; text-decoration: underline;">Terms and Conditions</a> 
-                        and <a href="privacy.html" style="color: #0066cc; text-decoration: underline;">Privacy Policy</a>
+                <div class="form-group">
+                    <label class="remember-me">
+                        <input type="checkbox" name="terms" required>
+                        <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
                     </label>
                 </div>
                 
