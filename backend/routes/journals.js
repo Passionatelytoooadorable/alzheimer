@@ -3,7 +3,7 @@ const { query } = require('../config/database');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Add new journal
+// Add new journal - FIXED: Added auth middleware
 router.post('/', auth, async (req, res) => {
   try {
     const { title, content, mood, tags } = req.body;
@@ -33,7 +33,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Get all journals for user
+// Get all journals for user - FIXED: Added auth middleware
 router.get('/', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
