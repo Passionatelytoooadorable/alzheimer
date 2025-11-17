@@ -43,28 +43,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  
-  // Test database connection on startup
-  pool.query('SELECT NOW()')
-    .then(() => {
-      console.log('Connected to PostgreSQL database');
-    })
-    .catch(err => {
-      console.error('Database connection failed:', err.message);
-    });
-
-});
-
-//debug
 app.get('/api/debug-db', async (req, res) => {
   try {
     // Test each table individually
@@ -85,4 +63,25 @@ app.get('/api/debug-db', async (req, res) => {
   } catch (error) {
     res.json({ error: error.message });
   }
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  
+  // Test database connection on startup
+  pool.query('SELECT NOW()')
+    .then(() => {
+      console.log('Connected to PostgreSQL database');
+    })
+    .catch(err => {
+      console.error('Database connection failed:', err.message);
+    });
+
 });
