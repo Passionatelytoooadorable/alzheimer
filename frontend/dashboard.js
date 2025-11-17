@@ -276,6 +276,9 @@ document.getElementById('update-location-btn')?.addEventListener('click', functi
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
     window.location.href = 'index.html';
 }
 
