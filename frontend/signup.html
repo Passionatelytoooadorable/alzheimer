@@ -147,11 +147,12 @@
                     
                     const result = await response.json();
                     
+                    // Change this ONE line:
                     if (result.token) {
                         localStorage.setItem('token', result.token);
                         localStorage.setItem('user', JSON.stringify(result.user));
                         alert('Signup successful!');
-                        window.location.href = 'index.html';
+                        window.location.href = 'index.html'; // CHANGED FROM dashboard.html
                     } else {
                         alert(result.error || 'Signup failed');
                     }
