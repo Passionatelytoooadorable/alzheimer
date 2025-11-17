@@ -61,4 +61,28 @@ app.listen(PORT, () => {
     .catch(err => {
       console.error('Database connection failed:', err.message);
     });
+
+});
+
+//debug
+app.get('/api/debug-db', async (req, res) => {
+  try {
+    // Test each table individually
+    const tests = [];
+    
+    const tables = ['users', 'memories', 'journals', 'reminders', 'user_locations', 'user_sessions', 'user_activities'];
+    
+    for (const table of tables) {
+      try {
+        await pool.query(`SELECT 1 FROM ${table} LIMIT 1`);
+        tests.push({ table, status: 'OK' });
+      } catch (error) {
+        tests.push({ table, status: 'MISSING', error: error.message });
+      }
+    }
+    
+    res.json({ tables: tests });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
