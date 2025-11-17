@@ -3,7 +3,7 @@ const { query } = require('../config/database');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Update user location
+// Update user location - FIXED: Added auth middleware
 router.post('/', auth, async (req, res) => {
   try {
     const { latitude, longitude, address } = req.body;
@@ -33,7 +33,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Get user's last location
+// Get user's last location - FIXED: Added auth middleware
 router.get('/last', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
