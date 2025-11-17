@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="resources.css">
+    <!-- Simple default favicon -->
+    <link rel="icon" href="#" id="dynamic-favicon">
+    <script src="favicon-config.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="resources.html" class="active">Resources</a>
+            <a href="login.html">Logout</a>
+        </nav>
+    </header>
+
+    <main class="resources-container">
+        <!-- Full Edge-to-Edge Header -->
+        <section class="resources-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Support Resources 📚</h1>
+                    <p>Comprehensive information, tools, and support networks for Alzheimer's patients and caregivers</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="totalResources">50+</span>
+                        <span class="stat-label">Resources</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="supportGroups">25+</span>
+                        <span class="stat-label">Support Groups</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="emergencyContacts">10+</span>
+                        <span class="stat-label">Emergency Contacts</span>
+                    </div>
+                </div>
+                <div class="header-animation">
+                    <div class="floating-icons">
+                        <div class="resource-icon icon-1">🏥</div>
+                        <div class="resource-icon icon-2">👨‍👩‍👧‍👦</div>
+                        <div class="resource-icon icon-3">📞</div>
+                        <div class="resource-icon icon-4">📱</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Access Bar -->
+        <section class="quick-access">
+            <div class="quick-access-grid">
+                <button class="quick-access-btn" data-category="emergency">
+                    <span class="access-icon">🆘</span>
+                    Emergency Help
+                </button>
+                <button class="quick-access-btn" data-category="caregiver">
+                    <span class="access-icon">🤗</span>
+                    Caregiver Support
+                </button>
+                <button class="quick-access-btn" data-category="medical">
+                    <span class="access-icon">🏥</span>
+                    Medical Info
+                </button>
+                <button class="quick-access-btn" data-category="community">
+                    <span class="access-icon">👥</span>
+                    Community
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <div class="resources-content">
+            <!-- Left Column - Resource Categories -->
+            <div class="categories-sidebar">
+                <div class="categories-list">
+                    <button class="category-btn active" data-category="all">All Resources</button>
+                    <button class="category-btn" data-category="educational">Educational</button>
+                    <button class="category-btn" data-category="caregiver">Caregiver Support</button>
+                    <button class="category-btn" data-category="medical">Medical & Professional</button>
+                    <button class="category-btn" data-category="legal">Legal & Financial</button>
+                    <button class="category-btn" data-category="daily">Daily Living Aids</button>
+                    <button class="category-btn" data-category="community">Community & Support</button>
+                    <button class="category-btn" data-category="digital">Digital Tools</button>
+                    <button class="category-btn" data-category="emergency">Emergency & Crisis</button>
+                </div>
+            </div>
+
+            <!-- Right Column - Resources Grid -->
+            <div class="resources-grid">
+                <!-- Educational Resources -->
+                <section class="resource-category" data-category="educational">
+                    <h2 class="category-title">🧠 Educational Resources</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">📖</div>
+                            <h3>Understanding Alzheimer's</h3>
+                            <p>Comprehensive guide to disease progression, symptoms, and stages</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/alzheimers-dementia/what-is-alzheimers" target="_blank" class="resource-link">Alzheimer's Association</a>
+                                <a href="https://www.nia.nih.gov/health/alzheimers" target="_blank" class="resource-link">National Institute on Aging</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">🎓</div>
+                            <h3>Caregiving Guides</h3>
+                            <p>Daily care techniques, communication strategies, and safety tips</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving" target="_blank" class="resource-link">Caregiving Resources</a>
+                                <a href="https://www.caregiver.org/alzheimers-disease-caregiving" target="_blank" class="resource-link">Family Caregiver Alliance</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">💊</div>
+                            <h3>Medical Information</h3>
+                            <p>Treatments, medications, and latest research updates</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/alzheimers-dementia/treatments" target="_blank" class="resource-link">Treatment Options</a>
+                                <a href="https://clinicaltrials.gov/ct2/results?cond=Alzheimer+Disease" target="_blank" class="resource-link">Clinical Trials</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Caregiver Support -->
+                <section class="resource-category" data-category="caregiver">
+                    <h2 class="category-title">🤗 Caregiver Support</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">💆‍♀️</div>
+                            <h3>Self-Care Resources</h3>
+                            <p>Burnout prevention, stress management, and caregiver wellness</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/caregiver-health" target="_blank" class="resource-link">Caregiver Health</a>
+                                <a href="https://www.caregiver.org/caregiver-health" target="_blank" class="resource-link">Wellness Tips</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">👥</div>
+                            <h3>Support Groups</h3>
+                            <p>Local and online caregiver communities and peer support</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/support-groups" target="_blank" class="resource-link">Find Support Groups</a>
+                                <a href="https://www.alzconnected.org/" target="_blank" class="resource-link">Online Community</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">🛌</div>
+                            <h3>Respite Care</h3>
+                            <p>Temporary care relief services and resources</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/care-options/respite-care" target="_blank" class="resource-link">Respite Care Info</a>
+                                <a href="https://www.archrespite.org/" target="_blank" class="resource-link">National Respite Network</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Medical & Professional -->
+                <section class="resource-category" data-category="medical">
+                    <h2 class="category-title">🏥 Medical & Professional Support</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">🔍</div>
+                            <h3>Find Specialists</h3>
+                            <p>Neurologists, geriatric psychiatrists, and memory clinics</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/resources/medical_professionals" target="_blank" class="resource-link">Find Doctors</a>
+                                <a href="https://www.aan.com/" target="_blank" class="resource-link">Neurologists Directory</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">🏠</div>
+                            <h3>Home Care Services</h3>
+                            <p>Certified agencies and professional caregivers</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/care-options/in-home-care" target="_blank" class="resource-link">Home Care Options</a>
+                                <a href="https://www.agingcare.com/home-care" target="_blank" class="resource-link">Caregiver Services</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">⚖️</div>
+                            <h3>Legal & Financial Planning</h3>
+                            <p>Power of attorney, Medicaid, and estate planning</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/financial-legal-planning" target="_blank" class="resource-link">Legal Resources</a>
+                                <a href="https://www.naela.org/" target="_blank" class="resource-link">Elder Law Attorneys</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Emergency & Crisis -->
+                <section class="resource-category" data-category="emergency">
+                    <h2 class="category-title">🆘 Emergency & Crisis Support</h2>
+                    <div class="resources-list">
+                        <div class="resource-card emergency">
+                            <div class="resource-icon">🚨</div>
+                            <h3>24/7 Helpline</h3>
+                            <p>Immediate support and guidance available 24 hours</p>
+                            <div class="resource-links">
+                                <a href="tel:800-272-3900" class="resource-link emergency-link">📞 Call: 800-272-3900</a>
+                                <a href="https://www.alz.org/help-support/resources/helpline" target="_blank" class="resource-link">Helpline Info</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card emergency">
+                            <div class="resource-icon">🚶‍♂️</div>
+                            <h3>Wandering Prevention</h3>
+                            <p>Safety protocols and emergency response</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/safety/wandering" target="_blank" class="resource-link">Safety Tips</a>
+                                <a href="https://www.communityresourcefinder.org/" target="_blank" class="resource-link">Safety Resources</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card emergency">
+                            <div class="resource-icon">🏥</div>
+                            <h3>Crisis Intervention</h3>
+                            <p>Emergency services and behavioral crisis support</p>
+                            <div class="resource-links">
+                                <a href="tel:911" class="resource-link emergency-link">🚑 Call 911</a>
+                                <a href="https://www.samhsa.gov/find-help/national-helpline" target="_blank" class="resource-link">Crisis Helpline</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Community Resources -->
+                <section class="resource-category" data-category="community">
+                    <h2 class="category-title">👥 Community & Support</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">🌐</div>
+                            <h3>Online Communities</h3>
+                            <p>Connect with others who understand your journey</p>
+                            <div class="resource-links">
+                                <a href="https://www.alzconnected.org/" target="_blank" class="resource-link">Alzheimer's Association Forum</a>
+                                <a href="https://www.dementiaconnect.org/" target="_blank" class="resource-link">Dementia Connect</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">📍</div>
+                            <h3>Local Services</h3>
+                            <p>Find local support, transportation, and meal delivery</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/resources/community-resources" target="_blank" class="resource-link">Local Resources</a>
+                                <a href="https://www.eldercare.acl.gov/" target="_blank" class="resource-link">Elder Care Locator</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">🎉</div>
+                            <h3>Social Engagement</h3>
+                            <p>Community programs and virtual events</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/resources/online-tools/social-activities" target="_blank" class="resource-link">Activity Ideas</a>
+                                <a href="https://www.seniorcenter.us/" target="_blank" class="resource-link">Senior Centers</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Digital Tools -->
+                <section class="resource-category" data-category="digital">
+                    <h2 class="category-title">📱 Digital Tools & Apps</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">🧩</div>
+                            <h3>Memory Support Apps</h3>
+                            <p>Cognitive training and reminder applications</p>
+                            <div class="resource-links">
+                                <a href="https://www.lumosity.com/" target="_blank" class="resource-link">Lumosity</a>
+                                <a href="https://www.elevateapp.com/" target="_blank" class="resource-link">Elevate</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">👨‍👩‍👧‍👦</div>
+                            <h3>Care Coordination</h3>
+                            <p>Family sharing platforms and care management</p>
+                            <div class="resource-links">
+                                <a href="https://www.caringbridge.org/" target="_blank" class="resource-link">CaringBridge</a>
+                                <a href="https://www.lotsahelpinghands.com/" target="_blank" class="resource-link">Helping Hands</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">💻</div>
+                            <h3>Telehealth Services</h3>
+                            <p>Remote medical consultations and support</p>
+                            <div class="resource-links">
+                                <a href="https://www.teladoc.com/" target="_blank" class="resource-link">Teladoc</a>
+                                <a href="https://www.doctorondemand.com/" target="_blank" class="resource-link">Doctor on Demand</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Daily Living Aids -->
+                <section class="resource-category" data-category="daily">
+                    <h2 class="category-title">🏡 Daily Living Aids</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">🛡️</div>
+                            <h3>Safety Products</h3>
+                            <p>Home monitoring, GPS trackers, and safety alarms</p>
+                            <div class="resource-links">
+                                <a href="https://www.alz.org/help-support/caregiving/safety" target="_blank" class="resource-link">Safety Products</a>
+                                <a href="https://www.medicalalert.com/" target="_blank" class="resource-link">Medical Alerts</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">💊</div>
+                            <h3>Medication Management</h3>
+                            <p>Pill organizers and reminder systems</p>
+                            <div class="resource-links">
+                                <a href="https://www.medisafe.com/" target="_blank" class="resource-link">Medisafe App</a>
+                                <a href="https://www.herohealth.com/" target="_blank" class="resource-link">Hero Dispenser</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">🍽️</div>
+                            <h3>Adaptive Equipment</h3>
+                            <p>Easy-to-use utensils and dressing aids</p>
+                            <div class="resource-links">
+                                <a href="https://www.alimed.com/" target="_blank" class="resource-link">Adaptive Tools</a>
+                                <a href="https://www.maxiaids.com/" target="_blank" class="resource-link">Daily Living Aids</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Legal & Financial -->
+                <section class="resource-category" data-category="legal">
+                    <h2 class="category-title">⚖️ Legal & Financial Planning</h2>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">📄</div>
+                            <h3>Advance Directives</h3>
+                            <p>Living wills, healthcare proxies, and planning documents</p>
+                            <div class="resource-links">
+                                <a href="https://www.agingwithdignity.org/five-wishes" target="_blank" class="resource-link">Five Wishes</a>
+                                <a href="https://www.nia.nih.gov/health/advance-care-planning-healthcare-directives" target="_blank" class="resource-link">Planning Guide</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">💰</div>
+                            <h3>Benefits Assistance</h3>
+                            <p>Social Security, disability, and veterans benefits</p>
+                            <div class="resource-links">
+                                <a href="https://www.ssa.gov/" target="_blank" class="resource-link">Social Security</a>
+                                <a href="https://www.va.gov/geriatrics/" target="_blank" class="resource-link">Veterans Benefits</a>
+                            </div>
+                        </div>
+
+                        <div class="resource-card">
+                            <div class="resource-icon">🏥</div>
+                            <h3>Long-Term Care Planning</h3>
+                            <p>Insurance options and payment assistance</p>
+                            <div class="resource-links">
+                                <a href="https://www.medicaid.gov/" target="_blank" class="resource-link">Medicaid</a>
+                                <a href="https://www.longtermcare.acl.gov/" target="_blank" class="resource-link">Long-Term Care</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Emergency Quick Access Modal -->
+        <div id="emergencyModal" class="modal">
+            <div class="modal-content emergency-modal">
+                <span class="close">&times;</span>
+                <h2>🆘 Emergency Assistance</h2>
+                <div class="emergency-contacts">
+                    <div class="emergency-contact">
+                        <h3>Alzheimer's Association 24/7 Helpline</h3>
+                        <a href="tel:800-272-3900" class="emergency-call-btn">📞 Call 800-272-3900</a>
+                        <p>Available 24 hours in 200+ languages</p>
+                    </div>
+                    <div class="emergency-contact">
+                        <h3>Emergency Services</h3>
+                        <a href="tel:911" class="emergency-call-btn emergency">🚑 Call 911</a>
+                        <p>For immediate medical emergencies</p>
+                    </div>
+                    <div class="emergency-contact">
+                        <h3>Crisis Text Line</h3>
+                        <a href="sms:741741" class="emergency-call-btn">💬 Text HOME to 741741</a>
+                        <p>Free 24/7 crisis support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="resources.js"></script>
+</body>
+
+</html>
+

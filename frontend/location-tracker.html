@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Safety - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="location-tracker.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Simple default favicon -->
+    <link rel="icon" href="#" id="dynamic-favicon">
+    <script src="favicon-config.js"></script>
+</head>
+<body>
+    <!-- Blue Navigation Header -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon">🧠</div>
+                <div class="logo-text">Alzheimer's Support</div>
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="location-tracker.html" class="active">Location Safety</a>
+                <a href="resources.html">Resources</a>
+                <a href="login.html">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="location-container">
+        <!-- Orange Location Header - Spread Out -->
+        <section class="location-header">
+            <div class="location-header-content">
+                <div class="header-text">
+                    <h1>Location Safety 🗺️</h1>
+                    <p>Real-time location tracking and safety monitoring for peace of mind</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-number">Active</span>
+                        <span class="stat-label">Status</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">Safe Zones</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">2</span>
+                        <span class="stat-label">Guardians</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">85%</span>
+                        <span class="stat-label">Battery</span>
+                    </div>
+                </div>
+                <!-- Floating Icons -->
+                <div class="floating-animation">
+                    <div class="floating-icons">
+                        <div class="location-icon icon-1">📍</div>
+                        <div class="location-icon icon-2">🏠</div>
+                        <div class="location-icon icon-3">👥</div>
+                        <div class="location-icon icon-4">🛡️</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content - Spread Out -->
+        <div class="main-content">
+            <div class="content-wrapper">
+                <!-- Left Column - Enlarged Map Section -->
+                <div class="map-section">
+                    <!-- Quick Actions -->
+                    <section class="quick-actions">
+                        <button class="action-btn primary" id="startTrackingBtn">
+                            <span class="btn-icon">📍</span>
+                            Start Live Tracking
+                        </button>
+                        <button class="action-btn secondary" id="addSafeZoneBtn">
+                            <span class="btn-icon">🏠</span>
+                            Add Safe Zone
+                        </button>
+                        <button class="action-btn tertiary" id="shareLocationBtn">
+                            <span class="btn-icon">👥</span>
+                            Share with Guardians
+                        </button>
+                    </section>
+
+                    <!-- Enlarged Map Container -->
+                    <section class="map-container-section">
+                        <div class="section-header">
+                            <h2>Live Location Map</h2>
+                            <div class="location-controls">
+                                <button class="control-btn" id="refreshLocation">
+                                    <span class="btn-icon">🔄</span>
+                                    Refresh
+                                </button>
+                                <button class="control-btn" id="centerMap">
+                                    <span class="btn-icon">🎯</span>
+                                    Center
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="map-container">
+                            <div id="locationMap"></div>
+                            <div class="map-overlay">
+                                <div class="location-info-card">
+                                    <h3>Current Location</h3>
+                                    <div class="location-details">
+                                        <div class="detail-item">
+                                            <span class="label">Status:</span>
+                                            <span class="value">Tracking Active</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="label">Last Updated:</span>
+                                            <span class="value">Just now</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="label">Battery:</span>
+                                            <span class="value">85%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Safe Zones Section -->
+                    <section class="safe-zones-section" id="safeZonesSection">
+                        <div class="section-header">
+                            <h2>Safe Zones</h2>
+                        </div>
+                        <div class="safe-zones-list">
+                            <div class="safe-zone-card">
+                                <div class="zone-header">
+                                    <div class="zone-name">Home</div>
+                                    <div class="zone-type">Home</div>
+                                </div>
+                                <div class="zone-details">
+                                    <div class="zone-address">123 Main Street, Mumbai</div>
+                                    <div class="zone-radius">
+                                        <span class="radius-icon">📏</span>
+                                        Safe radius: 500 meters
+                                    </div>
+                                </div>
+                                <div class="zone-actions">
+                                    <button class="zone-btn edit">Edit</button>
+                                    <button class="zone-btn delete">Delete</button>
+                                </div>
+                            </div>
+                            <div class="safe-zone-card">
+                                <div class="zone-header">
+                                    <div class="zone-name">Local Park</div>
+                                    <div class="zone-type">Park</div>
+                                </div>
+                                <div class="zone-details">
+                                    <div class="zone-address">Central Park, Bandra West</div>
+                                    <div class="zone-radius">
+                                        <span class="radius-icon">📏</span>
+                                        Safe radius: 800 meters
+                                    </div>
+                                </div>
+                                <div class="zone-actions">
+                                    <button class="zone-btn edit">Edit</button>
+                                    <button class="zone-btn delete">Delete</button>
+                                </div>
+                            </div>
+                            <div class="safe-zone-card">
+                                <div class="zone-header">
+                                    <div class="zone-name">Grocery Store</div>
+                                    <div class="zone-type">Store</div>
+                                </div>
+                                <div class="zone-details">
+                                    <div class="zone-address">456 Market Road, Andheri</div>
+                                    <div class="zone-radius">
+                                        <span class="radius-icon">📏</span>
+                                        Safe radius: 300 meters
+                                    </div>
+                                </div>
+                                <div class="zone-actions">
+                                    <button class="zone-btn edit">Edit</button>
+                                    <button class="zone-btn delete">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Safe Zone Form will be inserted here by JavaScript -->
+                    </section>
+                </div>
+
+                <!-- Right Column - Enlarged Sidebar -->
+                <aside class="location-sidebar">
+                    <!-- Enlarged Guardians Section -->
+                    <div class="guardians-section">
+                        <div class="section-header">
+                            <h3>Guardians</h3>
+                            <button class="add-btn" id="addGuardianBtn">
+                                <span class="btn-icon">👤</span>
+                                Add
+                            </button>
+                        </div>
+                        <div class="guardians-list">
+                            <div class="guardian-card">
+                                <div class="guardian-info">
+                                    <div class="guardian-avatar">EJ</div>
+                                    <div class="guardian-details">
+                                        <div class="guardian-name">Ella Johnson</div>
+                                        <div class="guardian-contact">(555) 123-4567</div>
+                                        <div class="guardian-role">Primary Guardian</div>
+                                    </div>
+                                    <div class="guardian-status active">Active</div>
+                                </div>
+                            </div>
+                            <div class="guardian-card">
+                                <div class="guardian-info">
+                                    <div class="guardian-avatar">MC</div>
+                                    <div class="guardian-details">
+                                        <div class="guardian-name">Michael Chen</div>
+                                        <div class="guardian-contact">(555) 987-6543</div>
+                                        <div class="guardian-role">Secondary Guardian</div>
+                                    </div>
+                                    <div class="guardian-status active">Active</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enlarged Recent Alerts Section -->
+                    <div class="alerts-section">
+                        <div class="section-header">
+                            <h3>Recent Alerts</h3>
+                            <span class="alert-badge">2</span>
+                        </div>
+                        <div class="alerts-list">
+                            <div class="alert-item">
+                                <div class="alert-icon">⚠️</div>
+                                <div class="alert-content">
+                                    <div class="alert-message">Left safe zone: Home</div>
+                                    <div class="alert-time">10:30 AM</div>
+                                    <div class="alert-location">123 Main Street</div>
+                                </div>
+                            </div>
+                            <div class="alert-item">
+                                <div class="alert-icon">⚠️</div>
+                                <div class="alert-content">
+                                    <div class="alert-message">Entered safe zone: Park</div>
+                                    <div class="alert-time">11:15 AM</div>
+                                    <div class="alert-location">Central Park, Bandra West</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enlarged Location History -->
+                    <div class="history-section">
+                        <div class="section-header">
+                            <h3>Recent Locations</h3>
+                            <button class="view-all-btn">View All</button>
+                        </div>
+                        <div class="history-list">
+                            <div class="history-item">
+                                <div class="history-icon">📍</div>
+                                <div class="history-details">
+                                    <div class="history-location">Home</div>
+                                    <div class="history-time">10:00 AM</div>
+                                    <div class="history-address">123 Main Street</div>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-icon">📍</div>
+                                <div class="history-details">
+                                    <div class="history-location">Local Park</div>
+                                    <div class="history-time">10:45 AM</div>
+                                    <div class="history-address">Central Park, Bandra West</div>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-icon">📍</div>
+                                <div class="history-details">
+                                    <div class="history-location">Grocery Store</div>
+                                    <div class="history-time">11:30 AM</div>
+                                    <div class="history-address">456 Market Road, Andheri</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="location-tracker.js"></script>
+</body>
+</html>

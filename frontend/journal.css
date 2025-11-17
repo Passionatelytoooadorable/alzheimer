@@ -1,0 +1,992 @@
+/* Journal Specific Styles */
+.journal-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    min-height: calc(100vh - 120px);
+}
+
+/* Full Edge-to-Edge Header */
+.journal-header {
+    background: linear-gradient(135deg, #96ceb4 0%, #88d8b0 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(150, 206, 180, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 140px;
+    padding: 1.5rem 2rem;
+    margin: 0 0 2rem 0;
+    width: 100%;
+}
+
+.header-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-content p {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    opacity: 0.9;
+    max-width: 500px;
+}
+
+.header-stats {
+    display: flex;
+    gap: 3rem;
+    margin-left: 2rem;
+}
+
+.stat {
+    text-align: center;
+    min-width: 80px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Floating Icons Animation */
+.header-animation {
+    flex-shrink: 0;
+    margin-left: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.floating-icons {
+    position: relative;
+    width: 160px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.journal-icon {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: float 6s ease-in-out infinite;
+    border: 2px solid rgba(255,255,255,0.8);
+}
+
+.icon-1 {
+    top: 10px;
+    left: 20px;
+    animation-delay: 0s;
+    background: linear-gradient(135deg, #e39fcb 0%, #b1e858 100%);
+    z-index: 4;
+}
+
+.icon-2 {
+    top: 10px;
+    right: 20px;
+    animation-delay: 1.5s;
+    background: linear-gradient(135deg, #f3c09d 0%, #deac4a 100%);
+    z-index: 3;
+}
+
+.icon-3 {
+    bottom: 10px;
+    left: 30px;
+    animation-delay: 3s;
+    background: linear-gradient(135deg, #ff8b94 0%, #ffaaa5 100%);
+    z-index: 2;
+}
+
+.icon-4 {
+    bottom: 10px;
+    right: 30px;
+    animation-delay: 4.5s;
+    background: linear-gradient(135deg, #a8e6cf 0%, #6b8ddb 100%);
+    z-index: 1;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translateY(-8px) rotate(2deg) scale(1.05);
+    }
+    50% {
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+    75% {
+        transform: translateY(4px) rotate(-2deg) scale(0.95);
+    }
+}
+
+/* Main Content Layout */
+.main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Left Side - Journal Content */
+.journal-content {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    justify-content: center;
+    min-height: 60px;
+    text-align: center;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #4ecdc4 0%, #e3ac5e 100%);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #ec7cab 0%, #f1736c 100%);
+    color: white;
+}
+
+.action-btn.tertiary {
+    background: linear-gradient(135deg, #a8d0e6 0%, #6cf4c2 100%);
+    color: #374785;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+/* Content Area */
+.content-area {
+    min-height: 400px;
+}
+
+/* Entries Section */
+.entries-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.entries-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.entries-section h2 {
+    color: #374785;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.filter-options {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.6rem 1.25rem;
+    border: 2px solid #96ceb4;
+    background: white;
+    color: #374785;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: #96ceb4;
+    color: white;
+}
+
+.entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.entry-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-left: 4px solid #96ceb4;
+}
+
+.entry-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.entry-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #374785;
+    margin: 0;
+}
+
+.entry-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.entry-content {
+    color: #495057;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.entry-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.entry-mood {
+    font-size: 1.2rem;
+}
+
+.entry-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.entry-btn {
+    padding: 0.4rem 0.875rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.entry-btn.edit {
+    background: #a8d0e6;
+    color: #374785;
+}
+
+.entry-btn.delete {
+    background: #ff6b6b;
+    color: white;
+}
+
+.entry-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Journal Form Section */
+.journal-form-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.form-header h2 {
+    color: #374785;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.close-form-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.close-form-btn:hover {
+    background: #ee5a52;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.journal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374785;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #96ceb4;
+    box-shadow: 0 0 0 3px rgba(150, 206, 180, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+/* Mood Selector */
+.mood-selector {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.mood-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+.mood-btn:hover,
+.mood-btn.active {
+    border-color: #96ceb4;
+    background: #f0f8f4;
+    transform: translateY(-1px);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.btn-primary {
+    background: #4ecdc4;
+    color: white;
+}
+
+.btn-secondary {
+    background: #e9ecef;
+    color: #666;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Right Side - Calendar & Reminders */
+.calendar-sidebar {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: sticky;
+    top: 2rem;
+}
+
+.calendar-section,
+.reminders-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.calendar-section h3,
+.reminders-section h3 {
+    color: #374785;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+/* Calendar Styles */
+.calendar-container {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.calendar-header h4 {
+    margin: 0;
+    color: #374785;
+    font-size: 1rem;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #374785;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-btn:hover {
+    background: #e9ecef;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e9ecef;
+}
+
+.calendar-day {
+    background: white;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.calendar-day.header {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #374785;
+    cursor: default;
+}
+
+.calendar-day.today {
+    background: #96ceb4;
+    color: white;
+    font-weight: 600;
+}
+
+.calendar-day.has-entry {
+    position: relative;
+}
+
+.calendar-day.has-entry::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #4ecdc4;
+    border-radius: 50%;
+}
+
+.calendar-day:hover:not(.header) {
+    background: #f0f8f4;
+}
+
+/* Reminders Section */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.add-reminder-btn {
+    background: #96ceb4;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.875rem;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.add-reminder-btn:hover {
+    background: #88d8b0;
+    transform: scale(1.05);
+}
+
+.reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.reminder-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #ff6b6b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.reminder-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.reminder-time {
+    font-weight: 600;
+    color: #374785;
+    font-size: 0.8rem;
+    min-width: 50px;
+}
+
+.reminder-text {
+    flex: 1;
+    color: #495057;
+    font-size: 0.85rem;
+}
+
+.reminder-status {
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.reminder-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.reminder-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Writing Prompts Section */
+.prompts-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    margin-top: 2rem;
+}
+
+.prompts-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.prompts-section h2 {
+    color: #374785;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.close-prompts-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.close-prompts-btn:hover {
+    background: #ee5a52;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.prompts-list {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.prompt-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #a8d0e6;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.prompt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.prompt-card p {
+    margin: 0;
+    color: #495057;
+    font-size: 1rem;
+    line-height: 1.5;
+    font-style: italic;
+    flex: 1;
+}
+
+.use-prompt-btn {
+    background: #a8d0e6;
+    color: #374785;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.use-prompt-btn:hover {
+    background: #8bc1e3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.empty-state h3 {
+    color: #374785;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.empty-state p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.reminder-modal {
+    max-width: 500px;
+}
+
+.reminder-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .calendar-sidebar {
+        grid-column: 1;
+        position: static;
+    }
+    
+    .header-content {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .header-stats {
+        margin-left: 0;
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 0 1rem;
+    }
+    
+    .journal-header {
+        padding: 1.25rem 1rem;
+        min-height: 120px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .header-content h1 {
+        font-size: 2rem;
+    }
+    
+    .header-animation {
+        margin: 0;
+    }
+    
+    .header-stats {
+        gap: 2rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .entries-section .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-options {
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .calendar-grid {
+        gap: 0;
+    }
+    
+    .calendar-day {
+        padding: 0.25rem;
+        font-size: 0.7rem;
+        min-height: 35px;
+    }
+    
+    .mood-selector {
+        flex-direction: column;
+    }
+    
+    .entries-section,
+    .journal-form-section,
+    .prompts-section {
+        padding: 1.5rem;
+    }
+    
+    .prompts-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

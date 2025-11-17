@@ -1,0 +1,543 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #333;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background-color: #a8d0e6;
+    color: #374785;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 1.8rem;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: #374785;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    background-color: rgba(255,255,255,0.3);
+}
+
+.login-container {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.illustration-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.animation-container {
+    position: relative;
+    width: 400px;
+    height: 300px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* Elderly Person */
+.elderly-person {
+    position: absolute;
+    left: 100px;
+    bottom: 50px;
+    animation: gentle-bounce 4s ease-in-out infinite;
+}
+
+.elderly-person .head {
+    width: 60px;
+    height: 60px;
+    background: #ffccbc;
+    border-radius: 50%;
+    position: relative;
+}
+
+.elderly-person .head::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #ffab91;
+    border-radius: 50%;
+    top: 10px;
+    left: 10px;
+}
+
+.elderly-person .body {
+    width: 80px;
+    height: 70px;
+    background: #90caf9;
+    border-radius: 40% 40% 0 0;
+    position: absolute;
+    top: 60px;
+    left: -10px;
+}
+
+.elderly-person .arm-left,
+.elderly-person .arm-right {
+    width: 20px;
+    height: 50px;
+    background: #90caf9;
+    border-radius: 10px;
+    position: absolute;
+    top: 70px;
+}
+
+.elderly-person .arm-left {
+    left: -15px;
+    transform: rotate(20deg);
+    animation: arm-sway 3s ease-in-out infinite;
+}
+
+.elderly-person .arm-right {
+    right: -15px;
+    transform: rotate(-20deg);
+    animation: arm-sway 3s ease-in-out infinite 1.5s;
+}
+
+/* Caregiver */
+.caregiver {
+    position: absolute;
+    right: 100px;
+    bottom: 50px;
+    animation: gentle-bounce 4s ease-in-out infinite 2s;
+}
+
+.caregiver .head {
+    width: 50px;
+    height: 50px;
+    background: #ffd54f;
+    border-radius: 50%;
+    position: relative;
+}
+
+.caregiver .head::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: #ffb300;
+    border-radius: 50%;
+    top: 10px;
+    left: 10px;
+}
+
+.caregiver .body {
+    width: 70px;
+    height: 60px;
+    background: #81c784;
+    border-radius: 40% 40% 0 0;
+    position: absolute;
+    top: 50px;
+    left: -10px;
+}
+
+.caregiver .arm-left,
+.caregiver .arm-right {
+    width: 15px;
+    height: 40px;
+    background: #81c784;
+    border-radius: 10px;
+    position: absolute;
+    top: 60px;
+}
+
+.caregiver .arm-left {
+    left: -12px;
+    transform: rotate(15deg);
+}
+
+.caregiver .arm-right {
+    right: -12px;
+    transform: rotate(-15deg);
+    animation: point-phone 4s ease-in-out infinite;
+}
+
+.caregiver .phone {
+    width: 25px;
+    height: 40px;
+    background: #374785;
+    border-radius: 5px;
+    position: absolute;
+    top: 40px;
+    right: -30px;
+    animation: phone-glow 3s ease-in-out infinite;
+}
+
+.caregiver .phone::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 20px;
+    background: #a8d0e6;
+    border-radius: 2px;
+    top: 10px;
+    left: 5px;
+}
+
+/* Interaction Elements */
+.interaction-bubble {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 60px;
+    background: rgba(168, 208, 230, 0.8);
+    border-radius: 30px;
+    animation: bubble-pulse 5s ease-in-out infinite;
+}
+
+.heart {
+    position: absolute;
+    font-size: 1.2rem;
+    opacity: 0;
+    animation: float-heart 6s ease-in-out infinite;
+}
+
+.heart-1 {
+    top: 120px;
+    left: 120px;
+    animation-delay: 0s;
+}
+
+.heart-2 {
+    top: 80px;
+    left: 200px;
+    animation-delay: 2s;
+}
+
+.heart-3 {
+    top: 150px;
+    right: 150px;
+    animation-delay: 4s;
+}
+
+/* Animations */
+@keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes arm-sway {
+    0%, 100% { transform: rotate(20deg); }
+    50% { transform: rotate(10deg); }
+}
+
+@keyframes point-phone {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(-25deg); }
+}
+
+@keyframes phone-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(168, 208, 230, 0); }
+    50% { box-shadow: 0 0 20px rgba(168, 208, 230, 0.8); }
+}
+
+@keyframes bubble-pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+    50% { transform: translateX(-50%) scale(1.1); opacity: 0.9; }
+}
+
+@keyframes float-heart {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    20% { transform: translateY(-20px) scale(1); opacity: 1; }
+    80% { transform: translateY(-60px) scale(0.8); opacity: 0.7; }
+    100% { transform: translateY(-80px) scale(0); opacity: 0; }
+}
+
+.illustration-text {
+    text-align: center;
+    max-width: 400px;
+}
+
+.illustration-text h2 {
+    color: #374785;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.illustration-text p {
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-header h1 {
+    color: #374785;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.login-header p {
+    color: #6c757d;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-group input {
+    padding: 0.8rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s;
+    background-color: #f8f9fa;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #a8d0e6;
+    box-shadow: 0 0 0 3px rgba(168, 208, 230, 0.3);
+    background-color: white;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.forgot-password {
+    color: #374785;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.login-button {
+    background-color: #a8d0e6;
+    color: #374785;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 0.5rem;
+}
+
+.login-button:hover {
+    background-color: #8bc1e3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.login-footer {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.login-footer p {
+    margin-bottom: 1rem;
+    color: #6c757d;
+}
+
+.login-footer a {
+    color: #374785;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+.accessibility-options {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.accessibility-btn {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    color: #495057;
+}
+
+.accessibility-btn:hover {
+    background-color: #e9ecef;
+}
+
+.footer {
+    background-color: #a8d0e6;
+    color: #374785;
+    text-align: center;
+    padding: 1rem;
+    margin-top: auto;
+}
+
+/* High contrast mode */
+body.high-contrast {
+    background-color: #000;
+    color: #fff;
+}
+
+body.high-contrast .login-card {
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #fff;
+}
+
+body.high-contrast .form-group input {
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #fff;
+}
+
+body.high-contrast .login-button {
+    background-color: #fff;
+    color: #000;
+}
+
+/* Large text mode */
+body.large-text {
+    font-size: 1.2rem;
+}
+
+body.large-text .login-header h1 {
+    font-size: 2.5rem;
+}
+
+body.large-text .form-group input {
+    font-size: 1.2rem;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .login-container {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 2rem;
+    }
+    
+    .animation-container {
+        width: 300px;
+        height: 250px;
+    }
+    
+    .elderly-person {
+        left: 60px;
+    }
+    
+    .caregiver {
+        right: 60px;
+    }
+    
+    .login-card {
+        padding: 2rem;
+    }
+    
+    .form-options {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
