@@ -92,7 +92,7 @@
                 
                 <div class="form-group">
                     <label class="remember-me">
-                        <input type="checkbox" name="terms" required>
+                        <input type="checkbox" id="terms" name="terms" required>
                         <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
                     </label>
                 </div>
@@ -110,7 +110,7 @@
         const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
         document.addEventListener('DOMContentLoaded', function() {
-            const signupForm = document.getElementById('signup-form');
+            const signupForm = document.getElementById('signupForm');
             
             if (!signupForm) {
                 console.error('Signup form not found!');
@@ -121,7 +121,7 @@
                 e.preventDefault();
                 
                 // Get all form values
-                const name = document.getElementById('name').value;
+                const name = document.getElementById('fullName').value;
                 const email = document.getElementById('email').value;
                 const username = document.getElementById('username').value;
                 const phone = document.getElementById('phone').value;
@@ -160,13 +160,13 @@
                     
                     const result = await response.json();
       
-                    if (result.token) {
+                    if (response.ok && result.token) {
                         localStorage.setItem('token', result.token);
                         localStorage.setItem('user', JSON.stringify(result.user));
                         alert('Signup successful!');
                         window.location.href = 'index.html';
                     } else {
-                        alert(result.error || 'Signup failed');
+                        alert(result.error || result.message || 'Signup failed. Please try again.');
                     }
                 } catch (error) {
                     console.error('Signup failed:', error);
