@@ -1,91 +1,22 @@
-const API_BASE = 'https://alzheimer-vbm2.onrender.com/api';
+// dashboard.js - Updated with Live Backend API
+const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 // Check authentication
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user') || '{}');
-let currentSessionId = localStorage.getItem('currentSessionId');
 
 if (!token) {
     window.location.href = 'index.html';
 }
 
-// Track user activity and location
-async function trackUserActivity(activityType, description) {
-    try {
-        await fetch(`${API_BASE}/activities`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                activity_type: activityType,
-                description: description
-            })
-        });
-    } catch (error) {
-        console.error('Failed to track activity:', error);
-    }
-}
+// Display user info
+document.getElementById('user-name').textContent = user.name || 'User';
 
-// Get user location
-async function getUserLocation() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error('Geolocation is not supported'));
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                
-                // Get address from coordinates (simplified)
-                const address = `Lat: ${latitude}, Long: ${longitude}`;
-                
-                try {
-                    // Save location to backend
-                    await fetch(`${API_BASE}/locations`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            latitude: latitude,
-                            longitude: longitude,
-                            address: address
-                        })
-                    });
-                    
-                    resolve({ latitude, longitude, address });
-                } catch (error) {
-                    console.error('Failed to save location:', error);
-                    resolve({ latitude, longitude, address });
-                }
-            },
-            (error) => {
-                console.error('Location error:', error);
-                reject(error);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-        );
-    });
-}
-
-// Load user data with enhanced tracking
+// Load user data from backend
 async function loadUserData() {
     try {
-        // Track dashboard access
-        await trackUserActivity('dashboard_accessed', 'User accessed dashboard');
-
-        // Get user location
-        try {
-            await getUserLocation();
-        } catch (error) {
-            console.log('Location tracking not available');
-        }
-
+        console.log('Loading user data from backend...');
+        
         // Load memories
         const memoriesResponse = await fetch(`${API_BASE}/memories`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -107,19 +38,15 @@ async function loadUserData() {
         const remindersData = await remindersResponse.json();
         displayReminders(remindersData.reminders || []);
 
-        // Load user activities
-        const activitiesResponse = await fetch(`${API_BASE}/auth/activities`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const activitiesData = await activitiesResponse.json();
-        displayActivities(activitiesData.activities || []);
+        console.log('User data loaded successfully');
 
     } catch (error) {
         console.error('Failed to load user data:', error);
+        alert('Failed to load data. Please check your connection.');
     }
 }
 
-// Enhanced add memory with tracking
+// Add new memory to backend
 async function addMemory(memoryData) {
     try {
         const response = await fetch(`${API_BASE}/memories`, {
@@ -130,20 +57,20 @@ async function addMemory(memoryData) {
             },
             body: JSON.stringify(memoryData)
         });
-        
         const result = await response.json();
         
         if (result.memory) {
-            await trackUserActivity('memory_created', `Created memory: ${memoryData.title}`);
+            alert('Memory added successfully!');
+            loadUserData(); // Reload data
         }
-        
         return result;
     } catch (error) {
         console.error('Failed to add memory:', error);
+        alert('Failed to add memory. Please try again.');
     }
 }
 
-// Enhanced add journal with tracking
+// Add new journal to backend
 async function addJournal(journalData) {
     try {
         const response = await fetch(`${API_BASE}/journals`, {
@@ -154,20 +81,20 @@ async function addJournal(journalData) {
             },
             body: JSON.stringify(journalData)
         });
-        
         const result = await response.json();
         
         if (result.journal) {
-            await trackUserActivity('journal_created', `Created journal: ${journalData.title || 'Untitled'}`);
+            alert('Journal added successfully!');
+            loadUserData(); // Reload data
         }
-        
         return result;
     } catch (error) {
         console.error('Failed to add journal:', error);
+        alert('Failed to add journal. Please try again.');
     }
 }
 
-// Enhanced add reminder with tracking
+// Add new reminder to backend
 async function addReminder(reminderData) {
     try {
         const response = await fetch(`${API_BASE}/reminders`, {
@@ -178,63 +105,181 @@ async function addReminder(reminderData) {
             },
             body: JSON.stringify(reminderData)
         });
-        
         const result = await response.json();
         
         if (result.reminder) {
-            await trackUserActivity('reminder_created', `Created reminder: ${reminderData.title}`);
+            alert('Reminder added successfully!');
+            loadUserData(); // Reload data
         }
-        
         return result;
     } catch (error) {
         console.error('Failed to add reminder:', error);
+        alert('Failed to add reminder. Please try again.');
     }
 }
 
-// Display activities
-function displayActivities(activities) {
-    const container = document.getElementById('activities-container');
+// Update location to backend
+async function updateLocation(locationData) {
+    try {
+        const response = await fetch(`${API_BASE}/locations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(locationData)
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to update location:', error);
+    }
+}
+
+// Display functions (keep your existing display functions)
+function displayMemories(memories) {
+    const container = document.getElementById('memories-container');
     if (!container) return;
     
-    if (activities.length === 0) {
-        container.innerHTML = '<p>No recent activities</p>';
+    if (memories.length === 0) {
+        container.innerHTML = '<p>No memories yet. Add your first memory!</p>';
         return;
     }
     
-    container.innerHTML = activities.map(activity => `
-        <div class="activity-item">
-            <div class="activity-type">${activity.activity_type}</div>
-            <div class="activity-desc">${activity.description}</div>
-            <div class="activity-time">${new Date(activity.timestamp).toLocaleString()}</div>
+    container.innerHTML = memories.map(memory => `
+        <div class="memory-card">
+            <h3>${memory.title}</h3>
+            <p>${memory.description}</p>
+            <div class="memory-meta">
+                <small>Date: ${new Date(memory.memory_date).toLocaleDateString()}</small>
+                <small>Location: ${memory.location || 'Not specified'}</small>
+                <small>Added: ${new Date(memory.created_at).toLocaleDateString()}</small>
+            </div>
         </div>
     `).join('');
 }
 
-// Logout with session tracking
-async function logout() {
-    try {
-        if (currentSessionId) {
-            await fetch(`${API_BASE}/auth/logout`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ sessionId: currentSessionId })
-            });
-        }
-        
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('currentSessionId');
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('Logout error:', error);
+function displayJournals(journals) {
+    const container = document.getElementById('journals-container');
+    if (!container) return;
+    
+    if (journals.length === 0) {
+        container.innerHTML = '<p>No journal entries yet. Start writing!</p>';
+        return;
     }
+    
+    container.innerHTML = journals.map(journal => `
+        <div class="journal-card">
+            <h3>${journal.title || 'Untitled'}</h3>
+            <p class="journal-content">${journal.content}</p>
+            <div class="journal-meta">
+                <span class="mood">Mood: ${journal.mood || 'Not specified'}</span>
+                <span class="date">${new Date(journal.created_at).toLocaleDateString()}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
-// Event listeners
-document.getElementById('logout-btn').addEventListener('click', logout);
+function displayReminders(reminders) {
+    const container = document.getElementById('reminders-container');
+    if (!container) return;
+    
+    if (reminders.length === 0) {
+        container.innerHTML = '<p>No reminders yet. Add your first reminder!</p>';
+        return;
+    }
+    
+    container.innerHTML = reminders.map(reminder => `
+        <div class="reminder-card ${reminder.is_completed ? 'completed' : ''}">
+            <h3>${reminder.title}</h3>
+            <p>${reminder.description}</p>
+            <div class="reminder-meta">
+                <small>Due: ${new Date(reminder.reminder_date).toLocaleString()}</small>
+                <small>Priority: ${reminder.priority || 'medium'}</small>
+                <small>Status: ${reminder.is_completed ? 'Completed' : 'Pending'}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Event listeners for adding new items
+document.getElementById('add-memory-btn')?.addEventListener('click', async function() {
+    const title = prompt('Enter memory title:');
+    const description = prompt('Enter memory description:');
+    
+    if (title && description) {
+        await addMemory({
+            title: title,
+            description: description,
+            memory_date: new Date().toISOString().split('T')[0],
+            location: ''
+        });
+    }
+});
+
+document.getElementById('add-journal-btn')?.addEventListener('click', async function() {
+    const content = prompt('Write your journal entry:');
+    const mood = prompt('How are you feeling? (happy, sad, neutral, etc.):') || 'neutral';
+    
+    if (content) {
+        await addJournal({
+            title: 'Daily Journal',
+            content: content,
+            mood: mood
+        });
+    }
+});
+
+document.getElementById('add-reminder-btn')?.addEventListener('click', async function() {
+    const title = prompt('Enter reminder title:');
+    const description = prompt('Enter reminder description:');
+    
+    if (title && description) {
+        // Set reminder for 1 hour from now
+        const reminderDate = new Date(Date.now() + 60 * 60 * 1000);
+        
+        await addReminder({
+            title: title,
+            description: description,
+            reminder_date: reminderDate.toISOString(),
+            priority: 'medium'
+        });
+    }
+});
+
+// Get user location and update to backend
+document.getElementById('update-location-btn')?.addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                const address = `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`;
+                
+                await updateLocation({
+                    latitude: latitude,
+                    longitude: longitude,
+                    address: address
+                });
+                
+                alert(`Location updated: ${address}`);
+            },
+            (error) => {
+                console.error('Location error:', error);
+                alert('Could not get your location. Please enable location services.');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+});
+
+// Logout function
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}
+
+document.getElementById('logout-btn')?.addEventListener('click', logout);
 
 // Load data when page loads
 document.addEventListener('DOMContentLoaded', loadUserData);
