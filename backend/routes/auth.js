@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
+const auth = require('../middleware/auth');
 const router = express.Router();
 
 // Sign up route
@@ -120,6 +121,21 @@ router.post('/signin', async (req, res) => {
 
   } catch (error) {
     console.error('Signin error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get user activities
+router.get('/activities', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const activities = await query(
+      'SELECT * FROM user_activities WHERE user_id = $1 ORDER BY timestamp DESC LIMIT 50',
+      [userId]
+    );
+    res.json({ activities: activities.rows });
+  } catch (error) {
+    console.error('Get activities error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
