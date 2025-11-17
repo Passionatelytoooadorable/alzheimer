@@ -3,7 +3,7 @@ const { query } = require('../config/database');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Add new reminder
+// Add new reminder with tracking
 router.post('/', auth, async (req, res) => {
   try {
     const { title, description, reminder_date, priority } = req.body;
@@ -16,9 +16,10 @@ router.post('/', auth, async (req, res) => {
       [userId, title, description, reminder_date, priority]
     );
 
-    // Log activity
+    // Log reminder activity
     await query(
-      'INSERT INTO user_activities (user_id, activity_type, description) VALUES ($1, $2, $3)',
+      `INSERT INTO user_activities (user_id, activity_type, description) 
+       VALUES ($1, $2, $3)`,
       [userId, 'reminder_added', `Added reminder: ${title}`]
     );
 
@@ -43,64 +44,9 @@ router.get('/', auth, async (req, res) => {
       [userId]
     );
 
-    res.json({
-      reminders: reminders.rows
-    });
-
+    res.json({ reminders: reminders.rows });
   } catch (error) {
     console.error('Get reminders error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Update reminder completion status
-router.patch('/:id/complete', auth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { is_completed } = req.body;
-    const userId = req.user.userId;
-
-    const updatedReminder = await query(
-      'UPDATE reminders SET is_completed = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
-      [is_completed, id, userId]
-    );
-
-    if (updatedReminder.rows.length === 0) {
-      return res.status(404).json({ error: 'Reminder not found' });
-    }
-
-    res.json({
-      message: 'Reminder updated successfully',
-      reminder: updatedReminder.rows[0]
-    });
-
-  } catch (error) {
-    console.error('Update reminder error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Delete reminder
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user.userId;
-
-    const result = await query(
-      'DELETE FROM reminders WHERE id = $1 AND user_id = $2 RETURNING *',
-      [id, userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Reminder not found' });
-    }
-
-    res.json({
-      message: 'Reminder deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete reminder error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
