@@ -1,10 +1,12 @@
-// Login page JavaScript - Clean Version
+// Login page JavaScript - Updated with Live Backend API
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const textSizeBtn = document.getElementById('textSize');
     const highContrastBtn = document.getElementById('highContrast');
     
-    // Demo credentials
+    const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
+
+    // Demo credentials (for testing only)
     const validUsers = [
         { username: 'demo', password: 'demo123', name: 'Demo User' },
         { username: 'user@demo.com', password: 'password123', name: 'Alex Johnson' },
@@ -20,6 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!loginForm) return;
 
         loginForm.addEventListener('submit', handleLogin);
+        
+        // Check if user is already logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+            window.location.href = 'dashboard.html';
+        }
     }
 
     function handleLogin(e) {
@@ -31,8 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validation
         if (!validateInputs(username, password)) return;
         
-        // Attempt login
-        attemptLogin(username, password);
+        // Attempt login with backend API
+        attemptBackendLogin(username, password);
     }
 
     function validateInputs(username, password) {
@@ -43,40 +51,79 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    function attemptLogin(username, password) {
+    async function attemptBackendLogin(username, password) {
         const submitBtn = loginForm.querySelector('.login-button');
         const originalText = submitBtn.textContent;
         
         // Show loading state
         setButtonLoading(submitBtn, true, 'Signing In...');
         
-        // Simulate API call
-        setTimeout(() => {
-            const user = validUsers.find(u => 
-                u.username === username && u.password === password
-            );
+        try {
+            const credentials = {
+                email: username, // Backend accepts email or username
+                password: password
+            };
+
+            const response = await fetch(`${API_BASE}/auth/signin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(credentials)
+            });
             
-            if (user) {
-                loginSuccess(user, submitBtn, originalText);
+            const result = await response.json();
+            
+            if (result.token) {
+                loginSuccess(result, submitBtn, originalText);
             } else {
-                loginFailed(submitBtn, originalText);
+                // If backend login fails, try demo credentials as fallback
+                attemptDemoLogin(username, password, submitBtn, originalText);
             }
-        }, 1000);
+        } catch (error) {
+            console.error('Login API error:', error);
+            // If API is down, fall back to demo credentials
+            attemptDemoLogin(username, password, submitBtn, originalText);
+        }
     }
 
-    function loginSuccess(user, submitBtn, originalText) {
-    showMessage('Login successful! Redirecting...', 'success');
-    
-        // Store user session
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userName', user.name);
-        localStorage.setItem('userEmail', user.username);
+    function attemptDemoLogin(username, password, submitBtn, originalText) {
+        const user = validUsers.find(u => 
+            u.username === username && u.password === password
+        );
         
-        // Redirect to INDEX.HTML 
-    setTimeout(() => {
-        window.location.href = 'index.html'; 
-    }, 1500);
-}
+        if (user) {
+            // Create a mock backend response for demo users
+            const demoResponse = {
+                token: 'demo_token_' + Date.now(),
+                user: {
+                    id: 999,
+                    name: user.name,
+                    email: user.username,
+                    username: user.username
+                }
+            };
+            loginSuccess(demoResponse, submitBtn, originalText);
+        } else {
+            loginFailed(submitBtn, originalText);
+        }
+    }
+
+    function loginSuccess(loginData, submitBtn, originalText) {
+        showMessage('Login successful! Redirecting...', 'success');
+        
+        // Store user session with backend data
+        localStorage.setItem('token', loginData.token);
+        localStorage.setItem('user', JSON.stringify(loginData.user));
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', loginData.user.name);
+        localStorage.setItem('userEmail', loginData.user.email);
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
+    }
 
     function loginFailed(submitBtn, originalText) {
         showMessage('Invalid username or password. Please try again.', 'error');
@@ -168,11 +215,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: #1565c0;
                 line-height: 1.5;
             ">
-                <strong>💡 Demo Login Credentials:</strong><br>
+                <strong>💡 Login Options:</strong><br>
                 <div style="margin-top: 0.5rem;">
-                    • <strong>Username:</strong> <code>demo</code> | <strong>Password:</strong> <code>demo123</code><br>
-                    • <strong>Email:</strong> <code>user@demo.com</code> | <strong>Password:</strong> <code>password123</code><br>
-                    • <strong>Username:</strong> <code>test</code> | <strong>Password:</strong> <code>test</code>
+                    • <strong>Real Account:</strong> Use your registered email/password<br>
+                    • <strong>Demo Access:</strong> Try these test credentials:<br>
+                    &nbsp;&nbsp;- <strong>Username:</strong> <code>demo</code> | <strong>Password:</strong> <code>demo123</code><br>
+                    &nbsp;&nbsp;- <strong>Email:</strong> <code>user@demo.com</code> | <strong>Password:</strong> <code>password123</code>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
+                    <em>Demo accounts use local storage. Real accounts save to cloud database.</em>
                 </div>
             </div>
         `;
@@ -231,4 +282,3 @@ document.addEventListener('DOMContentLoaded', function() {
     
     autoFillDemo();
 });
-
