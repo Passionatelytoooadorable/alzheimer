@@ -8,7 +8,6 @@
     <!-- Simple default favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>👤</text></svg>">
 </head>
-</head>
 <body>
     <header class="header">
         <div class="logo">
@@ -101,6 +100,9 @@
                 </div>
                 
                 <button type="submit" class="login-button">Create Account</button>
+                
+                <!-- Error message container -->
+                <div id="error-message" class="error-message" style="display: none;"></div>
             </form>
             
             <div class="login-footer">
@@ -117,6 +119,166 @@
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
-    <script src="signup.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'https://alzheimer-vbm2.onrender.com/api'; 
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signupForm');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Password strength indicator
+            const passwordInput = document.getElementById('password');
+            const strengthBar = document.querySelector('.strength-bar');
+            const strengthText = document.querySelector('.strength-text');
+            
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                const strength = calculatePasswordStrength(password);
+                
+                // Update strength bar
+                strengthBar.style.width = strength.percentage + '%';
+                strengthBar.style.backgroundColor = strength.color;
+                
+                // Update strength text
+                strengthText.textContent = strength.text;
+            });
+            
+            // Form submission
+            signupForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Reset error message
+                errorMessage.style.display = 'none';
+                errorMessage.textContent = '';
+                
+                // Get form data
+                const formData = new FormData(signupForm);
+                const userData = {
+                    fullName: formData.get('fullName'),
+                    username: formData.get('username'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    password: formData.get('password'),
+                    confirmPassword: formData.get('confirmPassword'),
+                    terms: formData.get('terms') === 'on'
+                };
+                
+                // Validate passwords match
+                if (userData.password !== userData.confirmPassword) {
+                    showError('Passwords do not match');
+                    return;
+                }
+                
+                // Validate terms agreement
+                if (!userData.terms) {
+                    showError('You must agree to the Terms of Service and Privacy Policy');
+                    return;
+                }
+                
+                // Submit to API
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: userData.fullName,
+                            username: userData.username,
+                            email: userData.email,
+                            phone: userData.phone,
+                            password: userData.password
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Success - redirect to login or dashboard
+                        alert('Account created successfully! Please log in.');
+                        window.location.href = 'login.html';
+                    } else {
+                        // API returned an error
+                        showError(data.message || 'An error occurred during signup');
+                    }
+                } catch (error) {
+                    // Network or other error
+                    console.error('Signup error:', error);
+                    showError('Network error. Please try again.');
+                }
+            });
+            
+            // Accessibility features
+            document.getElementById('textSize').addEventListener('click', function() {
+                document.body.classList.toggle('large-text');
+            });
+            
+            document.getElementById('highContrast').addEventListener('click', function() {
+                document.body.classList.toggle('high-contrast');
+            });
+            
+            // Helper functions
+            function calculatePasswordStrength(password) {
+                let strength = 0;
+                let feedback = [];
+                
+                // Length check
+                if (password.length >= 8) {
+                    strength += 25;
+                } else {
+                    feedback.push('Use at least 8 characters');
+                }
+                
+                // Lowercase check
+                if (/[a-z]/.test(password)) {
+                    strength += 25;
+                } else {
+                    feedback.push('Include lowercase letters');
+                }
+                
+                // Uppercase check
+                if (/[A-Z]/.test(password)) {
+                    strength += 25;
+                } else {
+                    feedback.push('Include uppercase letters');
+                }
+                
+                // Number/Special character check
+                if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) {
+                    strength += 25;
+                } else {
+                    feedback.push('Include numbers or special characters');
+                }
+                
+                // Determine strength level
+                let level, color;
+                if (strength <= 25) {
+                    level = 'Weak';
+                    color = '#e74c3c';
+                } else if (strength <= 50) {
+                    level = 'Fair';
+                    color = '#f39c12';
+                } else if (strength <= 75) {
+                    level = 'Good';
+                    color = '#3498db';
+                } else {
+                    level = 'Strong';
+                    color = '#2ecc71';
+                }
+                
+                return {
+                    percentage: strength,
+                    color: color,
+                    text: feedback.length > 0 ? feedback.join(', ') : level
+                };
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
