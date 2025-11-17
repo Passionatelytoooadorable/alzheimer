@@ -1,51 +1,37 @@
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
+const helmet = require('helmet');
+const morgan = require('morgan');
 require('dotenv').config();
+
+// Import routes
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-
 // Middleware
+app.use(helmet());
 app.use(cors());
+app.use(morgan('combined'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// TEST ROUTE
+// Routes
+app.use('/api/auth', authRoutes);
+
+// TEST ROUTES
 app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: '✅ Backend is working!', 
-    timestamp: new Date().toISOString()
-  });
+  res.json({ message: '✅ Backend is working!', timestamp: new Date().toISOString() });
 });
 
-// DATABASE TEST
-app.get('/api/db-test', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW() as time');
-    res.json({ 
-      database: 'Connected ✅',
-      time: result.rows[0].time 
-    });
-  } catch (error) {
-    res.json({ 
-      database: 'Failed ❌',
-      error: error.message 
-    });
-  }
-});
-
-// HEALTH CHECK
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    environment: process.env.NODE_ENV || 'development'
-  });
+  res.json({ status: 'OK', environment: process.env.NODE_ENV });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
 app.listen(PORT, () => {
