@@ -3,7 +3,7 @@ const { query } = require('../config/database');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Add new memory
+// Add new memory - FIXED: Added auth middleware
 router.post('/', auth, async (req, res) => {
   try {
     const { title, description, memory_date, location, media_url } = req.body;
@@ -33,7 +33,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Get all memories for user
+// Get all memories for user - FIXED: Added auth middleware
 router.get('/', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
