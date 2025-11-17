@@ -279,7 +279,7 @@ function logout() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 }
 
 document.getElementById('logout-btn')?.addEventListener('click', logout);
