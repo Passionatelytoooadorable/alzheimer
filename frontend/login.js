@@ -22,12 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!loginForm) return;
 
         loginForm.addEventListener('submit', handleLogin);
-        
-        // Check if user is already logged in
-        const token = localStorage.getItem('token');
-        if (token) {
-            window.location.href = 'dashboard.html';
-        }
     }
 
     function handleLogin(e) {
@@ -282,3 +276,4 @@ document.addEventListener('DOMContentLoaded', function() {
     
     autoFillDemo();
 });
+
