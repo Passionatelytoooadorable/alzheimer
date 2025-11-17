@@ -44,18 +44,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // Add debug route to test database connection
-app.get('/api/debug-simple', async (req, res) => {
+app.get('/api/where-am-i', async (req, res) => {
   try {
-    const result = await pool.query('SELECT NOW()');
-    res.json({ 
-      status: 'Database connected',
-      time: result.rows[0].now 
+    const result = await pool.query('SELECT current_database() as db, current_schema() as schema');
+    res.json({
+      database: result.rows[0].db,
+      schema: result.rows[0].schema
     });
   } catch (error) {
-    res.json({ 
-      status: 'Database connection failed',
-      error: error.message 
-    });
+    res.json({ error: error.message });
   }
 });
 
@@ -80,6 +77,7 @@ app.listen(PORT, () => {
     });
 
 });
+
 
 
 
