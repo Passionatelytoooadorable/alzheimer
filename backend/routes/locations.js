@@ -3,7 +3,7 @@ const { query } = require('../config/database');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Update user location
+// Update user location with tracking
 router.post('/', auth, async (req, res) => {
   try {
     const { latitude, longitude, address } = req.body;
@@ -16,9 +16,10 @@ router.post('/', auth, async (req, res) => {
       [userId, latitude, longitude, address]
     );
 
-    // Log activity
+    // Log location activity
     await query(
-      'INSERT INTO user_activities (user_id, activity_type, description) VALUES ($1, $2, $3)',
+      `INSERT INTO user_activities (user_id, activity_type, description) 
+       VALUES ($1, $2, $3)`,
       [userId, 'location_updated', 'User location updated']
     );
 
@@ -46,36 +47,9 @@ router.get('/last', auth, async (req, res) => {
       [userId]
     );
 
-    res.json({
-      location: lastLocation.rows[0] || null
-    });
-
+    res.json({ location: lastLocation.rows[0] || null });
   } catch (error) {
     console.error('Get location error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get location history
-router.get('/history', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { limit = 50 } = req.query;
-
-    const locationHistory = await query(
-      `SELECT * FROM user_locations 
-       WHERE user_id = $1 
-       ORDER BY timestamp DESC 
-       LIMIT $2`,
-      [userId, limit]
-    );
-
-    res.json({
-      locations: locationHistory.rows
-    });
-
-  } catch (error) {
-    console.error('Get location history error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
