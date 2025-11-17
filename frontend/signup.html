@@ -123,40 +123,50 @@
     const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
     document.getElementById('signup-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const userData = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value,
-            phone_number: document.getElementById('phone').value
-        };
+    e.preventDefault();
+    
+    console.log('Signup form submitted'); 
+    
+    const userData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+        phone_number: document.getElementById('phone').value
+    };
 
-        try {
-            const response = await fetch(`${API_BASE}/auth/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData)
-            });
-            
-            const result = await response.json();
-            
-            if (result.token) {
-                localStorage.setItem('token', result.token);
-                localStorage.setItem('user', JSON.stringify(result.user));
-                alert('Signup successful!');
-                window.location.href = 'dashboard.html';
-            } else {
-                alert(result.error || 'Signup failed');
-            }
-        } catch (error) {
-            console.error('Signup failed:', error);
-            alert('Signup failed. Please try again.');
+    console.log('User data:', userData); 
+
+    try {
+        console.log('Sending request to backend...'); 
+        
+        const response = await fetch(`${API_BASE}/auth/signup`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        console.log('Response status:', response.status); 
+        console.log('Response headers:', response.headers);
+        
+        const result = await response.json();
+        console.log('Response result:', result); 
+        
+        if (result.token) {
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
+            alert('Signup successful!');
+            window.location.href = 'dashboard.html';
+        } else {
+            alert(result.error || 'Signup failed');
         }
-    });
+    } catch (error) {
+        console.error('Signup failed:', error); 
+        alert('Signup failed. Please try again.');
+    }
+});
 
     // Toggle between signup and login
     document.getElementById('show-login').addEventListener('click', function() {
