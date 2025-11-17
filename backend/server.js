@@ -6,6 +6,10 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const memoryRoutes = require('./routes/memories');
+const journalRoutes = require('./routes/journals');
+const reminderRoutes = require('./routes/reminders');
+const locationRoutes = require('./routes/locations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,14 +23,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/memories', memoryRoutes);
+app.use('/api/journals', journalRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/locations', locationRoutes);
 
-// TEST ROUTES
+// Test routes
 app.get('/api/test', (req, res) => {
-  res.json({ message: '✅ Backend is working!', timestamp: new Date().toISOString() });
+  res.json({ 
+    message: '✅ Backend is working!', 
+    timestamp: new Date().toISOString(),
+    status: 'SUCCESS'
+  });
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', environment: process.env.NODE_ENV });
+  res.json({ 
+    status: 'OK', 
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // 404 handler
