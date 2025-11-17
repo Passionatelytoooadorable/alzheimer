@@ -43,27 +43,40 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.get('/api/debug-db', async (req, res) => {
+// Add debug route to test database connection
+app.get('/api/debug-db-connection', async (req, res) => {
   try {
-    // Test each table individually
-    const tests = [];
+    // Test basic connection
+    const dbResult = await pool.query('SELECT current_database(), current_schema()');
     
-    const tables = ['users', 'memories', 'journals', 'reminders', 'user_locations', 'user_sessions', 'user_activities'];
+    // Test if we can see the users table
+    const tableResult = await pool.query(`
+      SELECT table_schema, table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'users'
+    `);
     
-    for (const table of tables) {
-      try {
-        await pool.query(`SELECT 1 FROM ${table} LIMIT 1`);
-        tests.push({ table, status: 'OK' });
-      } catch (error) {
-        tests.push({ table, status: 'MISSING', error: error.message });
-      }
-    }
+    // Test if we can query the users table
+    const userResult = await pool.query('SELECT COUNT(*) as user_count FROM users');
     
-    res.json({ tables: tests });
+    res.json({
+      connection: 'success',
+      currentDatabase: dbResult.rows[0].current_database,
+      currentSchema: dbResult.rows[0].current_schema,
+      tablesFound: tableResult.rows,
+      userCount: userResult.rows[0].user_count,
+      environment: process.env.NODE_ENV
+    });
   } catch (error) {
-    res.json({ error: error.message });
+    res.json({
+      connection: 'failed',
+      error: error.message,
+      currentDatabase: 'unknown',
+      environment: process.env.NODE_ENV
+    });
   }
 });
+
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -85,3 +98,4 @@ app.listen(PORT, () => {
     });
 
 });
+
