@@ -44,35 +44,17 @@ app.get('/api/health', (req, res) => {
 });
 
 // Add debug route to test database connection
-app.get('/api/debug-db-connection', async (req, res) => {
+app.get('/api/debug-simple', async (req, res) => {
   try {
-    // Test basic connection
-    const dbResult = await pool.query('SELECT current_database(), current_schema()');
-    
-    // Test if we can see the users table
-    const tableResult = await pool.query(`
-      SELECT table_schema, table_name 
-      FROM information_schema.tables 
-      WHERE table_name = 'users'
-    `);
-    
-    // Test if we can query the users table
-    const userResult = await pool.query('SELECT COUNT(*) as user_count FROM users');
-    
-    res.json({
-      connection: 'success',
-      currentDatabase: dbResult.rows[0].current_database,
-      currentSchema: dbResult.rows[0].current_schema,
-      tablesFound: tableResult.rows,
-      userCount: userResult.rows[0].user_count,
-      environment: process.env.NODE_ENV
+    const result = await pool.query('SELECT NOW()');
+    res.json({ 
+      status: 'Database connected',
+      time: result.rows[0].now 
     });
   } catch (error) {
-    res.json({
-      connection: 'failed',
-      error: error.message,
-      currentDatabase: 'unknown',
-      environment: process.env.NODE_ENV
+    res.json({ 
+      status: 'Database connection failed',
+      error: error.message 
     });
   }
 });
@@ -98,5 +80,6 @@ app.listen(PORT, () => {
     });
 
 });
+
 
 
