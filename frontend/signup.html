@@ -120,165 +120,48 @@
     </footer>
 
     <script>
-        // API Configuration
-        const API_BASE_URL = 'https://alzheimer-vbm2.onrender.com/api'; 
+    const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
+
+    document.getElementById('signup-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        document.addEventListener('DOMContentLoaded', function() {
-            const signupForm = document.getElementById('signupForm');
-            const errorMessage = document.getElementById('error-message');
-            
-            // Password strength indicator
-            const passwordInput = document.getElementById('password');
-            const strengthBar = document.querySelector('.strength-bar');
-            const strengthText = document.querySelector('.strength-text');
-            
-            passwordInput.addEventListener('input', function() {
-                const password = this.value;
-                const strength = calculatePasswordStrength(password);
-                
-                // Update strength bar
-                strengthBar.style.width = strength.percentage + '%';
-                strengthBar.style.backgroundColor = strength.color;
-                
-                // Update strength text
-                strengthText.textContent = strength.text;
+        const userData = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            phone_number: document.getElementById('phone').value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
             });
             
-            // Form submission
-            signupForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                // Reset error message
-                errorMessage.style.display = 'none';
-                errorMessage.textContent = '';
-                
-                // Get form data
-                const formData = new FormData(signupForm);
-                const userData = {
-                    fullName: formData.get('fullName'),
-                    username: formData.get('username'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone'),
-                    password: formData.get('password'),
-                    confirmPassword: formData.get('confirmPassword'),
-                    terms: formData.get('terms') === 'on'
-                };
-                
-                // Validate passwords match
-                if (userData.password !== userData.confirmPassword) {
-                    showError('Passwords do not match');
-                    return;
-                }
-                
-                // Validate terms agreement
-                if (!userData.terms) {
-                    showError('You must agree to the Terms of Service and Privacy Policy');
-                    return;
-                }
-                
-                // Submit to API
-                try {
-                    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            name: userData.fullName,
-                            username: userData.username,
-                            email: userData.email,
-                            phone: userData.phone,
-                            password: userData.password
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        // Success - redirect to login or dashboard
-                        alert('Account created successfully! Please log in.');
-                        window.location.href = 'login.html';
-                    } else {
-                        // API returned an error
-                        showError(data.message || 'An error occurred during signup');
-                    }
-                } catch (error) {
-                    // Network or other error
-                    console.error('Signup error:', error);
-                    showError('Network error. Please try again.');
-                }
-            });
+            const result = await response.json();
             
-            // Accessibility features
-            document.getElementById('textSize').addEventListener('click', function() {
-                document.body.classList.toggle('large-text');
-            });
-            
-            document.getElementById('highContrast').addEventListener('click', function() {
-                document.body.classList.toggle('high-contrast');
-            });
-            
-            // Helper functions
-            function calculatePasswordStrength(password) {
-                let strength = 0;
-                let feedback = [];
-                
-                // Length check
-                if (password.length >= 8) {
-                    strength += 25;
-                } else {
-                    feedback.push('Use at least 8 characters');
-                }
-                
-                // Lowercase check
-                if (/[a-z]/.test(password)) {
-                    strength += 25;
-                } else {
-                    feedback.push('Include lowercase letters');
-                }
-                
-                // Uppercase check
-                if (/[A-Z]/.test(password)) {
-                    strength += 25;
-                } else {
-                    feedback.push('Include uppercase letters');
-                }
-                
-                // Number/Special character check
-                if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) {
-                    strength += 25;
-                } else {
-                    feedback.push('Include numbers or special characters');
-                }
-                
-                // Determine strength level
-                let level, color;
-                if (strength <= 25) {
-                    level = 'Weak';
-                    color = '#e74c3c';
-                } else if (strength <= 50) {
-                    level = 'Fair';
-                    color = '#f39c12';
-                } else if (strength <= 75) {
-                    level = 'Good';
-                    color = '#3498db';
-                } else {
-                    level = 'Strong';
-                    color = '#2ecc71';
-                }
-                
-                return {
-                    percentage: strength,
-                    color: color,
-                    text: feedback.length > 0 ? feedback.join(', ') : level
-                };
+            if (result.token) {
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                alert('Signup successful!');
+                window.location.href = 'dashboard.html';
+            } else {
+                alert(result.error || 'Signup failed');
             }
-            
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.style.display = 'block';
-            }
-        });
-    </script>
+        } catch (error) {
+            console.error('Signup failed:', error);
+            alert('Signup failed. Please try again.');
+        }
+    });
+
+    // Toggle between signup and login
+    document.getElementById('show-login').addEventListener('click', function() {
+        window.location.href = 'index.html';
+    });
+</script>
 </body>
 </html>
