@@ -56,36 +56,42 @@
             
             <form id="signup-form" class="login-form">
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="Full Name" required>
+                    <label for="name" class="input-label">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
                 </div>
                 
                 <div class="form-group">
-                    <input type="email" id="email" name="email" placeholder="Email Address" required>
+                    <label for="email" class="input-label">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email address" required>
                 </div>
                 
                 <div class="form-group">
-                    <input type="text" id="username" name="username" placeholder="Username" required>
+                    <label for="username" class="input-label">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Choose a username" required>
                 </div>
                 
                 <div class="form-group">
-                    <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
+                    <label for="phone" class="input-label">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
                 </div>
                 
                 <div class="form-group">
-                    <input type="password" id="password" name="password" placeholder="Password" required>
+                    <label for="password" class="input-label">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Create a password" required>
                 </div>
                 
                 <div class="form-group">
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+                    <label for="confirmPassword" class="input-label">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
                 </div>
                 
-                <div class="form-group checkbox-group">
-                <input type="checkbox" id="terms" name="terms" required>
-                <label for="terms">
-                    I agree to the <a href="terms.html" style="color: #007bff; text-decoration: underline;">Terms and Conditions</a> 
-                    and <a href="privacy.html" style="color: #007bff; text-decoration: underline;">Privacy Policy</a>
-                </label>
-            </div>
+                <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 10px; margin: 1.5rem 0;">
+                    <input type="checkbox" id="terms" name="terms" required style="margin: 0;">
+                    <label for="terms" style="margin: 0; color: #0066cc; font-weight: 500;">
+                        I agree to the <a href="terms.html" style="color: #0066cc; text-decoration: underline;">Terms and Conditions</a> 
+                        and <a href="privacy.html" style="color: #0066cc; text-decoration: underline;">Privacy Policy</a>
+                    </label>
+                </div>
                 
                 <button type="submit" class="login-button">Create Account</button>
             </form>
