@@ -6,17 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
-    // Demo credentials (for testing only)
-    const validUsers = [
-        { username: 'demo', password: 'demo123', name: 'Demo User' },
-        { username: 'user@demo.com', password: 'password123', name: 'Alex Johnson' },
-        { username: 'test', password: 'test', name: 'Test User' }
-    ];
-
     // Initialize login functionality
     initLoginForm();
     initAccessibility();
-    addDemoHint();
 
     function initLoginForm() {
         if (!loginForm) return;
@@ -71,35 +63,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.token) {
                 loginSuccess(result, submitBtn, originalText);
             } else {
-                // If backend login fails, try demo credentials as fallback
-                attemptDemoLogin(username, password, submitBtn, originalText);
+                loginFailed(submitBtn, originalText, result.message || 'Invalid username or password');
             }
         } catch (error) {
             console.error('Login API error:', error);
-            // If API is down, fall back to demo credentials
-            attemptDemoLogin(username, password, submitBtn, originalText);
-        }
-    }
-
-    function attemptDemoLogin(username, password, submitBtn, originalText) {
-        const user = validUsers.find(u => 
-            u.username === username && u.password === password
-        );
-        
-        if (user) {
-            // Create a mock backend response for demo users
-            const demoResponse = {
-                token: 'demo_token_' + Date.now(),
-                user: {
-                    id: 999,
-                    name: user.name,
-                    email: user.username,
-                    username: user.username
-                }
-            };
-            loginSuccess(demoResponse, submitBtn, originalText);
-        } else {
-            loginFailed(submitBtn, originalText);
+            loginFailed(submitBtn, originalText, 'Network error. Please try again later.');
         }
     }
 
@@ -119,8 +87,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1500);
     }
 
-    function loginFailed(submitBtn, originalText) {
-        showMessage('Invalid username or password. Please try again.', 'error');
+    function loginFailed(submitBtn, originalText, message) {
+        showMessage(message, 'error');
         setButtonLoading(submitBtn, false, originalText);
         
         // Clear password field and refocus
@@ -195,39 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return messageDiv;
     }
 
-    function addDemoHint() {
-        const demoHint = document.createElement('div');
-        demoHint.className = 'demo-hint';
-        demoHint.innerHTML = `
-            <div style="
-                background: #e3f2fd;
-                border: 1px solid #bbdefb;
-                border-radius: 8px;
-                padding: 1rem;
-                margin: 2rem 0 1rem 0;
-                font-size: 0.85rem;
-                color: #1565c0;
-                line-height: 1.5;
-            ">
-                <strong>💡 Login Options:</strong><br>
-                <div style="margin-top: 0.5rem;">
-                    • <strong>Real Account:</strong> Use your registered email/password<br>
-                    • <strong>Demo Access:</strong> Try these test credentials:<br>
-                    &nbsp;&nbsp;- <strong>Username:</strong> <code>demo</code> | <strong>Password:</strong> <code>demo123</code><br>
-                    &nbsp;&nbsp;- <strong>Email:</strong> <code>user@demo.com</code> | <strong>Password:</strong> <code>password123</code>
-                </div>
-                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
-                    <em>Demo accounts use local storage. Real accounts save to cloud database.</em>
-                </div>
-            </div>
-        `;
-        
-        const loginFooter = document.querySelector('.login-footer');
-        if (loginFooter) {
-            loginFooter.parentNode.insertBefore(demoHint, loginFooter);
-        }
-    }
-
     function initAccessibility() {
         // Text size toggle
         if (textSizeBtn) {
@@ -263,16 +198,4 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
-    // Quick test function for development
-    function autoFillDemo() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('demo') === 'true') {
-            document.getElementById('username').value = 'demo';
-            document.getElementById('password').value = 'demo123';
-            showMessage('Demo credentials auto-filled. Click "Sign In" to continue.', 'success');
-        }
-    }
-    
-    autoFillDemo();
 });
