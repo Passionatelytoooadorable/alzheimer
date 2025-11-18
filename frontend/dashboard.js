@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check authentication
     if (!localStorage.getItem('token')) {
         window.location.href = 'login.html';
-        return;
     }
 
     initializeDashboard();
