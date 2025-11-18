@@ -1,4 +1,4 @@
-// Journal JavaScript - Updated with Backend API Integration
+// Journal JavaScript - Optimized for Fast Loading
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 class Journal {
@@ -18,10 +18,10 @@ class Journal {
     }
 
     async init() {
-        console.log('Journal initialized with backend API');
+        console.log('Journal initialized with fast loading');
         
-        // Load data from backend
-        await this.loadDataFromBackend();
+        // Load default data immediately (no API wait)
+        this.loadDefaultData();
         
         // Setup event listeners
         this.setupEventListeners();
@@ -31,50 +31,14 @@ class Journal {
         
         // Update dashboard stats
         this.updateDashboardStats();
-    }
-
-    async loadDataFromBackend() {
-        try {
-            // Load journal entries from backend
-            const entriesResponse = await fetch(`${API_BASE}/journals`, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
-            });
-            
-            if (entriesResponse.ok) {
-                const entriesData = await entriesResponse.json();
-                this.entries = entriesData.journals || [];
-                
-                // If no entries from backend, load sample data
-                if (this.entries.length === 0) {
-                    await this.loadSampleData();
-                }
-            } else {
-                await this.loadSampleData();
-            }
-            
-            // Load reminders (using localStorage for now since backend might not have reminders endpoint)
-            this.reminders = JSON.parse(localStorage.getItem('reminders')) || [];
-            if (this.reminders.length === 0) {
-                this.loadSampleReminders();
-            }
-            
-        } catch (error) {
-            console.error('Failed to load data from backend:', error);
-            // Fallback to sample data
-            await this.loadSampleData();
-            this.loadSampleReminders();
-        }
         
-        this.displayEntries();
-        this.displayReminders();
-        this.updateStats();
+        // Then try to sync with backend in background
+        this.syncWithBackend();
     }
 
-    async loadSampleData() {
-        // Sample journal entries
-        const sampleEntries = [
+    loadDefaultData() {
+        // Load default journal entries
+        const defaultEntries = [
             {
                 id: 1,
                 title: "A Wonderful Day with Family",
@@ -91,43 +55,12 @@ class Journal {
             }
         ];
 
-        // Save sample entries to backend
-        for (const entry of sampleEntries) {
-            try {
-                await fetch(`${API_BASE}/journals`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`
-                    },
-                    body: JSON.stringify({
-                        title: entry.title,
-                        content: entry.content,
-                        mood: entry.mood,
-                        date: entry.date
-                    })
-                });
-            } catch (error) {
-                console.error('Failed to save sample entry to backend:', error);
-            }
-        }
+        // Load from localStorage or use defaults
+        const savedEntries = localStorage.getItem('journalEntries');
+        this.entries = savedEntries ? JSON.parse(savedEntries) : defaultEntries;
 
-        // Reload entries from backend
-        const response = await fetch(`${API_BASE}/journals`, {
-            headers: {
-                'Authorization': `Bearer ${this.token}`
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            this.entries = data.journals || [];
-        }
-    }
-
-    loadSampleReminders() {
-        // Sample reminders
-        const sampleReminders = [
+        // Load default reminders
+        const defaultReminders = [
             {
                 id: 1,
                 title: "Take morning medication",
@@ -158,8 +91,79 @@ class Journal {
             }
         ];
 
-        this.reminders = sampleReminders;
-        localStorage.setItem('reminders', JSON.stringify(this.reminders));
+        const savedReminders = localStorage.getItem('reminders');
+        this.reminders = savedReminders ? JSON.parse(savedReminders) : defaultReminders;
+
+        // Display data immediately
+        this.displayEntries();
+        this.displayReminders();
+        this.updateStats();
+    }
+
+    async syncWithBackend() {
+        try {
+            // Try to load from backend
+            const entriesResponse = await fetch(`${API_BASE}/journals`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+            
+            if (entriesResponse.ok) {
+                const entriesData = await entriesResponse.json();
+                const backendEntries = entriesData.journals || [];
+                
+                if (backendEntries.length > 0) {
+                    // Use backend data if available
+                    this.entries = backendEntries;
+                    localStorage.setItem('journalEntries', JSON.stringify(this.entries));
+                } else {
+                    // If no backend data, save our default data to backend
+                    await this.saveDefaultDataToBackend();
+                }
+                
+                // Refresh display with updated data
+                this.displayEntries();
+                this.updateStats();
+                this.initializeCalendar();
+            }
+        } catch (error) {
+            console.log('Backend sync failed, using local data:', error);
+            // Continue with local data - no problem
+        }
+    }
+
+    async saveDefaultDataToBackend() {
+        // Only save if we have default data that's not in backend
+        const defaultEntries = [
+            {
+                title: "A Wonderful Day with Family",
+                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                mood: "😊",
+                date: new Date().toISOString().split('T')[0]
+            },
+            {
+                title: "Morning Walk Thoughts",
+                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+                mood: "😌",
+                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            }
+        ];
+
+        for (const entry of defaultEntries) {
+            try {
+                await fetch(`${API_BASE}/journals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify(entry)
+                });
+            } catch (error) {
+                console.log('Failed to save default entry to backend:', error);
+            }
+        }
     }
 
     setupEventListeners() {
@@ -343,11 +347,12 @@ class Journal {
         }
     }
 
-    formatTime(timeString) { 
-        const [hours, minutes] = timeString.split(':'); 
-        const hour = parseInt(hours); 
-        const ampm = hour >= 12 ? 'PM' : 'AM'; 
-        return `${hours}:${minutes} ${ampm}`; 
+    formatTime(timeString) {
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
     }
 
     initializeCalendar() {
@@ -550,16 +555,34 @@ class Journal {
         };
         
         try {
+            let newEntry;
+            
             if (editingId) {
                 // Update existing entry
-                await this.updateEntryInBackend(editingId, entryData);
+                newEntry = await this.updateEntryInBackend(editingId, entryData);
+                // Update local data
+                const index = this.entries.findIndex(entry => entry.id == editingId);
+                if (index !== -1) {
+                    this.entries[index] = { ...this.entries[index], ...entryData };
+                }
             } else {
                 // Create new entry
-                await this.addEntryToBackend(entryData);
+                newEntry = await this.addEntryToBackend(entryData);
+                // Add to local data with ID
+                if (newEntry && newEntry.journal) {
+                    this.entries.push(newEntry.journal);
+                } else {
+                    // Fallback: create local entry if backend fails
+                    const localEntry = {
+                        id: Date.now(),
+                        ...entryData
+                    };
+                    this.entries.push(localEntry);
+                }
             }
             
-            // Reload entries from backend
-            await this.loadDataFromBackend();
+            // Save to localStorage
+            localStorage.setItem('journalEntries', JSON.stringify(this.entries));
             
             // Close form and show entries
             this.closeNewEntryForm();
@@ -568,14 +591,41 @@ class Journal {
             this.displayEntries();
             this.updateStats();
             this.initializeCalendar();
+            this.updateDashboardStats();
             
             // Show success message
             this.showNotification(`Journal entry ${editingId ? 'updated' : 'saved'} successfully!`, 'success');
             
         } catch (error) {
             console.error('Failed to save journal entry:', error);
-            this.showNotification('Failed to save journal entry. Please try again.', 'error');
+            // Fallback: save locally
+            this.saveEntryLocally(entryData, editingId);
         }
+    }
+
+    saveEntryLocally(entryData, editingId) {
+        if (editingId) {
+            // Update local entry
+            const index = this.entries.findIndex(entry => entry.id == editingId);
+            if (index !== -1) {
+                this.entries[index] = { ...this.entries[index], ...entryData };
+            }
+        } else {
+            // Create new local entry
+            const localEntry = {
+                id: Date.now(),
+                ...entryData
+            };
+            this.entries.push(localEntry);
+        }
+        
+        localStorage.setItem('journalEntries', JSON.stringify(this.entries));
+        this.closeNewEntryForm();
+        this.displayEntries();
+        this.updateStats();
+        this.initializeCalendar();
+        this.updateDashboardStats();
+        this.showNotification(`Journal entry ${editingId ? 'updated' : 'saved'} locally!`, 'success');
     }
 
     async addEntryToBackend(entryData) {
@@ -649,11 +699,6 @@ class Journal {
         window.dispatchEvent(new StorageEvent('storage', {
             key: 'weeklyCount', 
             newValue: weeklyCount.toString()
-        }));
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'reminderCount',
-            newValue: todayReminders.length.toString()
         }));
     }
 
@@ -774,22 +819,22 @@ class Journal {
         if (confirm('Are you sure you want to delete this journal entry?')) {
             try {
                 await this.deleteEntryFromBackend(id);
-                
-                // Remove from local array
-                this.entries = this.entries.filter(entry => entry.id !== id);
-                
-                // Update dashboard stats after deletion
-                this.updateDashboardStats();
-                
-                this.displayEntries();
-                this.updateStats();
-                this.initializeCalendar();
-                
-                this.showNotification('Journal entry deleted successfully!', 'success');
             } catch (error) {
-                console.error('Failed to delete journal entry:', error);
-                this.showNotification('Failed to delete journal entry. Please try again.', 'error');
+                console.log('Backend delete failed, deleting locally:', error);
             }
+            
+            // Always delete locally
+            this.entries = this.entries.filter(entry => entry.id !== id);
+            localStorage.setItem('journalEntries', JSON.stringify(this.entries));
+            
+            // Update dashboard stats after deletion
+            this.updateDashboardStats();
+            
+            this.displayEntries();
+            this.updateStats();
+            this.initializeCalendar();
+            
+            this.showNotification('Journal entry deleted successfully!', 'success');
         }
     }
 
@@ -821,7 +866,8 @@ class Journal {
             font-weight: 600;
             z-index: 10000;
             animation: slideIn 0.3s ease;
-            ${type === 'success' ? 'background: #4ecdc4;' : 'background: #a8d0e6;'}
+            ${type === 'success' ? 'background: #4ecdc4;' : 
+              type === 'error' ? 'background: #ff6b6b;' : 'background: #a8d0e6;'}
         `;
         
         document.body.appendChild(notification);
@@ -832,6 +878,7 @@ class Journal {
     }
 }
 
+// Add CSS for notifications if not already present
 if (!document.querySelector('#journal-notifications')) {
     const style = document.createElement('style');
     style.id = 'journal-notifications';
