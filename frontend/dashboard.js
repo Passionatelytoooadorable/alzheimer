@@ -135,7 +135,23 @@ async function updateLocation(locationData) {
     }
 }
 
-// Display functions (keep your existing display functions)
+function updateDashboardCounts() {
+    // Update memory count from localStorage
+    const memories = JSON.parse(localStorage.getItem('memories')) || [];
+    document.getElementById('memoryCount').textContent = memories.length;
+    document.getElementById('memoryCount2').textContent = memories.length;
+    
+    // Update journal count (you'll need to implement journal storage)
+    const journals = JSON.parse(localStorage.getItem('journals')) || [];
+    document.getElementById('journalCount').textContent = journals.length;
+    document.getElementById('journalCount2').textContent = journals.length;
+    
+    // Update user name
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    document.getElementById('userName').textContent = user.name || 'User';
+}
+
+// Display functions
 function displayMemories(memories) {
     const container = document.getElementById('memories-container');
     if (!container) return;
@@ -285,4 +301,7 @@ function logout() {
 document.getElementById('logout-btn')?.addEventListener('click', logout);
 
 // Load data when page loads
-document.addEventListener('DOMContentLoaded', loadUserData);
+document.addEventListener('DOMContentLoaded', function() {
+    updateDashboardCounts();
+    loadUserData();
+});
