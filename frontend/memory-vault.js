@@ -310,6 +310,16 @@ function handleMemorySubmit(e) {
     memories.push(memory);
     localStorage.setItem('memories', JSON.stringify(memories));
     
+    // Dispatch update event
+    window.dispatchEvent(new CustomEvent('memoryUpdated', {
+        detail: { count: memories.length }
+    }));
+    
+    // Update dashboard directly if on same page
+    if (typeof updateDashboardCounts === 'function') {
+        updateDashboardCounts();
+    }
+    
     // Update dashboard stats
     updateDashboardMemoryStats();
     
