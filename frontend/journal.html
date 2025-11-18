@@ -6,7 +6,6 @@
     <title>Daily Journal - Alzheimer's Support</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="journal.css">
-    <!-- Simple default favicon -->
     <link rel="icon" href="#" id="dynamic-favicon">
     <script src="favicon-config.js"></script>
 </head>
@@ -26,7 +25,6 @@
     </header>
 
     <main class="journal-container">
-        <!-- Full Width Header -->
         <section class="journal-header">
             <div class="header-content">
                 <div class="header-text">
@@ -58,11 +56,8 @@
             </div>
         </section>
 
-        <!-- Main Content - Side by Side Layout -->
         <div class="main-content">
-            <!-- Left Side - Journal Content -->
             <div class="journal-content">
-                <!-- Quick Actions -->
                 <section class="quick-actions">
                     <button class="action-btn primary" id="newEntryBtn">
                         <span class="btn-icon">➕</span>
@@ -78,9 +73,7 @@
                     </button>
                 </section>
 
-                <!-- Dynamic Content Area -->
                 <div class="content-area">
-                    <!-- Journal Entries List - Initially Visible -->
                     <section class="entries-section" id="entriesSection">
                         <div class="section-header">
                             <h2>Your Journal Entries</h2>
@@ -91,13 +84,11 @@
                                 <button class="filter-btn" data-filter="month">This Month</button>
                             </div>
                         </div>
-
                         <div class="entries-list" id="entriesList">
-                            <!-- Journal entries will be dynamically added here -->
+                            <!-- Entries will be loaded here -->
                         </div>
                     </section>
 
-                    <!-- Journal Form - Initially Hidden -->
                     <section class="journal-form-section" id="journalFormSection" style="display: none;">
                         <div class="form-header">
                             <h2 id="formTitle">New Journal Entry</h2>
@@ -134,7 +125,6 @@
                         </form>
                     </section>
 
-                    <!-- Writing Prompts Section - Initially Hidden -->
                     <section class="prompts-section" id="promptsSection" style="display: none;">
                         <div class="section-header">
                             <h2>Writing Prompts</h2>
@@ -174,9 +164,7 @@
                 </div>
             </div>
 
-            <!-- Right Side - Calendar & Reminders -->
             <aside class="calendar-sidebar">
-                <!-- Calendar Section -->
                 <div class="calendar-section">
                     <h3>Memory Calendar</h3>
                     <div class="calendar-container">
@@ -186,26 +174,24 @@
                             <button class="nav-btn" id="nextMonth">›</button>
                         </div>
                         <div class="calendar-grid" id="calendarGrid">
-                            <!-- Calendar days will be dynamically generated -->
+                            <!-- Calendar will be loaded here -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Reminders Section -->
                 <div class="reminders-section">
                     <div class="section-header">
                         <h3>Today's Reminders</h3>
                         <button class="add-reminder-btn" id="addReminderBtn">+ Add</button>
                     </div>
                     <div class="reminders-list" id="remindersList">
-                        <!-- Reminders will be dynamically added here -->
+                        <!-- Reminders will be loaded here -->
                     </div>
                 </div>
             </aside>
         </div>
     </main>
 
-    <!-- Add Reminder Modal -->
     <div id="reminderModal" class="modal">
         <div class="modal-content reminder-modal">
             <span class="close">&times;</span>
