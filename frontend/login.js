@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const textSizeBtn = document.getElementById('textSize');
     const highContrastBtn = document.getElementById('highContrast');
-    const createAccountLink = document.querySelector('.create-account-link');
     
     const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
@@ -18,17 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initLoginForm();
     initAccessibility();
     addDemoHint();
-    
-    // Create account link redirect
-    if (createAccountLink) {
-        createAccountLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            // For demo purposes, auto-fill demo credentials and submit
-            document.getElementById('username').value = 'demo';
-            document.getElementById('password').value = 'demo123';
-            loginForm.dispatchEvent(new Event('submit'));
-        });
-    }
 
     function initLoginForm() {
         if (!loginForm) return;
