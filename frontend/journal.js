@@ -36,66 +36,42 @@ class Journal {
         this.syncWithBackend();
     }
 
-    // Helper function to get IST date in YYYY-MM-DD format
-    getISTDate(date = new Date()) {
-        // Get date in local timezone (browser will handle IST automatically)
-        const localDate = new Date(date);
-        const year = localDate.getFullYear();
-        const month = String(localDate.getMonth() + 1).padStart(2, '0');
-        const day = String(localDate.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
     loadDefaultData() {
-        // Get dates for default entries - use fixed dates that won't change
-        const today = this.getISTDate();
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayFormatted = this.getISTDate(yesterday);
-
-        // Default entries with permanent dates
+        // Fixed dates for November 17th and 18th, 2025
         const defaultEntries = [
             {
                 id: 1,
                 title: "A Wonderful Day with Family",
-                date: "2024-01-15", // Fixed date that will always exist
+                date: "2025-11-17",
                 content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-                mood: "😊",
-                isDefault: true // Mark as default entry
+                mood: "😊"
             },
             {
                 id: 2,
-                title: "Morning Walk Thoughts", 
-                date: "2024-01-14", // Fixed date that will always exist
+                title: "Morning Walk Thoughts",
+                date: "2025-11-18", 
                 content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
-                mood: "😌",
-                isDefault: true // Mark as default entry
+                mood: "😌"
             }
         ];
 
-        // Load from localStorage
+        // Load from localStorage or use defaults
         const savedEntries = localStorage.getItem('journalEntries');
         
         if (savedEntries) {
-            // Use saved entries but ensure default entries are preserved
+            // Use saved entries, but ensure we don't have duplicates
             const parsedEntries = JSON.parse(savedEntries);
             
-            // Check if default entries exist in saved data
-            const hasDefault1 = parsedEntries.some(entry => entry.id === 1);
-            const hasDefault2 = parsedEntries.some(entry => entry.id === 2);
-            
-            if (!hasDefault1 || !hasDefault2) {
-                // Add missing default entries
-                this.entries = [...defaultEntries, ...parsedEntries.filter(entry => entry.id !== 1 && entry.id !== 2)];
-            } else {
-                this.entries = parsedEntries;
-            }
+            // Remove any duplicate default entries and keep user entries
+            const userEntries = parsedEntries.filter(entry => entry.id !== 1 && entry.id !== 2);
+            this.entries = [...defaultEntries, ...userEntries];
         } else {
             // First time load - use defaults
             this.entries = defaultEntries;
         }
 
-        // Load default reminders with current dates
+        // Load default reminders
+        const today = new Date().toISOString().split('T')[0];
         const defaultReminders = [
             {
                 id: 1,
@@ -130,7 +106,7 @@ class Journal {
         const savedReminders = localStorage.getItem('reminders');
         this.reminders = savedReminders ? JSON.parse(savedReminders) : defaultReminders;
 
-        // Save to localStorage to ensure defaults are preserved
+        // Save to localStorage
         localStorage.setItem('journalEntries', JSON.stringify(this.entries));
 
         // Display data immediately
@@ -153,14 +129,29 @@ class Journal {
                 const backendEntries = entriesData.journals || [];
                 
                 if (backendEntries.length > 0) {
-                    // Merge backend data with local defaults
-                    const localDefaults = this.entries.filter(entry => entry.isDefault);
-                    const backendNonDefaults = backendEntries.filter(entry => !entry.isDefault);
-                    this.entries = [...localDefaults, ...backendNonDefaults];
+                    // Merge backend data with our default entries
+                    const backendNonDefaults = backendEntries.filter(entry => entry.id !== 1 && entry.id !== 2);
+                    
+                    // Keep our default entries and add backend entries
+                    const defaultEntries = [
+                        {
+                            id: 1,
+                            title: "A Wonderful Day with Family",
+                            date: "2025-11-17",
+                            content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                            mood: "😊"
+                        },
+                        {
+                            id: 2,
+                            title: "Morning Walk Thoughts",
+                            date: "2025-11-18",
+                            content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+                            mood: "😌"
+                        }
+                    ];
+                    
+                    this.entries = [...defaultEntries, ...backendNonDefaults];
                     localStorage.setItem('journalEntries', JSON.stringify(this.entries));
-                } else {
-                    // If no backend data, save our data to backend
-                    await this.saveDataToBackend();
                 }
                 
                 // Refresh display with updated data
@@ -171,31 +162,6 @@ class Journal {
         } catch (error) {
             console.log('Backend sync failed, using local data:', error);
             // Continue with local data - no problem
-        }
-    }
-
-    async saveDataToBackend() {
-        // Save all non-default entries to backend
-        const nonDefaultEntries = this.entries.filter(entry => !entry.isDefault);
-        
-        for (const entry of nonDefaultEntries) {
-            try {
-                await fetch(`${API_BASE}/journals`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`
-                    },
-                    body: JSON.stringify({
-                        title: entry.title,
-                        content: entry.content,
-                        mood: entry.mood,
-                        date: entry.date
-                    })
-                });
-            } catch (error) {
-                console.log('Failed to save entry to backend:', error);
-            }
         }
     }
 
@@ -269,16 +235,10 @@ class Journal {
     displayEntries(filter = 'all') {
         const entriesList = document.getElementById('entriesList');
         
-        // Get current date in IST for filtering
-        const today = this.getISTDate();
-        
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const oneWeekAgoFormatted = this.getISTDate(oneWeekAgo);
-        
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
-        const oneMonthAgoFormatted = this.getISTDate(oneMonthAgo);
+        // Filter entries
+        const today = new Date().toISOString().split('T')[0];
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         
         let filteredEntries = this.entries;
         
@@ -287,10 +247,10 @@ class Journal {
                 filteredEntries = this.entries.filter(entry => entry.date === today);
                 break;
             case 'week':
-                filteredEntries = this.entries.filter(entry => entry.date >= oneWeekAgoFormatted);
+                filteredEntries = this.entries.filter(entry => entry.date >= oneWeekAgo);
                 break;
             case 'month':
-                filteredEntries = this.entries.filter(entry => entry.date >= oneMonthAgoFormatted);
+                filteredEntries = this.entries.filter(entry => entry.date >= oneMonthAgo);
                 break;
         }
 
@@ -331,7 +291,7 @@ class Journal {
                 <div class="entry-mood">${entry.mood}</div>
                 <div class="entry-actions">
                     <button class="entry-btn edit" onclick="journal.editEntry(${entry.id})">Edit</button>
-                    ${!entry.isDefault ? `<button class="entry-btn delete" onclick="journal.deleteEntry(${entry.id})">Delete</button>` : ''}
+                    <button class="entry-btn delete" onclick="journal.deleteEntry(${entry.id})">Delete</button>
                 </div>
             </div>
         `;
@@ -346,7 +306,7 @@ class Journal {
     }
 
     displayReminders() {
-        const today = this.getISTDate();
+        const today = new Date().toISOString().split('T')[0];
         const todayReminders = this.reminders.filter(reminder => reminder.date === today);
         const remindersList = document.getElementById('remindersList');
         
@@ -509,7 +469,7 @@ class Journal {
         // Reset form
         document.getElementById('formTitle').textContent = 'New Journal Entry';
         document.getElementById('journalForm').reset();
-        document.getElementById('entryDate').value = this.getISTDate();
+        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('selectedMood').value = '';
         document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
         
@@ -542,7 +502,7 @@ class Journal {
         const form = document.getElementById('reminderForm');
         
         form.reset();
-        document.getElementById('reminderDate').value = this.getISTDate();
+        document.getElementById('reminderDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('reminderTime').value = '08:00';
         
         modal.style.display = 'block';
@@ -724,7 +684,7 @@ class Journal {
         localStorage.setItem('weeklyCount', weeklyCount.toString());
         
         // Get reminder count for today
-        const today = this.getISTDate();
+        const today = new Date().toISOString().split('T')[0];
         const todayReminders = this.reminders.filter(reminder => reminder.date === today);
         localStorage.setItem('reminderCount', todayReminders.length.toString());
         
@@ -744,11 +704,8 @@ class Journal {
     }
 
     calculateWeeklyCount() {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const oneWeekAgoFormatted = this.getISTDate(oneWeekAgo);
-        
-        const weeklyEntries = this.entries.filter(entry => entry.date >= oneWeekAgoFormatted);
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const weeklyEntries = this.entries.filter(entry => entry.date >= oneWeekAgo);
         return weeklyEntries.length;
     }
 
@@ -835,7 +792,7 @@ class Journal {
     editEntry(id) {
         const entry = this.entries.find(e => e.id === id);
         
-        if (entry && !entry.isDefault) { // Don't allow editing default entries
+        if (entry) {
             this.openNewEntryForm();
             
             // Update form title
@@ -856,19 +813,10 @@ class Journal {
             
             // Store the ID for updating
             document.getElementById('journalForm').dataset.editingId = id;
-        } else if (entry && entry.isDefault) {
-            this.showNotification('Default entries cannot be edited.', 'info');
         }
     }
 
     async deleteEntry(id) {
-        const entry = this.entries.find(e => e.id === id);
-        
-        if (entry && entry.isDefault) {
-            this.showNotification('Default entries cannot be deleted.', 'info');
-            return;
-        }
-        
         if (confirm('Are you sure you want to delete this journal entry?')) {
             try {
                 await this.deleteEntryFromBackend(id);
