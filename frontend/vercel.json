@@ -1,12 +1,12 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/",
-      "dest": "/login.html"
+      "source": "/",
+      "destination": "/index.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/home",
+      "destination": "/index.html"
     }
   ]
 }
