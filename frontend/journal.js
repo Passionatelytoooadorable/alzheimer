@@ -1,4 +1,4 @@
-// Journal JavaScript with Live Backend API Integration
+// Journal JavaScript with Live Backend API Integration and Default Data
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 class Journal {
@@ -20,7 +20,7 @@ class Journal {
     async init() {
         console.log('Journal initialized with backend API');
         
-        // Load data from backend
+        // Load data from backend and create default entries if needed
         await this.loadJournalData();
         
         // Setup event listeners
@@ -59,7 +59,12 @@ class Journal {
             
             console.log('Loaded journals from backend:', this.entries);
             
-            // Load reminders (using localStorage for now as per original)
+            // Create default entries if this is user's first time
+            if (this.entries.length === 0) {
+                await this.createDefaultJournalEntries();
+            }
+            
+            // Load reminders (using localStorage as per original)
             this.loadReminders();
             
             this.displayEntries();
@@ -69,6 +74,67 @@ class Journal {
             console.error('Failed to load journal data:', error);
             // Fallback to localStorage if backend fails
             this.loadFromLocalStorage();
+        }
+    }
+
+    async createDefaultJournalEntries() {
+        console.log('Creating default journal entries for new user...');
+        
+        const defaultEntries = [
+            {
+                title: "A Wonderful Day with Family",
+                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                mood: "happy",
+                date: new Date().toISOString().split('T')[0] // Today
+            },
+            {
+                title: "Morning Walk Thoughts", 
+                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+                mood: "calm",
+                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Yesterday
+            }
+        ];
+
+        try {
+            for (const entryData of defaultEntries) {
+                await this.createJournalEntry(entryData);
+            }
+            console.log('Default journal entries created successfully');
+            
+            // Reload entries to include the new ones
+            await this.reloadJournalEntries();
+            
+        } catch (error) {
+            console.error('Failed to create default journal entries:', error);
+        }
+    }
+
+    async reloadJournalEntries() {
+        try {
+            const response = await fetch(`${API_BASE}/journals`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.entries = data.journals || [];
+                
+                // Transform backend data to match frontend format
+                this.entries = this.entries.map(entry => ({
+                    id: entry.id,
+                    title: entry.title || 'Untitled Entry',
+                    date: new Date(entry.created_at).toISOString().split('T')[0],
+                    content: entry.content,
+                    mood: this.convertMoodToEmoji(entry.mood)
+                }));
+                
+                this.displayEntries();
+                this.updateStats();
+            }
+        } catch (error) {
+            console.error('Failed to reload journal entries:', error);
         }
     }
 
@@ -101,19 +167,18 @@ class Journal {
             this.entries = localEntries;
             this.displayEntries();
             this.updateStats();
-        } else {
-            // Show empty state
-            this.displayEntries();
         }
     }
 
     loadReminders() {
-        // Load reminders from localStorage (as per original functionality)
-        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        // Check if reminders already exist in localStorage
+        let reminders = JSON.parse(localStorage.getItem('reminders')) || [];
         
-        // Sample reminders if none exist
+        // Create default reminders if none exist (first time user)
         if (reminders.length === 0) {
-            const sampleReminders = [
+            console.log('Creating default reminders for new user...');
+            
+            const defaultReminders = [
                 {
                     id: 1,
                     title: "Take morning medication",
@@ -130,7 +195,7 @@ class Journal {
                 },
                 {
                     id: 3,
-                    title: "Call family member",
+                    title: "Call family member", 
                     date: new Date().toISOString().split('T')[0],
                     time: "17:00",
                     completed: false
@@ -143,7 +208,10 @@ class Journal {
                     completed: false
                 }
             ];
-            localStorage.setItem('reminders', JSON.stringify(sampleReminders));
+            
+            reminders = defaultReminders;
+            localStorage.setItem('reminders', JSON.stringify(reminders));
+            console.log('Default reminders created successfully');
         }
         
         this.displayReminders();
@@ -564,7 +632,7 @@ class Journal {
             this.closeNewEntryForm();
             
             // Refresh display
-            await this.loadJournalData();
+            await this.reloadJournalEntries();
             this.initializeCalendar();
             
             // Show success message
@@ -791,7 +859,7 @@ class Journal {
                 this.updateDashboardStats();
                 
                 // Refresh data
-                await this.loadJournalData();
+                await this.reloadJournalEntries();
                 this.initializeCalendar();
                 
                 this.showNotification('Journal entry deleted successfully!', 'success');
