@@ -151,45 +151,52 @@ class Journal {
     }
 
     async saveDefaultDataToBackend() {
-        // Get today's date and yesterday's date in correct format
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        const todayFormatted = today.toISOString().split('T')[0];
-        const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+    // Get dates in IST timezone
+    const getISTDate = () => {
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istTime = new Date(now.getTime() + istOffset);
+        return istTime.toISOString().split('T')[0];
+    };
 
-        // Only save if we have default data that's not in backend
-        const defaultEntries = [
-            {
-                title: "A Wonderful Day with Family",
-                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-                mood: "😊",
-                date: todayFormatted
-            },
-            {
-                title: "Morning Walk Thoughts",
-                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
-                mood: "😌",
-                date: yesterdayFormatted
-            }
-        ];
+    const today = getISTDate();
+    
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayIST = new Date(yesterday.getTime() + (5.5 * 60 * 60 * 1000));
+    const yesterdayFormatted = yesterdayIST.toISOString().split('T')[0];
 
-        for (const entry of defaultEntries) {
-            try {
-                await fetch(`${API_BASE}/journals`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`
-                    },
-                    body: JSON.stringify(entry)
-                });
-            } catch (error) {
-                console.log('Failed to save default entry to backend:', error);
-            }
+    // Only save if we have default data that's not in backend
+    const defaultEntries = [
+        {
+            title: "A Wonderful Day with Family",
+            content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+            mood: "😊",
+            date: today
+        },
+        {
+            title: "Morning Walk Thoughts",
+            content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+            mood: "😌",
+            date: yesterdayFormatted
+        }
+    ];
+
+    for (const entry of defaultEntries) {
+        try {
+            await fetch(`${API_BASE}/journals`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify(entry)
+            });
+        } catch (error) {
+            console.log('Failed to save default entry to backend:', error);
         }
     }
+}
 
     setupEventListeners() {
         // New Entry Button
@@ -937,4 +944,5 @@ let journal;
 document.addEventListener('DOMContentLoaded', function() {
     journal = new Journal();
 });
+
 
