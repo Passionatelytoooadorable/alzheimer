@@ -1,4 +1,3 @@
-// Journal JavaScript - Simple and Working Version
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 class Journal {
@@ -17,14 +16,21 @@ class Journal {
 
     async init() {
         console.log('Journal initialized');
-        await this.loadInitialData();
+        
+        // FIRST: Always create and show default entries immediately
+        await this.createAndShowDefaultEntries();
+        
+        // THEN: Setup everything else
         this.setupEventListeners();
         this.initializeCalendar();
+        this.loadReminders();
         this.updateDashboardStats();
     }
 
-    async loadInitialData() {
-        // Load journal entries
+    async createAndShowDefaultEntries() {
+        console.log('Creating default entries...');
+        
+        // First try to load from backend
         try {
             const response = await fetch(`${API_BASE}/journals`, {
                 headers: {
@@ -44,83 +50,79 @@ class Journal {
                     content: entry.content,
                     mood: this.convertMoodToEmoji(entry.mood)
                 }));
+                
+                console.log('Loaded from backend:', this.entries.length, 'entries');
             }
         } catch (error) {
-            console.error('Failed to load journals:', error);
+            console.error('Backend failed, using local storage:', error);
+            // Load from localStorage if backend fails
+            const localEntries = JSON.parse(localStorage.getItem('journalEntries')) || [];
+            this.entries = localEntries;
         }
 
-        // Create default entries if empty
+        // If no entries exist, CREATE THEM RIGHT NOW
         if (this.entries.length === 0) {
-            await this.createDefaultEntries();
+            console.log('No entries found, creating default entries immediately...');
+            
+            const defaultEntries = [
+                {
+                    id: 1,
+                    title: "A Wonderful Day with Family",
+                    date: new Date().toISOString().split('T')[0],
+                    content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                    mood: "😊"
+                },
+                {
+                    id: 2,
+                    title: "Morning Walk Thoughts",
+                    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+                    mood: "😌"
+                }
+            ];
+            
+            // Save to localStorage immediately
+            localStorage.setItem('journalEntries', JSON.stringify(defaultEntries));
+            this.entries = defaultEntries;
+            
+            console.log('Default entries created and saved to localStorage');
+            
+            // Try to save to backend too (but don't wait for it)
+            this.saveDefaultsToBackend(defaultEntries);
         }
 
-        // Load and display entries
+        // DISPLAY THE ENTRIES IMMEDIATELY
         this.displayEntries();
         this.updateStats();
-
-        // Load reminders
-        this.loadReminders();
+        console.log('Entries displayed:', this.entries);
     }
 
-    async createDefaultEntries() {
-        const defaultEntries = [
-            {
-                title: "A Wonderful Day with Family",
-                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-                mood: "happy",
-                date: new Date().toISOString().split('T')[0]
-            },
-            {
-                title: "Morning Walk Thoughts", 
-                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
-                mood: "calm",
-                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-            }
-        ];
-
-        for (const entryData of defaultEntries) {
+    async saveDefaultsToBackend(defaultEntries) {
+        // Try to save defaults to backend in background
+        for (const entry of defaultEntries) {
             try {
-                await this.createJournalEntry(entryData);
+                await fetch(`${API_BASE}/journals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify({
+                        title: entry.title,
+                        content: entry.content,
+                        mood: this.convertEmojiToMood(entry.mood)
+                    })
+                });
             } catch (error) {
-                console.error('Failed to create default entry:', error);
+                console.log('Backend save failed for entry, but local copy exists');
             }
-        }
-
-        // Reload entries
-        await this.reloadEntries();
-    }
-
-    async reloadEntries() {
-        try {
-            const response = await fetch(`${API_BASE}/journals`, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                this.entries = data.journals || [];
-                this.entries = this.entries.map(entry => ({
-                    id: entry.id,
-                    title: entry.title || 'Untitled Entry',
-                    date: new Date(entry.created_at).toISOString().split('T')[0],
-                    content: entry.content,
-                    mood: this.convertMoodToEmoji(entry.mood)
-                }));
-                
-                this.displayEntries();
-                this.updateStats();
-            }
-        } catch (error) {
-            console.error('Failed to reload entries:', error);
         }
     }
 
     convertMoodToEmoji(mood) {
         const moodMap = {
             'happy': '😊',
-            'calm': '😌',
+            'calm': '😌', 
             'sad': '😢',
             'frustrated': '😠',
             'tired': '😴'
@@ -144,6 +146,7 @@ class Journal {
         
         // Create default reminders if none exist
         if (reminders.length === 0) {
+            console.log('Creating default reminders...');
             reminders = [
                 {
                     id: 1,
@@ -156,12 +159,12 @@ class Journal {
                     id: 2,
                     title: "Doctor appointment",
                     date: new Date().toISOString().split('T')[0],
-                    time: "14:00",
+                    time: "14:00", 
                     completed: false
                 },
                 {
                     id: 3,
-                    title: "Call family member", 
+                    title: "Call family member",
                     date: new Date().toISOString().split('T')[0],
                     time: "17:00",
                     completed: false
@@ -175,6 +178,7 @@ class Journal {
                 }
             ];
             localStorage.setItem('reminders', JSON.stringify(reminders));
+            console.log('Default reminders created');
         }
         
         this.displayReminders();
@@ -239,7 +243,12 @@ class Journal {
 
     displayEntries(filter = 'all') {
         const entriesList = document.getElementById('entriesList');
-        if (!entriesList) return;
+        if (!entriesList) {
+            console.error('entriesList not found!');
+            return;
+        }
+
+        console.log('Displaying entries:', this.entries);
 
         const today = new Date().toISOString().split('T')[0];
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -261,11 +270,6 @@ class Journal {
 
         entriesList.innerHTML = '';
 
-        filteredEntries.forEach(entry => {
-            const entryCard = this.createEntryCard(entry);
-            entriesList.appendChild(entryCard);
-        });
-
         if (filteredEntries.length === 0) {
             entriesList.innerHTML = `
                 <div class="empty-state">
@@ -277,7 +281,13 @@ class Journal {
                     </button>
                 </div>
             `;
+            return;
         }
+
+        filteredEntries.forEach(entry => {
+            const entryCard = this.createEntryCard(entry);
+            entriesList.appendChild(entryCard);
+        });
     }
 
     createEntryCard(entry) {
@@ -313,13 +323,26 @@ class Journal {
         const todayReminders = reminders.filter(reminder => reminder.date === today);
         const remindersList = document.getElementById('remindersList');
         
-        if (!remindersList) return;
+        if (!remindersList) {
+            console.error('remindersList not found!');
+            return;
+        }
 
         // Update count
         document.getElementById('remindersCount').textContent = todayReminders.length;
         
         remindersList.innerHTML = '';
         
+        if (todayReminders.length === 0) {
+            remindersList.innerHTML = `
+                <div class="empty-state" style="padding: 1rem;">
+                    <div class="empty-icon">⏰</div>
+                    <p>No reminders for today</p>
+                </div>
+            `;
+            return;
+        }
+
         todayReminders.forEach(reminder => {
             const reminderItem = document.createElement('div');
             reminderItem.className = 'reminder-item';
@@ -337,23 +360,13 @@ class Journal {
             
             remindersList.appendChild(reminderItem);
         });
-        
-        if (todayReminders.length === 0) {
-            remindersList.innerHTML = `
-                <div class="empty-state" style="padding: 1rem;">
-                    <div class="empty-icon">⏰</div>
-                    <p>No reminders for today</p>
-                </div>
-            `;
-        }
     }
 
-    formatTime(timeString) {
-        const [hours, minutes] = timeString.split(':');
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const displayHour = hour % 12 || 12;
-        return `${displayHour}:${minutes} ${ampm}`;
+    formatTime(timeString) { 
+        const [hours, minutes] = timeString.split(':'); 
+        const hour = parseInt(hours); 
+        const ampm = hour >= 12 ? 'PM' : 'AM'; 
+        return `${hours}:${minutes} ${ampm}`; 
     }
 
     initializeCalendar() {
@@ -431,6 +444,64 @@ class Journal {
             
             calendarGrid.appendChild(dayElement);
         }
+    }
+
+    updateStats() {
+        document.getElementById('totalEntries').textContent = this.entries.length;
+        const weeklyCount = this.calculateWeeklyCount();
+        document.getElementById('thisWeek').textContent = weeklyCount;
+        localStorage.setItem('weeklyCount', weeklyCount.toString());
+    }
+
+    calculateWeeklyCount() {
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return this.entries.filter(entry => entry.date >= oneWeekAgo).length;
+    }
+
+    updateDashboardStats() {
+        const journalCount = this.entries.length;
+        const weeklyCount = this.calculateWeeklyCount();
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        const today = new Date().toISOString().split('T')[0];
+        const todayReminders = reminders.filter(reminder => reminder.date === today);
+        
+        localStorage.setItem('journalCount', journalCount.toString());
+        localStorage.setItem('weeklyCount', weeklyCount.toString());
+        localStorage.setItem('reminderCount', todayReminders.length.toString());
+    }
+
+    formatDate(dateString) {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            ${type === 'success' ? 'background: #4ecdc4;' : 
+              type === 'error' ? 'background: #ff6b6b;' : 'background: #a8d0e6;'}
+        `;
+        
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }
+
+    logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('journalEntries'); 
+        window.location.href = 'index.html';
     }
 
     // UI Methods
@@ -684,67 +755,10 @@ class Journal {
         }
     }
 
-    updateStats() {
-        document.getElementById('totalEntries').textContent = this.entries.length;
-        const weeklyCount = this.calculateWeeklyCount();
-        document.getElementById('thisWeek').textContent = weeklyCount;
-        localStorage.setItem('weeklyCount', weeklyCount.toString());
-    }
-
-    calculateWeeklyCount() {
-        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        return this.entries.filter(entry => entry.date >= oneWeekAgo).length;
-    }
-
-    updateDashboardStats() {
-        const journalCount = this.entries.length;
-        const weeklyCount = this.calculateWeeklyCount();
-        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
-        const today = new Date().toISOString().split('T')[0];
-        const todayReminders = reminders.filter(reminder => reminder.date === today);
-        
-        localStorage.setItem('journalCount', journalCount.toString());
-        localStorage.setItem('weeklyCount', weeklyCount.toString());
-        localStorage.setItem('reminderCount', todayReminders.length.toString());
-    }
-
-    formatDate(dateString) {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('en-US', options);
-    }
-
-    showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-            ${type === 'success' ? 'background: #4ecdc4;' : 
-              type === 'error' ? 'background: #ff6b6b;' : 'background: #a8d0e6;'}
-        `;
-        
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-    }
-
-    logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = 'index.html';
-    }
-}
-
 // Initialize when DOM is ready
 let journal;
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - starting journal');
     journal = new Journal();
 });
 
@@ -760,3 +774,10 @@ if (!document.querySelector('#journal-notifications')) {
     `;
     document.head.appendChild(style);
 }
+
+// Debug function to force show defaults
+function forceShowDefaults() {
+    localStorage.removeItem('journalEntries');
+    location.reload();
+}
+
