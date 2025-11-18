@@ -37,21 +37,21 @@ class Journal {
     }
 
     loadDefaultData() {
-        // Fixed dates for November 17th and 18th, 2025
+        // Fixed dates for November 17th and 18th, 2025 - NEWEST FIRST
         const defaultEntries = [
-            {
-                id: 1,
-                title: "A Wonderful Day with Family",
-                date: "2025-11-17",
-                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-                mood: "😊"
-            },
             {
                 id: 2,
                 title: "Morning Walk Thoughts",
-                date: "2025-11-18", 
+                date: "2025-11-18", // NEWER DATE
                 content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
                 mood: "😌"
+            },
+            {
+                id: 1,
+                title: "A Wonderful Day with Family",
+                date: "2025-11-17", // OLDER DATE
+                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                mood: "😊"
             }
         ];
 
@@ -59,16 +59,20 @@ class Journal {
         const savedEntries = localStorage.getItem('journalEntries');
         
         if (savedEntries) {
-            // Use saved entries, but ensure we don't have duplicates
             const parsedEntries = JSON.parse(savedEntries);
             
-            // Remove any duplicate default entries and keep user entries
+            // Remove ALL default entries by ID to prevent duplicates
             const userEntries = parsedEntries.filter(entry => entry.id !== 1 && entry.id !== 2);
+            
+            // Combine defaults with user entries and sort by date DESC
             this.entries = [...defaultEntries, ...userEntries];
         } else {
             // First time load - use defaults
             this.entries = defaultEntries;
         }
+
+        // Sort all entries by date in descending order (newest first)
+        this.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         // Load default reminders
         const today = new Date().toISOString().split('T')[0];
@@ -129,28 +133,31 @@ class Journal {
                 const backendEntries = entriesData.journals || [];
                 
                 if (backendEntries.length > 0) {
-                    // Merge backend data with our default entries
-                    const backendNonDefaults = backendEntries.filter(entry => entry.id !== 1 && entry.id !== 2);
-                    
-                    // Keep our default entries and add backend entries
+                    // Default entries with proper order
                     const defaultEntries = [
-                        {
-                            id: 1,
-                            title: "A Wonderful Day with Family",
-                            date: "2025-11-17",
-                            content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-                            mood: "😊"
-                        },
                         {
                             id: 2,
                             title: "Morning Walk Thoughts",
                             date: "2025-11-18",
                             content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
                             mood: "😌"
+                        },
+                        {
+                            id: 1,
+                            title: "A Wonderful Day with Family",
+                            date: "2025-11-17",
+                            content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                            mood: "😊"
                         }
                     ];
                     
+                    // Remove default entries from backend data
+                    const backendNonDefaults = backendEntries.filter(entry => entry.id !== 1 && entry.id !== 2);
+                    
+                    // Combine and sort by date DESC
                     this.entries = [...defaultEntries, ...backendNonDefaults];
+                    this.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
                     localStorage.setItem('journalEntries', JSON.stringify(this.entries));
                 }
                 
@@ -254,6 +261,9 @@ class Journal {
                 break;
         }
 
+        // Sort filtered entries by date DESC (newest first)
+        filteredEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
         // Clear list
         entriesList.innerHTML = '';
 
@@ -346,11 +356,12 @@ class Journal {
         }
     }
 
-    formatTime(timeString) { 
-        const [hours, minutes] = timeString.split(':'); 
-        const hour = parseInt(hours); 
-        const ampm = hour >= 12 ? 'PM' : 'AM'; 
-        return `${hours}:${minutes} ${ampm}`; 
+    formatTime(timeString) {
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
     }
 
     initializeCalendar() {
@@ -579,6 +590,9 @@ class Journal {
                 }
             }
             
+            // Sort entries by date DESC after adding/updating
+            this.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             // Save to localStorage
             localStorage.setItem('journalEntries', JSON.stringify(this.entries));
             
@@ -616,6 +630,9 @@ class Journal {
             };
             this.entries.push(localEntry);
         }
+        
+        // Sort entries by date DESC
+        this.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
         
         localStorage.setItem('journalEntries', JSON.stringify(this.entries));
         this.closeNewEntryForm();
