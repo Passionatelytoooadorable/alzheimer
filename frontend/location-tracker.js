@@ -328,3 +328,4 @@ function callNumber(number) {
 
 // Initialize map when Google Maps API is loaded
 window.initMap = initializeLocationTracker;
+
