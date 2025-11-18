@@ -37,26 +37,26 @@ class Journal {
     }
 
     loadDefaultData() {
- 
+        // Fixed dates for November 17th and 18th, 2025 - NEWEST FIRST
         const defaultEntries = [
             {
-                id: 1,
+                id: 2,
                 title: "Morning Walk Thoughts",
-                date: "2025-11-18",
+                date: "2025-11-18", // NEWER DATE
                 content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
                 mood: "😌"
             },
             {
-                id: 2,
+                id: 1,
                 title: "A Wonderful Day with Family",
-                date: "2025-11-17", 
+                date: "2025-11-17", // OLDER DATE
                 content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
                 mood: "😊"
             }
         ];
 
         // Load from localStorage or use defaults
-        //const savedEntries = localStorage.getItem('journalEntries');
+        const savedEntries = localStorage.getItem('journalEntries');
         
         if (savedEntries) {
             const parsedEntries = JSON.parse(savedEntries);
@@ -914,4 +914,3 @@ let journal;
 document.addEventListener('DOMContentLoaded', function() {
     journal = new Journal();
 });
-
