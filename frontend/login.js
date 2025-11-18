@@ -113,10 +113,12 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('userName', loginData.user.name);
         localStorage.setItem('userEmail', loginData.user.email);
         
-        // Redirect to dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 1500);
+        if (response.ok && result.token) {
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
+            alert('Login successful!');
+            window.location.href = 'dashboard.html'; // This should be dashboard.html
+        }
     }
 
     function loginFailed(submitBtn, originalText) {
@@ -276,4 +278,5 @@ document.addEventListener('DOMContentLoaded', function() {
     
     autoFillDemo();
 });
+
 
