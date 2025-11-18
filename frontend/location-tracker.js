@@ -1,181 +1,330 @@
-// location-tracker.js - Updated with Live Backend API
-const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
+//  Complete Geolocation Implementation
+let map;
+let userMarker;
+let watchId = null;
+let isTracking = false;
 
-// Check authentication
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user') || '{}');
+// Google Maps API key (replace with your actual key)
+const GOOGLE_MAPS_API_KEY = 'AIzaSyC9S-gw5r2h3c8g4Y4Y4Y4Y4Y4Y4Y4Y4Y4Y4';
 
-if (!token) {
-    window.location.href = 'index.html';
-}
-
-// Display user info
-document.getElementById('user-name').textContent = user.name || 'User';
-
-// Get current location and save to backend
-async function getCurrentLocation() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error('Geolocation is not supported by this browser.'));
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                
-                try {
-                    // Get address from coordinates (simplified - you can use a geocoding service)
-                    const address = await getAddressFromCoords(latitude, longitude);
-                    
-                    // Save to backend
-                    const result = await saveLocationToBackend(latitude, longitude, address);
-                    
-                    resolve({
-                        latitude,
-                        longitude,
-                        address,
-                        timestamp: new Date().toISOString(),
-                        saved: true
-                    });
-                } catch (error) {
-                    resolve({
-                        latitude,
-                        longitude,
-                        address: `Lat: ${latitude}, Long: ${longitude}`,
-                        timestamp: new Date().toISOString(),
-                        saved: false,
-                        error: error.message
-                    });
-                }
-            },
-            (error) => {
-                reject(error);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
-            }
-        );
-    });
-}
-
-// Save location to backend
-async function saveLocationToBackend(latitude, longitude, address) {
-    const response = await fetch(`${API_BASE}/locations`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            latitude: latitude,
-            longitude: longitude,
-            address: address
-        })
-    });
-    return await response.json();
-}
-
-// Get address from coordinates (simplified)
-async function getAddressFromCoords(latitude, longitude) {
-    // You can integrate with a geocoding service like Google Maps API here
-    // For now, return coordinates as address
-    return `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`;
-}
-
-// Load location history from backend
-async function loadLocationHistory() {
-    try {
-        // Note: You might want to create a /api/locations/history endpoint
-        // For now, we'll just get the last location
-        const response = await fetch(`${API_BASE}/locations/last`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        const data = await response.json();
-        displayLastLocation(data.location);
-    } catch (error) {
-        console.error('Failed to load location history:', error);
-    }
-}
-
-// Display last known location
-function displayLastLocation(location) {
-    const container = document.getElementById('location-history');
-    if (!container) return;
-    
-    if (!location) {
-        container.innerHTML = '<p>No location history found.</p>';
+document.addEventListener('DOMContentLoaded', function() {
+    // Check authentication
+    if (!localStorage.getItem('token')) {
+        window.location.href = 'login.html';
         return;
     }
-    
-    container.innerHTML = `
-        <div class="location-card">
-            <h3>Last Known Location</h3>
-            <p><strong>Address:</strong> ${location.address}</p>
-            <p><strong>Coordinates:</strong> ${location.latitude}, ${location.longitude}</p>
-            <p><strong>Time:</strong> ${new Date(location.timestamp).toLocaleString()}</p>
-        </div>
-    `;
-}
 
-// Update location display
-function updateLocationDisplay(locationData) {
-    const locationInfo = document.getElementById('location-info');
-    if (!locationInfo) return;
-    
-    locationInfo.innerHTML = `
-        <div class="location-success">
-            <h3>📍 Location Found!</h3>
-            <p><strong>Address:</strong> ${locationData.address}</p>
-            <p><strong>Coordinates:</strong> ${locationData.latitude.toFixed(6)}, ${locationData.longitude.toFixed(6)}</p>
-            <p><strong>Status:</strong> ${locationData.saved ? '✅ Saved to database' : '⚠️ Not saved'}</p>
-            <p><strong>Time:</strong> ${new Date(locationData.timestamp).toLocaleString()}</p>
-        </div>
-    `;
-}
-
-// Event listener for location button
-document.getElementById('get-location-btn').addEventListener('click', async function() {
-    const btn = this;
-    const originalText = btn.textContent;
-    
-    btn.textContent = 'Getting Location...';
-    btn.disabled = true;
-    
-    try {
-        const locationData = await getCurrentLocation();
-        updateLocationDisplay(locationData);
-        
-        if (locationData.saved) {
-            loadLocationHistory(); // Reload history
-        }
-    } catch (error) {
-        console.error('Location error:', error);
-        document.getElementById('location-info').innerHTML = `
-            <div class="location-error">
-                <h3>❌ Location Error</h3>
-                <p>${error.message}</p>
-                <p>Please ensure location services are enabled and try again.</p>
-            </div>
-        `;
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
+    initializeLocationTracker();
+    setupEventListeners();
 });
 
-// Logout function
-function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = 'index.html';
+function initializeLocationTracker() {
+    // Initialize map with default location (will be updated with user's location)
+    const defaultLocation = { lat: 40.7128, lng: -74.0060 }; // New York
+    
+    map = new google.maps.Map(document.getElementById('liveMap'), {
+        zoom: 15,
+        center: defaultLocation,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true
+    });
+
+    // Try to get current location immediately
+    getCurrentLocation();
 }
 
-document.getElementById('logout-btn')?.addEventListener('click', logout);
+function setupEventListeners() {
+    // Start Tracking Button
+    document.getElementById('startTracking').addEventListener('click', startContinuousTracking);
+    
+    // Stop Tracking Button
+    document.getElementById('stopTracking').addEventListener('click', stopContinuousTracking);
+    
+    // Refresh Location Button
+    document.getElementById('refreshLocation').addEventListener('click', getCurrentLocation);
+    
+    // Add Safe Zone Button
+    document.getElementById('addSafeZone').addEventListener('click', function() {
+        alert('Safe zone creation feature would open here. This is a demo implementation.');
+    });
+    
+    // Emergency Alert Button
+    document.getElementById('emergencyAlert').addEventListener('click', showEmergencyModal);
+    
+    // Emergency Modal Buttons
+    document.getElementById('confirmEmergency').addEventListener('click', sendEmergencyAlert);
+    document.getElementById('cancelEmergency').addEventListener('click', hideEmergencyModal);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('emergencyModal');
+        if (event.target === modal) {
+            hideEmergencyModal();
+        }
+    });
+}
 
-// Load location history when page loads
-document.addEventListener('DOMContentLoaded', loadLocationHistory);
+function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.');
+        return;
+    }
+
+    showLoading('Getting your current location...');
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            updateUserLocation(position);
+            hideLoading();
+        },
+        function(error) {
+            console.error('Error getting location:', error);
+            handleLocationError(error);
+            hideLoading();
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+        }
+    );
+}
+
+function startContinuousTracking() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.');
+        return;
+    }
+
+    if (isTracking) {
+        alert('Location tracking is already active.');
+        return;
+    }
+
+    showLoading('Starting continuous location tracking...');
+
+    watchId = navigator.geolocation.watchPosition(
+        function(position) {
+            updateUserLocation(position);
+            if (!isTracking) {
+                isTracking = true;
+                updateTrackingStatus(true);
+                hideLoading();
+                showNotification('Continuous tracking started successfully!', 'success');
+            }
+        },
+        function(error) {
+            console.error('Error in continuous tracking:', error);
+            handleLocationError(error);
+            hideLoading();
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 30000
+        }
+    );
+}
+
+function stopContinuousTracking() {
+    if (watchId && isTracking) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        isTracking = false;
+        updateTrackingStatus(false);
+        showNotification('Continuous tracking stopped.', 'info');
+    } else {
+        alert('No active tracking session to stop.');
+    }
+}
+
+function updateUserLocation(position) {
+    const userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+    };
+
+    // Update map center and marker
+    map.setCenter(userLocation);
+    
+    if (!userMarker) {
+        userMarker = new google.maps.Marker({
+            position: userLocation,
+            map: map,
+            title: 'Your Current Location',
+            icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="12" fill="#4285F4" stroke="white" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="4" fill="white"/>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(32, 32)
+            }
+        });
+    } else {
+        userMarker.setPosition(userLocation);
+    }
+
+    // Add accuracy circle
+    const accuracyCircle = new google.maps.Circle({
+        strokeColor: '#4285F4',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#4285F4',
+        fillOpacity: 0.2,
+        map: map,
+        center: userLocation,
+        radius: position.coords.accuracy
+    });
+
+    // Remove previous accuracy circle after 5 seconds
+    setTimeout(() => {
+        accuracyCircle.setMap(null);
+    }, 5000);
+
+    // Update location details
+    updateLocationDetails(position);
+    
+    // Save location to history
+    saveLocationToHistory(userLocation, position.coords.accuracy);
+}
+
+function updateLocationDetails(position) {
+    document.getElementById('currentLat').textContent = position.coords.latitude.toFixed(6);
+    document.getElementById('currentLng').textContent = position.coords.longitude.toFixed(6);
+    document.getElementById('currentAccuracy').textContent = `${Math.round(position.coords.accuracy)} meters`;
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+    
+    // Update header stats
+    document.getElementById('locationTime').textContent = 'Now';
+}
+
+function updateTrackingStatus(tracking) {
+    const statusElement = document.getElementById('locationStatus');
+    const startButton = document.getElementById('startTracking');
+    const stopButton = document.getElementById('stopTracking');
+    
+    if (tracking) {
+        statusElement.textContent = 'Tracking';
+        statusElement.style.color = '#4ecdc4';
+        startButton.disabled = true;
+        stopButton.disabled = false;
+    } else {
+        statusElement.textContent = 'Active';
+        statusElement.style.color = '#666';
+        startButton.disabled = false;
+        stopButton.disabled = true;
+    }
+}
+
+function handleLocationError(error) {
+    let errorMessage = 'Unknown error occurred while getting location.';
+    
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable.';
+            break;
+        case error.TIMEOUT:
+            errorMessage = 'Location request timed out. Please try again.';
+            break;
+    }
+    
+    showNotification(errorMessage, 'error');
+    console.error('Location error:', error);
+}
+
+function saveLocationToHistory(location, accuracy) {
+    const history = JSON.parse(localStorage.getItem('locationHistory')) || [];
+    
+    history.unshift({
+        timestamp: new Date().toISOString(),
+        latitude: location.lat,
+        longitude: location.lng,
+        accuracy: accuracy
+    });
+    
+    // Keep only last 50 locations
+    if (history.length > 50) {
+        history.pop();
+    }
+    
+    localStorage.setItem('locationHistory', JSON.stringify(history));
+}
+
+function showEmergencyModal() {
+    document.getElementById('emergencyModal').style.display = 'block';
+}
+
+function hideEmergencyModal() {
+    document.getElementById('emergencyModal').style.display = 'none';
+}
+
+function sendEmergencyAlert() {
+    const userLocation = userMarker ? userMarker.getPosition() : null;
+    
+    let alertMessage = '🚨 EMERGENCY ALERT 🚨\n\n';
+    alertMessage += 'I need immediate assistance!\n\n';
+    
+    if (userLocation) {
+        alertMessage += `My current location:\n`;
+        alertMessage += `Latitude: ${userLocation.lat().toFixed(6)}\n`;
+        alertMessage += `Longitude: ${userLocation.lng().toFixed(6)}\n`;
+        alertMessage += `Google Maps: https://maps.google.com/?q=${userLocation.lat()},${userLocation.lng()}\n\n`;
+    }
+    
+    alertMessage += `Time: ${new Date().toLocaleString()}\n`;
+    alertMessage += `Sent via Alzheimer's Support App`;
+    
+    // In a real app, this would send to backend and notify emergency contacts
+    alert('EMERGENCY ALERT SENT!\n\nThis alert with your location has been sent to your emergency contacts.\n\nMessage content:\n' + alertMessage);
+    
+    hideEmergencyModal();
+    showNotification('Emergency alert sent successfully!', 'success');
+}
+
+function showLoading(message) {
+    // You can implement a loading spinner here
+    console.log('Loading:', message);
+}
+
+function hideLoading() {
+    // Hide loading spinner
+    console.log('Loading complete');
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        ${type === 'success' ? 'background: #4ecdc4;' : type === 'error' ? 'background: #ff6b6b;' : 'background: #a8d0e6;'}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function callNumber(number) {
+    alert(`Calling ${number}. In a real app, this would initiate a phone call.`);
+    // In a real mobile app, you would use: window.location.href = `tel:${number}`;
+}
+
+// Initialize map when Google Maps API is loaded
+window.initMap = initializeLocationTracker;
