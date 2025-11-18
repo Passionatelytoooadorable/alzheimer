@@ -347,11 +347,12 @@ class Journal {
         }
     }
 
-    formatTime(timeString) { 
-        const [hours, minutes] = timeString.split(':'); 
-        const hour = parseInt(hours); 
-        const ampm = hour >= 12 ? 'PM' : 'AM'; 
-        return `${hours}:${minutes} ${ampm}`; 
+    formatTime(timeString) {
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
     }
 
     initializeCalendar() {
@@ -680,26 +681,16 @@ class Journal {
         const journalCount = this.entries.length;
         const weeklyCount = this.calculateWeeklyCount();
         
-        // Update localStorage for dashboard sync - use consistent keys
+        // Update localStorage for dashboard sync
         localStorage.setItem('journalCount', journalCount.toString());
         localStorage.setItem('weeklyCount', weeklyCount.toString());
-        localStorage.setItem('journals', JSON.stringify(this.entries)); // Add this for dashboard compatibility
         
         // Get reminder count for today
         const today = new Date().toISOString().split('T')[0];
         const todayReminders = this.reminders.filter(reminder => reminder.date === today);
         localStorage.setItem('reminderCount', todayReminders.length.toString());
         
-        // Dispatch custom events to update dashboard in real-time
-        window.dispatchEvent(new CustomEvent('journalUpdate', {
-            detail: {
-                journalCount: journalCount,
-                weeklyCount: weeklyCount,
-                reminderCount: todayReminders.length
-            }
-        }));
-        
-        // Also trigger storage event for backward compatibility
+        // Dispatch events to update dashboard
         window.dispatchEvent(new StorageEvent('storage', {
             key: 'journalCount',
             newValue: journalCount.toString()
@@ -709,23 +700,11 @@ class Journal {
             key: 'weeklyCount', 
             newValue: weeklyCount.toString()
         }));
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'journals',
-            newValue: JSON.stringify(this.entries)
-        }));
     }
 
     calculateWeeklyCount() {
-        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const oneWeekAgoString = oneWeekAgo.toISOString().split('T')[0];
-        
-        const weeklyEntries = this.entries.filter(entry => {
-            // Handle both string dates and Date objects
-            const entryDate = new Date(entry.date).toISOString().split('T')[0];
-            return entryDate >= oneWeekAgoString;
-        });
-        
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const weeklyEntries = this.entries.filter(entry => entry.date >= oneWeekAgo);
         return weeklyEntries.length;
     }
 
@@ -869,24 +848,8 @@ class Journal {
     }
 
     formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                // If date parsing fails, try alternative format
-                const [year, month, day] = dateString.split('-');
-                const validDate = new Date(year, month - 1, day);
-                if (isNaN(validDate.getTime())) {
-                    return 'Invalid Date';
-                }
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                return validDate.toLocaleDateString('en-US', options);
-            }
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return date.toLocaleDateString('en-US', options);
-        } catch (error) {
-            console.error('Date formatting error:', error);
-            return dateString; // Return original string if formatting fails
-        }
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
     }
 
     showNotification(message, type) {
