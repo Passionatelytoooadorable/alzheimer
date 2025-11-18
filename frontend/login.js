@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const textSizeBtn = document.getElementById('textSize');
     const highContrastBtn = document.getElementById('highContrast');
+    const createAccountLink = document.querySelector('.create-account-link');
     
     const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
@@ -17,6 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
     initLoginForm();
     initAccessibility();
     addDemoHint();
+    
+    // Create account link redirect
+    if (createAccountLink) {
+        createAccountLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // For demo purposes, auto-fill demo credentials and submit
+            document.getElementById('username').value = 'demo';
+            document.getElementById('password').value = 'demo123';
+            loginForm.dispatchEvent(new Event('submit'));
+        });
+    }
 
     function initLoginForm() {
         if (!loginForm) return;
@@ -113,12 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('userName', loginData.user.name);
         localStorage.setItem('userEmail', loginData.user.email);
         
-        if (response.ok && result.token) {
-            localStorage.setItem('token', result.token);
-            localStorage.setItem('user', JSON.stringify(result.user));
-            alert('Login successful!');
-            window.location.href = 'dashboard.html'; // This should be dashboard.html
-        }
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
     }
 
     function loginFailed(submitBtn, originalText) {
@@ -278,5 +288,3 @@ document.addEventListener('DOMContentLoaded', function() {
     
     autoFillDemo();
 });
-
-
