@@ -210,6 +210,11 @@
     color: #6c757d;
 }
 
+.location-on {
+    background: #ff6b6b !important;
+    color: white !important;
+}
+
 .tile-content {
     flex: 1;
     display: flex;
