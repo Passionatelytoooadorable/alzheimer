@@ -70,6 +70,11 @@ async function addMemory(memoryData) {
     }
 }
 
+window.addEventListener('memoryUpdated', function(e) {
+    document.getElementById('memoryCount').textContent = e.detail.count;
+    document.getElementById('memoryCount2').textContent = e.detail.count;
+});
+
 // Add new journal to backend
 async function addJournal(journalData) {
     try {
