@@ -1,14 +1,12 @@
-// Journal JavaScript with Live Backend API Integration and Default Data
+// Journal JavaScript - Simple and Working Version
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 class Journal {
     constructor() {
         this.entries = [];
-        this.currentPrompt = '';
         this.token = localStorage.getItem('token');
         this.user = JSON.parse(localStorage.getItem('user') || '{}');
         
-        // Check authentication
         if (!this.token) {
             window.location.href = 'index.html';
             return;
@@ -18,144 +16,105 @@ class Journal {
     }
 
     async init() {
-        console.log('Journal initialized with backend API');
-        
-        // Load data from backend and create default entries if needed
-        await this.loadJournalData();
-        
-        // Setup event listeners
+        console.log('Journal initialized');
+        await this.loadInitialData();
         this.setupEventListeners();
-        
-        // Initialize calendar
         this.initializeCalendar();
-        
-        // Update dashboard stats
         this.updateDashboardStats();
     }
 
-    async loadJournalData() {
+    async loadInitialData() {
+        // Load journal entries
         try {
-            console.log('Loading journal data from backend...');
             const response = await fetch(`${API_BASE}/journals`, {
                 headers: {
                     'Authorization': `Bearer ${this.token}`
                 }
             });
             
-            if (!response.ok) {
-                throw new Error(`Failed to fetch journals: ${response.status}`);
+            if (response.ok) {
+                const data = await response.json();
+                this.entries = data.journals || [];
+                
+                // Transform to frontend format
+                this.entries = this.entries.map(entry => ({
+                    id: entry.id,
+                    title: entry.title || 'Untitled Entry',
+                    date: new Date(entry.created_at).toISOString().split('T')[0],
+                    content: entry.content,
+                    mood: this.convertMoodToEmoji(entry.mood)
+                }));
             }
-            
-            const data = await response.json();
-            console.log('Backend response:', data);
-            
-            this.entries = data.journals || [];
-            
-            // Transform backend data to match frontend format
-            this.entries = this.entries.map(entry => ({
-                id: entry.id,
-                title: entry.title || 'Untitled Entry',
-                date: new Date(entry.created_at).toISOString().split('T')[0],
-                content: entry.content,
-                mood: this.convertMoodToEmoji(entry.mood)
-            }));
-            
-            console.log('Transformed entries:', this.entries);
-            
-            // Create default entries if this is user's first time
-            if (this.entries.length === 0) {
-                console.log('No entries found, creating default entries...');
-                await this.createDefaultJournalEntries();
-            } else {
-                console.log('Found existing entries:', this.entries.length);
-                this.displayEntries();
-                this.updateStats();
-            }
-            
-            // Load reminders
-            this.loadReminders();
-            
         } catch (error) {
-            console.error('Failed to load journal data:', error);
-            // Fallback: create default entries locally
-            this.createDefaultEntriesLocally();
+            console.error('Failed to load journals:', error);
         }
+
+        // Create default entries if empty
+        if (this.entries.length === 0) {
+            await this.createDefaultEntries();
+        }
+
+        // Load and display entries
+        this.displayEntries();
+        this.updateStats();
+
+        // Load reminders
+        this.loadReminders();
     }
 
-    async createDefaultJournalEntries() {
-        console.log('Creating default journal entries for new user...');
-        
+    async createDefaultEntries() {
         const defaultEntries = [
             {
                 title: "A Wonderful Day with Family",
                 content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
                 mood: "happy",
-                date: new Date().toISOString().split('T')[0] // Today
+                date: new Date().toISOString().split('T')[0]
             },
             {
                 title: "Morning Walk Thoughts", 
                 content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
                 mood: "calm",
-                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Yesterday
+                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             }
         ];
 
-        const createdEntries = [];
-        
-        try {
-            for (const entryData of defaultEntries) {
-                const result = await this.createJournalEntry(entryData);
-                if (result && result.journal) {
-                    createdEntries.push({
-                        id: result.journal.id,
-                        title: result.journal.title,
-                        date: new Date(result.journal.created_at).toISOString().split('T')[0],
-                        content: result.journal.content,
-                        mood: this.convertMoodToEmoji(result.journal.mood)
-                    });
-                }
+        for (const entryData of defaultEntries) {
+            try {
+                await this.createJournalEntry(entryData);
+            } catch (error) {
+                console.error('Failed to create default entry:', error);
             }
-            
-            console.log('Default journal entries created successfully:', createdEntries);
-            this.entries = createdEntries;
-            
-            // Display the entries
-            this.displayEntries();
-            this.updateStats();
-            
-        } catch (error) {
-            console.error('Failed to create default journal entries in backend:', error);
-            // Fallback to local creation
-            this.createDefaultEntriesLocally();
         }
+
+        // Reload entries
+        await this.reloadEntries();
     }
 
-    createDefaultEntriesLocally() {
-        console.log('Creating default entries locally...');
-        
-        const defaultEntries = [
-            {
-                id: 1,
-                title: "A Wonderful Day with Family",
-                date: new Date().toISOString().split('T')[0],
-                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-                mood: "😊"
-            },
-            {
-                id: 2,
-                title: "Morning Walk Thoughts",
-                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
-                mood: "😌"
+    async reloadEntries() {
+        try {
+            const response = await fetch(`${API_BASE}/journals`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.entries = data.journals || [];
+                this.entries = this.entries.map(entry => ({
+                    id: entry.id,
+                    title: entry.title || 'Untitled Entry',
+                    date: new Date(entry.created_at).toISOString().split('T')[0],
+                    content: entry.content,
+                    mood: this.convertMoodToEmoji(entry.mood)
+                }));
+                
+                this.displayEntries();
+                this.updateStats();
             }
-        ];
-        
-        this.entries = defaultEntries;
-        localStorage.setItem('journalEntries', JSON.stringify(defaultEntries));
-        
-        this.displayEntries();
-        this.updateStats();
-        console.log('Default entries created locally');
+        } catch (error) {
+            console.error('Failed to reload entries:', error);
+        }
     }
 
     convertMoodToEmoji(mood) {
@@ -164,8 +123,7 @@ class Journal {
             'calm': '😌',
             'sad': '😢',
             'frustrated': '😠',
-            'tired': '😴',
-            'neutral': '😊'
+            'tired': '😴'
         };
         return moodMap[mood] || '😊';
     }
@@ -182,16 +140,11 @@ class Journal {
     }
 
     loadReminders() {
-        console.log('Loading reminders...');
-        
-        // Check if reminders already exist in localStorage
         let reminders = JSON.parse(localStorage.getItem('reminders')) || [];
         
-        // Create default reminders if none exist (first time user)
+        // Create default reminders if none exist
         if (reminders.length === 0) {
-            console.log('Creating default reminders for new user...');
-            
-            const defaultReminders = [
+            reminders = [
                 {
                     id: 1,
                     title: "Take morning medication",
@@ -221,35 +174,23 @@ class Journal {
                     completed: false
                 }
             ];
-            
-            reminders = defaultReminders;
             localStorage.setItem('reminders', JSON.stringify(reminders));
-            console.log('Default reminders created successfully');
         }
         
-        console.log('Reminders loaded:', reminders);
         this.displayReminders();
     }
 
     setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
-        // New Entry Button
+        // Button events
         document.getElementById('newEntryBtn').addEventListener('click', () => this.openNewEntryForm());
-        
-        // Voice Entry Button
         document.getElementById('voiceEntryBtn').addEventListener('click', () => this.startVoiceEntry());
-        
-        // Prompts Button
         document.getElementById('promptsBtn').addEventListener('click', () => this.openPromptsSection());
-        
-        // Close Form Button
         document.getElementById('closeFormBtn').addEventListener('click', () => this.closeNewEntryForm());
-        
-        // Close Prompts Button
         document.getElementById('closePromptsBtn').addEventListener('click', () => this.closePromptsSection());
-        
-        // Filter Buttons
+        document.getElementById('addReminderBtn').addEventListener('click', () => this.openReminderModal());
+        document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+
+        // Filter buttons
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -257,18 +198,15 @@ class Journal {
                 journal.displayEntries(this.dataset.filter);
             });
         });
-        
-        // Add Reminder Button
-        document.getElementById('addReminderBtn').addEventListener('click', () => this.openReminderModal());
-        
-        // Use Prompt Buttons
+
+        // Prompt buttons
         document.querySelectorAll('.use-prompt-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 journal.usePrompt(this.dataset.prompt);
             });
         });
-        
-        // Mood Buttons
+
+        // Mood buttons
         document.querySelectorAll('.mood-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
@@ -276,45 +214,33 @@ class Journal {
                 document.getElementById('selectedMood').value = this.dataset.mood;
             });
         });
-        
+
         // Form submissions
         document.getElementById('journalForm').addEventListener('submit', (e) => this.handleJournalSubmit(e));
         document.getElementById('reminderForm').addEventListener('submit', (e) => this.handleReminderSubmit(e));
-        
+
         // Cancel buttons
         document.getElementById('cancelEntry').addEventListener('click', () => this.closeNewEntryForm());
         document.getElementById('cancelReminder').addEventListener('click', () => this.closeReminderModal());
-        
-        // Modal close buttons
+
+        // Modal close
         document.querySelectorAll('.modal .close').forEach(closeBtn => {
             closeBtn.addEventListener('click', function() {
                 this.closest('.modal').style.display = 'none';
             });
         });
-        
-        // Close modals when clicking outside
+
         window.addEventListener('click', function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
         });
-
-        // Logout button
-        document.getElementById('logout-btn').addEventListener('click', () => this.logout());
-
-        console.log('Event listeners setup complete');
     }
 
     displayEntries(filter = 'all') {
-        console.log('Displaying entries with filter:', filter);
         const entriesList = document.getElementById('entriesList');
-        
-        if (!entriesList) {
-            console.error('entriesList element not found!');
-            return;
-        }
+        if (!entriesList) return;
 
-        // Filter entries
         const today = new Date().toISOString().split('T')[0];
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -333,18 +259,13 @@ class Journal {
                 break;
         }
 
-        console.log('Filtered entries:', filteredEntries);
-
-        // Clear list
         entriesList.innerHTML = '';
 
-        // Add entry cards
         filteredEntries.forEach(entry => {
             const entryCard = this.createEntryCard(entry);
             entriesList.appendChild(entryCard);
         });
 
-        // Show empty state if no entries
         if (filteredEntries.length === 0) {
             entriesList.innerHTML = `
                 <div class="empty-state">
@@ -357,8 +278,6 @@ class Journal {
                 </div>
             `;
         }
-        
-        console.log('Entries display completed');
     }
 
     createEntryCard(entry) {
@@ -366,10 +285,10 @@ class Journal {
         card.className = 'entry-card';
         card.innerHTML = `
             <div class="entry-header">
-                <h3 class="entry-title">${this.escapeHtml(entry.title)}</h3>
+                <h3 class="entry-title">${entry.title}</h3>
                 <div class="entry-date">${this.formatDate(entry.date)}</div>
             </div>
-            <div class="entry-content">${this.escapeHtml(entry.content)}</div>
+            <div class="entry-content">${entry.content}</div>
             <div class="entry-footer">
                 <div class="entry-mood">${entry.mood}</div>
                 <div class="entry-actions">
@@ -389,33 +308,24 @@ class Journal {
     }
 
     displayReminders() {
-        console.log('Displaying reminders...');
         const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
         const today = new Date().toISOString().split('T')[0];
         const todayReminders = reminders.filter(reminder => reminder.date === today);
         const remindersList = document.getElementById('remindersList');
         
-        if (!remindersList) {
-            console.error('remindersList element not found!');
-            return;
-        }
+        if (!remindersList) return;
 
         // Update count
-        const remindersCountElement = document.getElementById('remindersCount');
-        if (remindersCountElement) {
-            remindersCountElement.textContent = todayReminders.length;
-        }
+        document.getElementById('remindersCount').textContent = todayReminders.length;
         
-        // Clear list
         remindersList.innerHTML = '';
         
-        // Add reminder items
         todayReminders.forEach(reminder => {
             const reminderItem = document.createElement('div');
             reminderItem.className = 'reminder-item';
             reminderItem.innerHTML = `
                 <div class="reminder-time">${this.formatTime(reminder.time)}</div>
-                <div class="reminder-text">${this.escapeHtml(reminder.title)}</div>
+                <div class="reminder-text">${reminder.title}</div>
                 <div class="reminder-status ${reminder.completed ? 'completed' : 'pending'}">
                     ${reminder.completed ? 'Done' : 'Pending'}
                 </div>
@@ -428,7 +338,6 @@ class Journal {
             remindersList.appendChild(reminderItem);
         });
         
-        // Show empty state if no reminders
         if (todayReminders.length === 0) {
             remindersList.innerHTML = `
                 <div class="empty-state" style="padding: 1rem;">
@@ -437,25 +346,9 @@ class Journal {
                 </div>
             `;
         }
-        
-        // Update dashboard stats
-        this.updateDashboardStats();
-        
-        console.log('Reminders display completed');
-    }
-
-    escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
 
     formatTime(timeString) {
-        if (!timeString) return '--:--';
         const [hours, minutes] = timeString.split(':');
         const hour = parseInt(hours);
         const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -464,11 +357,9 @@ class Journal {
     }
 
     initializeCalendar() {
-        console.log('Initializing calendar...');
         const currentDate = new Date();
         this.updateCalendar(currentDate);
         
-        // Navigation buttons
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
             this.updateCalendar(currentDate);
@@ -478,21 +369,14 @@ class Journal {
             currentDate.setMonth(currentDate.getMonth() + 1);
             this.updateCalendar(currentDate);
         });
-        
-        console.log('Calendar initialization complete');
     }
 
     updateCalendar(date) {
-        console.log('Updating calendar for:', date);
-        
         const monthNames = ["January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         ];
         
-        const currentMonthElement = document.getElementById('currentMonth');
-        if (currentMonthElement) {
-            currentMonthElement.textContent = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-        }
+        document.getElementById('currentMonth').textContent = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
         
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
         const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -500,14 +384,11 @@ class Journal {
         const monthLength = lastDay.getDate();
         
         const calendarGrid = document.getElementById('calendarGrid');
-        if (!calendarGrid) {
-            console.error('calendarGrid element not found!');
-            return;
-        }
+        if (!calendarGrid) return;
         
         calendarGrid.innerHTML = '';
         
-        // Add day headers
+        // Day headers
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         days.forEach(day => {
             const dayElement = document.createElement('div');
@@ -516,28 +397,26 @@ class Journal {
             calendarGrid.appendChild(dayElement);
         });
         
-        // Add empty cells for days before the first day of the month
+        // Empty days
         for (let i = 0; i < startingDay; i++) {
             const emptyDay = document.createElement('div');
             emptyDay.className = 'calendar-day';
             calendarGrid.appendChild(emptyDay);
         }
         
-        // Add days of the month
+        // Month days
         const today = new Date();
         
         for (let day = 1; day <= monthLength; day++) {
             const dayElement = document.createElement('div');
             dayElement.className = 'calendar-day';
             
-            // Check if today
             if (date.getFullYear() === today.getFullYear() && 
                 date.getMonth() === today.getMonth() && 
                 day === today.getDate()) {
                 dayElement.classList.add('today');
             }
             
-            // Check if has journal entry
             const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const hasEntry = this.entries.some(entry => entry.date === dateString);
             
@@ -552,85 +431,34 @@ class Journal {
             
             calendarGrid.appendChild(dayElement);
         }
-        
-        console.log('Calendar updated successfully');
     }
 
-    showEntriesForDate(date) {
-        const dateEntries = this.entries.filter(entry => entry.date === date);
-        
-        if (dateEntries.length > 0) {
-            // Filter to show entries for this date
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            this.displayEntries('all');
-            
-            // Highlight and scroll to entries for this date
-            setTimeout(() => {
-                const entryCards = document.querySelectorAll('.entry-card');
-                entryCards.forEach(card => {
-                    const entryDate = card.querySelector('.entry-date').textContent;
-                    if (this.formatDate(date) === entryDate) {
-                        card.style.background = '#f0f8f4';
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                });
-            }, 100);
-        } else {
-            // No entries for this date, offer to create one
-            if (confirm(`No journal entries for ${this.formatDate(date)}. Would you like to create one?`)) {
-                this.openNewEntryForm();
-                document.getElementById('entryDate').value = date;
-            }
-        }
-    }
-
+    // UI Methods
     openNewEntryForm() {
-        // Hide entries section and prompts section
         document.getElementById('entriesSection').style.display = 'none';
         document.getElementById('promptsSection').style.display = 'none';
-        // Show form section
         document.getElementById('journalFormSection').style.display = 'block';
         
-        // Reset form
         document.getElementById('formTitle').textContent = 'New Journal Entry';
         document.getElementById('journalForm').reset();
         document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('selectedMood').value = '';
         document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
         
-        // Enable form for new entry
-        document.querySelectorAll('#journalForm input, #journalForm textarea').forEach(element => {
-            element.disabled = false;
-        });
-        document.querySelectorAll('.mood-btn').forEach(btn => {
-            btn.disabled = false;
-        });
-        document.getElementById('cancelEntry').textContent = 'Cancel';
-        document.querySelector('.btn-primary').style.display = 'block';
-        
-        // Clear any editing state
         delete document.getElementById('journalForm').dataset.editingId;
-        
-        // Focus on title field
         document.getElementById('entryTitle').focus();
     }
 
     closeNewEntryForm() {
-        // Show entries section
         document.getElementById('entriesSection').style.display = 'block';
-        // Hide form section
         document.getElementById('journalFormSection').style.display = 'none';
     }
 
     openReminderModal() {
-        const modal = document.getElementById('reminderModal');
-        const form = document.getElementById('reminderForm');
-        
-        form.reset();
+        document.getElementById('reminderModal').style.display = 'block';
+        document.getElementById('reminderForm').reset();
         document.getElementById('reminderDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('reminderTime').value = '08:00';
-        
-        modal.style.display = 'block';
     }
 
     closeReminderModal() {
@@ -638,22 +466,17 @@ class Journal {
     }
 
     openPromptsSection() {
-        // Hide entries section and form section
         document.getElementById('entriesSection').style.display = 'none';
         document.getElementById('journalFormSection').style.display = 'none';
-        // Show prompts section
         document.getElementById('promptsSection').style.display = 'block';
     }
 
     closePromptsSection() {
-        // Show entries section
         document.getElementById('entriesSection').style.display = 'block';
-        // Hide prompts section
         document.getElementById('promptsSection').style.display = 'none';
     }
 
     usePrompt(prompt) {
-        // Close prompts and open form with the selected prompt
         this.closePromptsSection();
         this.openNewEntryForm();
         document.getElementById('entryContent').value = prompt;
@@ -664,6 +487,7 @@ class Journal {
         this.showNotification('Voice entry feature coming soon!', 'info');
     }
 
+    // Form Handlers
     async handleJournalSubmit(e) {
         e.preventDefault();
         
@@ -679,21 +503,15 @@ class Journal {
         
         try {
             if (editingId) {
-                // Update existing entry
                 await this.updateJournalEntry(editingId, entryData);
             } else {
-                // Create new entry
                 await this.createJournalEntry(entryData);
             }
             
-            // Close form and show entries
             this.closeNewEntryForm();
-            
-            // Refresh display
-            await this.loadJournalData();
+            await this.reloadEntries();
             this.initializeCalendar();
             
-            // Show success message
             this.showNotification(`Journal entry ${editingId ? 'updated' : 'saved'} successfully!`, 'success');
             
         } catch (error) {
@@ -702,6 +520,32 @@ class Journal {
         }
     }
 
+    handleReminderSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const reminder = {
+            id: Date.now(),
+            title: formData.get('reminderTitle'),
+            date: formData.get('reminderDate'),
+            time: formData.get('reminderTime'),
+            repeat: formData.get('reminderRepeat'),
+            completed: false
+        };
+        
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        reminders.push(reminder);
+        localStorage.setItem('reminders', JSON.stringify(reminders));
+        
+        this.closeReminderModal();
+        this.displayReminders();
+        this.updateStats();
+        this.updateDashboardStats();
+        
+        this.showNotification('Reminder added successfully!', 'success');
+    }
+
+    // API Methods
     async createJournalEntry(entryData) {
         const response = await fetch(`${API_BASE}/journals`, {
             method: 'POST',
@@ -716,12 +560,8 @@ class Journal {
             })
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to create journal entry');
-        }
-        
-        const result = await response.json();
-        return result;
+        if (!response.ok) throw new Error('Failed to create journal entry');
+        return await response.json();
     }
 
     async updateJournalEntry(id, entryData) {
@@ -738,12 +578,8 @@ class Journal {
             })
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to update journal entry');
-        }
-        
-        const result = await response.json();
-        return result;
+        if (!response.ok) throw new Error('Failed to update journal entry');
+        return await response.json();
     }
 
     async deleteJournalEntry(id) {
@@ -754,83 +590,11 @@ class Journal {
             }
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to delete journal entry');
-        }
-        
+        if (!response.ok) throw new Error('Failed to delete journal entry');
         return true;
     }
 
-    updateDashboardStats() {
-        const journalCount = this.entries.length;
-        const weeklyCount = this.calculateWeeklyCount();
-        
-        // Update localStorage for dashboard sync
-        localStorage.setItem('journalCount', journalCount.toString());
-        localStorage.setItem('weeklyCount', weeklyCount.toString());
-        
-        // Get reminder count for today
-        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
-        const today = new Date().toISOString().split('T')[0];
-        const todayReminders = reminders.filter(reminder => reminder.date === today);
-        localStorage.setItem('reminderCount', todayReminders.length.toString());
-        
-        // Dispatch events to update dashboard
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'journalCount',
-            newValue: journalCount.toString()
-        }));
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'weeklyCount', 
-            newValue: weeklyCount.toString()
-        }));
-        
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'reminderCount',
-            newValue: todayReminders.length.toString()
-        }));
-    }
-
-    calculateWeeklyCount() {
-        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const weeklyEntries = this.entries.filter(entry => entry.date >= oneWeekAgo);
-        return weeklyEntries.length;
-    }
-
-    handleReminderSubmit(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const reminder = {
-            id: Date.now(),
-            title: formData.get('reminderTitle'),
-            date: formData.get('reminderDate'),
-            time: formData.get('reminderTime'),
-            repeat: formData.get('reminderRepeat'),
-            completed: false,
-            type: 'normal'
-        };
-        
-        // Save to shared localStorage
-        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
-        reminders.push(reminder);
-        localStorage.setItem('reminders', JSON.stringify(reminders));
-        
-        // Close modal
-        this.closeReminderModal();
-        
-        // Refresh display
-        this.displayReminders();
-        this.updateStats();
-        
-        // Update dashboard stats
-        this.updateDashboardStats();
-        
-        // Show success message
-        this.showNotification('Reminder added successfully!', 'success');
-    }
-
+    // Other Methods
     toggleReminderCompletion(id) {
         const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
         const reminder = reminders.find(r => r.id === id);
@@ -839,123 +603,114 @@ class Journal {
             reminder.completed = !reminder.completed;
             localStorage.setItem('reminders', JSON.stringify(reminders));
             this.displayReminders();
-            
-            this.showNotification(`Reminder ${reminder.completed ? 'completed' : 'marked as pending'}!`, 'success');
-            
-            // Update dashboard stats
             this.updateDashboardStats();
         }
     }
 
     viewEntry(id) {
         const entry = this.entries.find(e => e.id === id);
+        if (!entry) return;
+
+        this.openNewEntryForm();
+        document.getElementById('formTitle').textContent = 'View Journal Entry';
+        document.getElementById('entryDate').value = entry.date;
+        document.getElementById('entryTitle').value = entry.title;
+        document.getElementById('entryContent').value = entry.content;
+        document.getElementById('selectedMood').value = entry.mood;
         
-        if (entry) {
-            this.openNewEntryForm();
-            
-            // Update form title
-            document.getElementById('formTitle').textContent = 'View Journal Entry';
-            
-            // Fill form with entry data
-            document.getElementById('entryDate').value = entry.date;
-            document.getElementById('entryTitle').value = entry.title;
-            document.getElementById('entryContent').value = entry.content;
-            document.getElementById('selectedMood').value = entry.mood;
-            
-            // Set active mood button
-            document.querySelectorAll('.mood-btn').forEach(btn => {
-                if (btn.dataset.mood === entry.mood) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // Disable form for viewing
-            document.querySelectorAll('#journalForm input, #journalForm textarea').forEach(element => {
-                element.disabled = true;
-            });
-            document.querySelectorAll('.mood-btn').forEach(btn => {
-                btn.disabled = true;
-            });
-            document.getElementById('cancelEntry').textContent = 'Close';
-            document.querySelector('.btn-primary').style.display = 'none';
-        }
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            if (btn.dataset.mood === entry.mood) btn.classList.add('active');
+        });
+        
+        document.querySelectorAll('#journalForm input, #journalForm textarea').forEach(el => el.disabled = true);
+        document.querySelectorAll('.mood-btn').forEach(btn => btn.disabled = true);
+        document.getElementById('cancelEntry').textContent = 'Close';
+        document.querySelector('.btn-primary').style.display = 'none';
     }
 
     editEntry(id) {
         const entry = this.entries.find(e => e.id === id);
+        if (!entry) return;
+
+        this.openNewEntryForm();
+        document.getElementById('formTitle').textContent = 'Edit Journal Entry';
+        document.getElementById('entryDate').value = entry.date;
+        document.getElementById('entryTitle').value = entry.title;
+        document.getElementById('entryContent').value = entry.content;
+        document.getElementById('selectedMood').value = entry.mood;
         
-        if (entry) {
-            this.openNewEntryForm();
-            
-            // Update form title
-            document.getElementById('formTitle').textContent = 'Edit Journal Entry';
-            
-            // Fill form with entry data
-            document.getElementById('entryDate').value = entry.date;
-            document.getElementById('entryTitle').value = entry.title;
-            document.getElementById('entryContent').value = entry.content;
-            document.getElementById('selectedMood').value = entry.mood;
-            
-            // Set active mood button
-            document.querySelectorAll('.mood-btn').forEach(btn => {
-                if (btn.dataset.mood === entry.mood) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // Store the ID for updating
-            document.getElementById('journalForm').dataset.editingId = id;
-        }
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            if (btn.dataset.mood === entry.mood) btn.classList.add('active');
+        });
+        
+        document.getElementById('journalForm').dataset.editingId = id;
     }
 
     async deleteEntry(id) {
-        if (confirm('Are you sure you want to delete this journal entry?')) {
-            try {
-                await this.deleteJournalEntry(id);
-                
-                // Update dashboard stats after deletion
-                this.updateDashboardStats();
-                
-                // Refresh data
-                await this.loadJournalData();
-                this.initializeCalendar();
-                
-                this.showNotification('Journal entry deleted successfully!', 'success');
-            } catch (error) {
-                console.error('Failed to delete journal entry:', error);
-                this.showNotification('Failed to delete journal entry. Please try again.', 'error');
+        if (!confirm('Are you sure you want to delete this journal entry?')) return;
+
+        try {
+            await this.deleteJournalEntry(id);
+            await this.reloadEntries();
+            this.initializeCalendar();
+            this.showNotification('Journal entry deleted successfully!', 'success');
+        } catch (error) {
+            console.error('Failed to delete journal entry:', error);
+            this.showNotification('Failed to delete journal entry. Please try again.', 'error');
+        }
+    }
+
+    showEntriesForDate(date) {
+        const dateEntries = this.entries.filter(entry => entry.date === date);
+        
+        if (dateEntries.length > 0) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            this.displayEntries('all');
+            
+            setTimeout(() => {
+                document.querySelectorAll('.entry-card').forEach(card => {
+                    const entryDate = card.querySelector('.entry-date').textContent;
+                    if (this.formatDate(date) === entryDate) {
+                        card.style.background = '#f0f8f4';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }, 100);
+        } else {
+            if (confirm(`No journal entries for ${this.formatDate(date)}. Would you like to create one?`)) {
+                this.openNewEntryForm();
+                document.getElementById('entryDate').value = date;
             }
         }
     }
 
     updateStats() {
-        console.log('Updating stats...');
-        const totalEntriesElement = document.getElementById('totalEntries');
-        const thisWeekElement = document.getElementById('thisWeek');
-        
-        if (totalEntriesElement) {
-            totalEntriesElement.textContent = this.entries.length;
-        }
-        
+        document.getElementById('totalEntries').textContent = this.entries.length;
         const weeklyCount = this.calculateWeeklyCount();
-        if (thisWeekElement) {
-            thisWeekElement.textContent = weeklyCount;
-        }
-        
-        // Also update localStorage for dashboard sync
+        document.getElementById('thisWeek').textContent = weeklyCount;
         localStorage.setItem('weeklyCount', weeklyCount.toString());
+    }
+
+    calculateWeeklyCount() {
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return this.entries.filter(entry => entry.date >= oneWeekAgo).length;
+    }
+
+    updateDashboardStats() {
+        const journalCount = this.entries.length;
+        const weeklyCount = this.calculateWeeklyCount();
+        const reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+        const today = new Date().toISOString().split('T')[0];
+        const todayReminders = reminders.filter(reminder => reminder.date === today);
         
-        console.log('Stats updated - Total:', this.entries.length, 'Weekly:', weeklyCount);
+        localStorage.setItem('journalCount', journalCount.toString());
+        localStorage.setItem('weeklyCount', weeklyCount.toString());
+        localStorage.setItem('reminderCount', todayReminders.length.toString());
     }
 
     formatDate(dateString) {
-        try {
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return dateString;
-        }
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
     }
 
     showNotification(message, type) {
@@ -977,10 +732,7 @@ class Journal {
         `;
         
         document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+        setTimeout(() => notification.remove(), 3000);
     }
 
     logout() {
@@ -990,7 +742,13 @@ class Journal {
     }
 }
 
-// Add CSS for notifications if not already present
+// Initialize when DOM is ready
+let journal;
+document.addEventListener('DOMContentLoaded', function() {
+    journal = new Journal();
+});
+
+// Add notification styles
 if (!document.querySelector('#journal-notifications')) {
     const style = document.createElement('style');
     style.id = 'journal-notifications';
@@ -1001,28 +759,4 @@ if (!document.querySelector('#journal-notifications')) {
         }
     `;
     document.head.appendChild(style);
-}
-
-// Initialize journal when DOM is loaded
-let journal;
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing journal...');
-    journal = new Journal();
-});
-
-// Debug function to check current data
-function debugData() {
-    console.log('=== DEBUG DATA ===');
-    console.log('Journal Entries:', journal.entries);
-    console.log('Reminders:', JSON.parse(localStorage.getItem('reminders')) || []);
-    console.log('Journal Count in localStorage:', localStorage.getItem('journalCount'));
-    console.log('Weekly Count in localStorage:', localStorage.getItem('weeklyCount'));
-    console.log('=== END DEBUG ===');
-}
-
-// Force reload data (for testing)
-function forceReload() {
-    if (journal) {
-        journal.loadJournalData();
-    }
 }
