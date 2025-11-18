@@ -37,19 +37,27 @@ class Journal {
     }
 
     loadDefaultData() {
-        // Load default journal entries
+        // Get today's date and yesterday's date in correct format
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const todayFormatted = today.toISOString().split('T')[0];
+        const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+
+        // Load default journal entries with proper dates
         const defaultEntries = [
             {
                 id: 1,
                 title: "A Wonderful Day with Family",
-                date: new Date().toISOString().split('T')[0],
+                date: todayFormatted,
                 content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
                 mood: "😊"
             },
             {
                 id: 2,
                 title: "Morning Walk Thoughts",
-                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                date: yesterdayFormatted,
                 content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
                 mood: "😌"
             }
@@ -64,28 +72,28 @@ class Journal {
             {
                 id: 1,
                 title: "Take morning medication",
-                date: new Date().toISOString().split('T')[0],
+                date: todayFormatted,
                 time: "09:00",
                 completed: false
             },
             {
                 id: 2,
                 title: "Doctor appointment",
-                date: new Date().toISOString().split('T')[0],
+                date: todayFormatted,
                 time: "14:00",
                 completed: false
             },
             {
                 id: 3,
                 title: "Call family member",
-                date: new Date().toISOString().split('T')[0],
+                date: todayFormatted,
                 time: "17:00",
                 completed: false
             },
             {
                 id: 4,
                 title: "Evening walk",
-                date: new Date().toISOString().split('T')[0],
+                date: todayFormatted,
                 time: "19:00",
                 completed: false
             }
@@ -134,19 +142,27 @@ class Journal {
     }
 
     async saveDefaultDataToBackend() {
+        // Get today's date and yesterday's date in correct format
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const todayFormatted = today.toISOString().split('T')[0];
+        const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+
         // Only save if we have default data that's not in backend
         const defaultEntries = [
             {
                 title: "A Wonderful Day with Family",
                 content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
                 mood: "😊",
-                date: new Date().toISOString().split('T')[0]
+                date: todayFormatted
             },
             {
                 title: "Morning Walk Thoughts",
                 content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
                 mood: "😌",
-                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                date: yesterdayFormatted
             }
         ];
 
@@ -700,6 +716,9 @@ class Journal {
             key: 'weeklyCount', 
             newValue: weeklyCount.toString()
         }));
+        
+        // Also update the journal stats in localStorage for dashboard access
+        localStorage.setItem('journals', JSON.stringify(this.entries));
     }
 
     calculateWeeklyCount() {
@@ -845,6 +864,7 @@ class Journal {
         
         // Also update localStorage for dashboard sync
         localStorage.setItem('weeklyCount', weeklyCount.toString());
+        localStorage.setItem('journalCount', this.entries.length.toString());
     }
 
     formatDate(dateString) {
