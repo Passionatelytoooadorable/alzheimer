@@ -38,23 +38,35 @@ function updateDashboardData() {
     document.getElementById('memoryCount2').textContent = memories.length;
     document.getElementById('memoryBadge').textContent = `${memories.length} memories`;
 
-    // Update journal count from localStorage - check both possible keys
-    let journals = JSON.parse(localStorage.getItem('journals')) || [];
-    const journalEntries = JSON.parse(localStorage.getItem('journalEntries')) || [];
+    // Update journal count from localStorage - get from both sources
+    let journalCount = 0;
+    let weeklyCount = 0;
     
-    // Use journalEntries if available (from journal page), otherwise use journals
+    // Try to get from journalEntries first (from journal page)
+    const journalEntries = JSON.parse(localStorage.getItem('journalEntries')) || [];
     if (journalEntries.length > 0) {
-        journals = journalEntries;
+        journalCount = journalEntries.length;
+        
+        // Calculate weekly count
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        weeklyCount = journalEntries.filter(entry => entry.date >= oneWeekAgo).length;
+    } else {
+        // Fallback to journals or localStorage counts
+        const journals = JSON.parse(localStorage.getItem('journals')) || [];
+        journalCount = journals.length;
+        weeklyCount = parseInt(localStorage.getItem('weeklyCount')) || 0;
     }
     
-    const journalCount = journals.length;
+    // Update UI elements
     document.getElementById('journalCount').textContent = journalCount;
     document.getElementById('journalCount2').textContent = journalCount;
     document.getElementById('journalBadge').textContent = `${journalCount} entries, 2 prompts`;
-
-    // Calculate weekly count for journal
-    const weeklyCount = calculateWeeklyJournalCount(journals);
-    document.getElementById('weeklyCount').textContent = weeklyCount;
+    
+    // Update weekly count in the journal tile
+    const weeklyElement = document.querySelector('.journal-tile .stat:nth-child(2) strong');
+    if (weeklyElement) {
+        weeklyElement.textContent = weeklyCount;
+    }
 
     // Update user name
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -68,18 +80,6 @@ function updateDashboardData() {
         return reminderDate === today;
     });
     document.getElementById('reminderCount').textContent = todayReminders.length;
-}
-
-function calculateWeeklyJournalCount(journals) {
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const oneWeekAgoString = oneWeekAgo.toISOString().split('T')[0];
-    
-    const weeklyEntries = journals.filter(entry => {
-        const entryDate = new Date(entry.date).toISOString().split('T')[0];
-        return entryDate >= oneWeekAgoString;
-    });
-    
-    return weeklyEntries.length;
 }
 
 function loadReminders() {
@@ -147,23 +147,15 @@ function setupEventListeners() {
 
     // Listen for storage updates from other pages
     window.addEventListener('storage', function(e) {
-        if (e.key === 'memories' || e.key === 'journals' || e.key === 'journalEntries' || e.key === 'reminders') {
+        if (e.key === 'memories' || e.key === 'journalEntries' || e.key === 'journals' || e.key === 'reminders' || e.key === 'weeklyCount') {
             updateDashboardData();
             loadReminders();
         }
     });
-
-    // Listen for custom journal update events
-    window.addEventListener('journalUpdate', function(e) {
+    
+    // Also listen for custom events from journal page
+    window.addEventListener('journalUpdated', function() {
         updateDashboardData();
-        loadReminders();
-    });
-
-    // Also update when page becomes visible (user returns from journal page)
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-            updateDashboardData();
-        }
     });
 }
 
@@ -182,7 +174,3 @@ window.dashboardFunctions = {
     updateDashboardData,
     loadReminders
 };
-
-// Update dashboard when page loads and when returning from other pages
-window.addEventListener('load', updateDashboardData);
-window.addEventListener('pageshow', updateDashboardData);
