@@ -1,4 +1,4 @@
-// Enhanced AI Companion JavaScript
+// Enhanced AI Companion JavaScript with Synchronized Reminders
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the application
     initializeApp();
@@ -23,7 +23,7 @@ let hasShownWelcome = false;
 async function initializeApp() {
     await loadAIResponses();
     updateDailyTip();
-    loadReminders();
+    loadReminders(); // This now syncs with Journal reminders
     initializeChat();
     updateStats();
     setupConsoleCommands();
@@ -231,16 +231,36 @@ function setupEventListeners() {
         });
     });
 
-    // Listen for reminder updates from other pages
+    // Listen for reminder updates from other pages (SYNC WITH JOURNAL)
     window.addEventListener('storage', function(e) {
         if (e.key === 'reminders') {
+            console.log('🔄 Reminders updated from storage, reloading...');
             loadReminders();
             updateStats();
+            updateDashboardStats();
         }
     });
     
     // Update days active stat periodically
     setInterval(updateDaysActiveStat, 60000);
+    
+    // Check for reminder updates more frequently
+    setInterval(checkForReminderUpdates, 5000);
+}
+
+// Check for reminder updates from Journal app
+function checkForReminderUpdates() {
+    const savedReminders = localStorage.getItem('reminders');
+    if (savedReminders) {
+        const parsedReminders = JSON.parse(savedReminders);
+        // Check if reminders have changed
+        if (JSON.stringify(parsedReminders) !== JSON.stringify(currentReminders)) {
+            console.log('🔄 Reminders changed, updating AI Companion...');
+            currentReminders = parsedReminders;
+            renderReminders();
+            updateStats();
+        }
+    }
 }
 
 // Enhanced welcome greeting system
@@ -640,40 +660,37 @@ function closeModal() {
     capturedPhoto = null;
 }
 
-// Reset reminders to default
+// ENHANCED: Reset reminders to match Journal app defaults
 function resetRemindersToDefault() {
+    const today = new Date().toISOString().split('T')[0];
     const defaultReminders = [
         {
             id: 1,
             title: "Take morning medication",
-            date: new Date().toISOString().split('T')[0],
+            date: today,
             time: "09:00",
-            completed: false,
-            type: "medication"
+            completed: false
         },
         {
             id: 2,
             title: "Doctor appointment",
-            date: new Date().toISOString().split('T')[0],
+            date: today,
             time: "14:00",
-            completed: false,
-            type: "normal"
+            completed: false
         },
         {
             id: 3,
             title: "Call family member",
-            date: new Date().toISOString().split('T')[0],
+            date: today,
             time: "17:00",
-            completed: false,
-            type: "normal"
+            completed: false
         },
         {
             id: 4,
             title: "Evening walk",
-            date: new Date().toISOString().split('T')[0],
+            date: today,
             time: "19:00",
-            completed: false,
-            type: "normal"
+            completed: false
         }
     ];
     
@@ -756,16 +773,22 @@ function setupConsoleCommands() {
     console.log('   debugAICompanion() - Show debug information');
 }
 
-// Load initial data
+// ENHANCED: Load initial data with Journal sync
 function loadInitialData() {
     // Load any saved data from localStorage
     const savedReminders = localStorage.getItem('reminders');
     const savedChat = localStorage.getItem('aiCompanionChat');
     
+    // Use Journal app reminders if they exist, otherwise create defaults
     if (savedReminders) {
         currentReminders = JSON.parse(savedReminders);
-        renderReminders();
+        console.log('📋 Loaded reminders from Journal app:', currentReminders.length);
+    } else {
+        // Create default reminders that match Journal app
+        resetRemindersToDefault();
     }
+    
+    renderReminders();
     
     if (savedChat) {
         chatHistory = JSON.parse(savedChat);
@@ -1009,15 +1032,20 @@ function openReminderModal() {
         const now = new Date();
         const timeString = now.toTimeString().substring(0, 5);
         document.getElementById('reminderTime').value = timeString;
+        
+        // Set today's date as default
+        document.getElementById('reminderDate').value = now.toISOString().split('T')[0];
     }
 }
 
+// ENHANCED: Save reminder that syncs with Journal app
 function saveReminder() {
     const title = document.getElementById('reminderTitle').value;
     const time = document.getElementById('reminderTime').value;
+    const date = document.getElementById('reminderDate').value;
     const type = document.getElementById('reminderType').value;
     
-    if (!title || !time) {
+    if (!title || !time || !date) {
         showNotification('Please fill in all required fields', 'error');
         return;
     }
@@ -1025,10 +1053,9 @@ function saveReminder() {
     const newReminder = {
         id: Date.now(),
         title: title,
+        date: date,
         time: time,
-        type: type,
-        completed: false,
-        date: new Date().toISOString().split('T')[0] // Add date for compatibility
+        completed: false
     };
     
     // Get existing reminders from localStorage (shared with journal)
@@ -1051,14 +1078,22 @@ function saveReminder() {
     
     // Update dashboard stats
     updateDashboardStats();
+    
+    console.log('📋 Reminder saved and synced with Journal app');
 }
 
+// ENHANCED: Load reminders that sync with Journal app
 function loadReminders() {
     // Load reminders from shared localStorage
     const savedReminders = localStorage.getItem('reminders');
     if (savedReminders) {
         currentReminders = JSON.parse(savedReminders);
+        console.log('📋 Loaded shared reminders:', currentReminders.length);
         renderReminders();
+    } else {
+        // If no reminders exist, create default ones that match Journal app
+        console.log('📋 No reminders found, creating default ones...');
+        resetRemindersToDefault();
     }
 }
 
@@ -1077,27 +1112,43 @@ function renderReminders() {
     remindersList.style.maxHeight = 'none';
     remindersList.style.overflow = 'visible';
     
-    // Sort reminders by time
-    currentReminders.sort((a, b) => a.time.localeCompare(b.time));
+    // Sort reminders by date and time
+    currentReminders.sort((a, b) => {
+        if (a.date !== b.date) {
+            return a.date.localeCompare(b.date);
+        }
+        return a.time.localeCompare(b.time);
+    });
+    
+    // Get today's date for filtering
+    const today = new Date().toISOString().split('T')[0];
     
     currentReminders.forEach(reminder => {
-        const reminderElement = document.createElement('div');
-        reminderElement.className = `reminder-item ${reminder.type === 'urgent' ? 'urgent' : ''} ${reminder.completed ? 'completed' : ''}`;
-        reminderElement.innerHTML = `
-            <div class="reminder-time">${reminder.time}</div>
-            <div class="reminder-text">${reminder.title}</div>
-            <div class="reminder-status">${reminder.completed ? '✓' : ''}</div>
-        `;
-        
-        reminderElement.addEventListener('click', () => {
-            toggleReminderCompletion(reminder.id);
-        });
-        
-        remindersList.appendChild(reminderElement);
+        // Only show today's reminders in the main list
+        if (reminder.date === today) {
+            const reminderElement = document.createElement('div');
+            reminderElement.className = `reminder-item ${reminder.completed ? 'completed' : ''}`;
+            reminderElement.innerHTML = `
+                <div class="reminder-time">${reminder.time}</div>
+                <div class="reminder-text">${reminder.title}</div>
+                <div class="reminder-status">${reminder.completed ? '✓' : ''}</div>
+            `;
+            
+            reminderElement.addEventListener('click', () => {
+                toggleReminderCompletion(reminder.id);
+            });
+            
+            remindersList.appendChild(reminderElement);
+        }
     });
+    
+    // If no reminders for today, show message
+    if (remindersList.children.length === 0) {
+        remindersList.innerHTML = '<p style="text-align: center; color: #666; padding: 1rem;">No reminders for today</p>';
+    }
 }
 
-// Toggle reminder completion
+// ENHANCED: Toggle reminder completion that syncs with Journal app
 function toggleReminderCompletion(id) {
     const reminder = currentReminders.find(r => r.id === id);
     if (reminder) {
@@ -1108,6 +1159,8 @@ function toggleReminderCompletion(id) {
         updateDashboardStats();
         
         showNotification(`Reminder ${reminder.completed ? 'completed' : 'reopened'}!`, 'success');
+        
+        console.log('📋 Reminder completion toggled and synced with Journal app');
     }
 }
 
@@ -1157,6 +1210,8 @@ function updateDashboardStats() {
     const today = new Date().toISOString().split('T')[0];
     const todayReminders = currentReminders.filter(reminder => reminder.date === today);
     localStorage.setItem('reminderCount', todayReminders.length.toString());
+    
+    console.log('📊 Dashboard stats updated');
 }
 
 // Render chat history
@@ -1205,9 +1260,10 @@ function showNotification(message, type = 'info') {
 function checkDueReminders() {
     const now = new Date();
     const currentTime = now.toTimeString().substring(0, 5);
+    const today = now.toISOString().split('T')[0];
     
     currentReminders.forEach(reminder => {
-        if (reminder.time === currentTime && !reminder.completed) {
+        if (reminder.date === today && reminder.time === currentTime && !reminder.completed) {
             showNotification(`Reminder: ${reminder.title}`, 'info');
             
             // Mark as completed for today
@@ -1215,6 +1271,8 @@ function checkDueReminders() {
             
             // Update localStorage
             localStorage.setItem('reminders', JSON.stringify(currentReminders));
+            
+            console.log('⏰ Due reminder triggered:', reminder.title);
         }
     });
     
@@ -1228,6 +1286,7 @@ function checkDueReminders() {
             reminder.completed = false;
         });
         localStorage.setItem('reminders', JSON.stringify(currentReminders));
+        console.log('🔄 Reminder completion status reset for new day');
     }, timeUntilMidnight);
 }
 
@@ -1245,5 +1304,7 @@ window.AICompanion = {
     showNotification,
     openCameraModal,
     openSettingsModal,
-    showWelcomeGreeting
+    showWelcomeGreeting,
+    loadReminders, // Added for manual sync
+    resetRemindersToDefault // Added for manual reset
 };
