@@ -302,7 +302,12 @@ class Journal {
                 </div>
             `;
         }
-    }
+        // for debugging
+        console.log('Filter:', filter);
+        console.log('Today IST:', today);
+        console.log('All entries:', this.entries.map(e => ({ title: e.title, date: e.date })));
+        console.log('Filtered entries:', filteredEntries.length);
+            }
 
     createEntryCard(entry) {
         const card = document.createElement('div');
@@ -928,3 +933,4 @@ let journal;
 document.addEventListener('DOMContentLoaded', function() {
     journal = new Journal();
 });
+
