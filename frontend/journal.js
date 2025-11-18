@@ -36,86 +36,82 @@ class Journal {
         this.syncWithBackend();
     }
 
+    // Helper function to get IST date in YYYY-MM-DD format
+    getISTDate(date = new Date()) {
+        // Convert to IST (UTC+5:30)
+        const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+        return istDate.toISOString().split('T')[0];
+    }
+
     loadDefaultData() {
-        // Get dates in IST timezone
-        const getISTDate = () => {
-            const now = new Date();
-            // IST is UTC+5:30
-            const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-            const istTime = new Date(now.getTime() + istOffset);
-            return istTime.toISOString().split('T')[0];
-    };
+        // Get dates in IST
+        const today = this.getISTDate();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayFormatted = this.getISTDate(yesterday);
 
-        const today = getISTDate();
-    
-    // Get yesterday in IST
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayIST = new Date(yesterday.getTime() + (5.5 * 60 * 60 * 1000));
-    const yesterdayFormatted = yesterdayIST.toISOString().split('T')[0];
+        // Load default journal entries with proper IST dates
+        const defaultEntries = [
+            {
+                id: 1,
+                title: "A Wonderful Day with Family",
+                date: today,
+                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                mood: "😊"
+            },
+            {
+                id: 2,
+                title: "Morning Walk Thoughts",
+                date: yesterdayFormatted,
+                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+                mood: "😌"
+            }
+        ];
 
-    // Load default journal entries with IST dates
-    const defaultEntries = [
-        {
-            id: 1,
-            title: "A Wonderful Day with Family",
-            date: today,
-            content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-            mood: "😊"
-        },
-        {
-            id: 2,
-            title: "Morning Walk Thoughts",
-            date: yesterdayFormatted,
-            content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
-            mood: "😌"
-        }
-    ];
+        // Load from localStorage or use defaults
+        const savedEntries = localStorage.getItem('journalEntries');
+        this.entries = savedEntries ? JSON.parse(savedEntries) : defaultEntries;
 
-    // Load from localStorage or use defaults
-    const savedEntries = localStorage.getItem('journalEntries');
-    this.entries = savedEntries ? JSON.parse(savedEntries) : defaultEntries;
+        // Load default reminders with IST dates
+        const defaultReminders = [
+            {
+                id: 1,
+                title: "Take morning medication",
+                date: today,
+                time: "09:00",
+                completed: false
+            },
+            {
+                id: 2,
+                title: "Doctor appointment",
+                date: today,
+                time: "14:00",
+                completed: false
+            },
+            {
+                id: 3,
+                title: "Call family member",
+                date: today,
+                time: "17:00",
+                completed: false
+            },
+            {
+                id: 4,
+                title: "Evening walk",
+                date: today,
+                time: "19:00",
+                completed: false
+            }
+        ];
 
-    // Load default reminders with IST dates
-    const defaultReminders = [
-        {
-            id: 1,
-            title: "Take morning medication",
-            date: today,
-            time: "09:00",
-            completed: false
-        },
-        {
-            id: 2,
-            title: "Doctor appointment",
-            date: today,
-            time: "14:00",
-            completed: false
-        },
-        {
-            id: 3,
-            title: "Call family member",
-            date: today,
-            time: "17:00",
-            completed: false
-        },
-        {
-            id: 4,
-            title: "Evening walk",
-            date: today,
-            time: "19:00",
-            completed: false
-        }
-    ];
+        const savedReminders = localStorage.getItem('reminders');
+        this.reminders = savedReminders ? JSON.parse(savedReminders) : defaultReminders;
 
-    const savedReminders = localStorage.getItem('reminders');
-    this.reminders = savedReminders ? JSON.parse(savedReminders) : defaultReminders;
-
-    // Display data immediately
-    this.displayEntries();
-    this.displayReminders();
-    this.updateStats();
-}
+        // Display data immediately
+        this.displayEntries();
+        this.displayReminders();
+        this.updateStats();
+    }
 
     async syncWithBackend() {
         try {
@@ -151,52 +147,43 @@ class Journal {
     }
 
     async saveDefaultDataToBackend() {
-    // Get dates in IST timezone
-    const getISTDate = () => {
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const istTime = new Date(now.getTime() + istOffset);
-        return istTime.toISOString().split('T')[0];
-    };
+        // Get dates in IST
+        const today = this.getISTDate();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayFormatted = this.getISTDate(yesterday);
 
-    const today = getISTDate();
-    
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayIST = new Date(yesterday.getTime() + (5.5 * 60 * 60 * 1000));
-    const yesterdayFormatted = yesterdayIST.toISOString().split('T')[0];
+        // Only save if we have default data that's not in backend
+        const defaultEntries = [
+            {
+                title: "A Wonderful Day with Family",
+                content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
+                mood: "😊",
+                date: today
+            },
+            {
+                title: "Morning Walk Thoughts",
+                content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
+                mood: "😌",
+                date: yesterdayFormatted
+            }
+        ];
 
-    // Only save if we have default data that's not in backend
-    const defaultEntries = [
-        {
-            title: "A Wonderful Day with Family",
-            content: "Today was such a beautiful day. My grandchildren came to visit and we spent the afternoon in the garden. They showed me their new toys and we had tea together. It reminded me of when my own children were young.",
-            mood: "😊",
-            date: today
-        },
-        {
-            title: "Morning Walk Thoughts",
-            content: "Went for my morning walk today. The weather was perfect - not too hot, not too cold. Saw the neighbor's cat sunbathing on the fence. It made me think about how simple pleasures can bring so much joy.",
-            mood: "😌",
-            date: yesterdayFormatted
-        }
-    ];
-
-    for (const entry of defaultEntries) {
-        try {
-            await fetch(`${API_BASE}/journals`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
-                },
-                body: JSON.stringify(entry)
-            });
-        } catch (error) {
-            console.log('Failed to save default entry to backend:', error);
+        for (const entry of defaultEntries) {
+            try {
+                await fetch(`${API_BASE}/journals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify(entry)
+                });
+            } catch (error) {
+                console.log('Failed to save default entry to backend:', error);
+            }
         }
     }
-}
 
     setupEventListeners() {
         // New Entry Button
@@ -266,62 +253,56 @@ class Journal {
     }
 
     displayEntries(filter = 'all') {
-    const entriesList = document.getElementById('entriesList');
-    
-    // Get current date in IST for filtering
-    const getISTDate = () => {
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const istTime = new Date(now.getTime() + istOffset);
-        return istTime.toISOString().split('T')[0];
-    };
+        const entriesList = document.getElementById('entriesList');
+        
+        // Get dates in IST for filtering
+        const today = this.getISTDate();
+        
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const oneWeekAgoFormatted = this.getISTDate(oneWeekAgo);
+        
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+        const oneMonthAgoFormatted = this.getISTDate(oneMonthAgo);
+        
+        let filteredEntries = this.entries;
+        
+        switch(filter) {
+            case 'today':
+                filteredEntries = this.entries.filter(entry => entry.date === today);
+                break;
+            case 'week':
+                filteredEntries = this.entries.filter(entry => entry.date >= oneWeekAgoFormatted);
+                break;
+            case 'month':
+                filteredEntries = this.entries.filter(entry => entry.date >= oneMonthAgoFormatted);
+                break;
+        }
 
-    const today = getISTDate();
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const oneWeekAgoIST = new Date(oneWeekAgo.getTime() + (5.5 * 60 * 60 * 1000));
-    const oneWeekAgoFormatted = oneWeekAgoIST.toISOString().split('T')[0];
-    
-    const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const oneMonthAgoIST = new Date(oneMonthAgo.getTime() + (5.5 * 60 * 60 * 1000));
-    const oneMonthAgoFormatted = oneMonthAgoIST.toISOString().split('T')[0];
-    
-    let filteredEntries = this.entries;
-    
-    switch(filter) {
-        case 'today':
-            filteredEntries = this.entries.filter(entry => entry.date === today);
-            break;
-        case 'week':
-            filteredEntries = this.entries.filter(entry => entry.date >= oneWeekAgoFormatted);
-            break;
-        case 'month':
-            filteredEntries = this.entries.filter(entry => entry.date >= oneMonthAgoFormatted);
-            break;
+        // Clear list
+        entriesList.innerHTML = '';
+
+        // Add entry cards
+        filteredEntries.forEach(entry => {
+            const entryCard = this.createEntryCard(entry);
+            entriesList.appendChild(entryCard);
+        });
+
+        // Show empty state if no entries
+        if (filteredEntries.length === 0) {
+            entriesList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No journal entries found</h3>
+                    <p>Start writing your first journal entry to capture your thoughts and memories!</p>
+                    <button class="action-btn primary" onclick="journal.openNewEntryForm()">
+                        Write Your First Entry
+                    </button>
+                </div>
+            `;
+        }
     }
-
-    // Clear list
-    entriesList.innerHTML = '';
-
-    // Add entry cards
-    filteredEntries.forEach(entry => {
-        const entryCard = this.createEntryCard(entry);
-        entriesList.appendChild(entryCard);
-    });
-
-    // Show empty state if no entries
-    if (filteredEntries.length === 0) {
-        entriesList.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">📝</div>
-                <h3>No journal entries found</h3>
-                <p>Start writing your first journal entry to capture your thoughts and memories!</p>
-                <button class="action-btn primary" onclick="journal.openNewEntryForm()">
-                    Write Your First Entry
-                </button>
-            </div>
-        `;
-    }
-}
 
     createEntryCard(entry) {
         const card = document.createElement('div');
@@ -351,7 +332,7 @@ class Journal {
     }
 
     displayReminders() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.getISTDate();
         const todayReminders = this.reminders.filter(reminder => reminder.date === today);
         const remindersList = document.getElementById('remindersList');
         
@@ -515,7 +496,7 @@ class Journal {
         // Reset form
         document.getElementById('formTitle').textContent = 'New Journal Entry';
         document.getElementById('journalForm').reset();
-        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('entryDate').value = this.getISTDate();
         document.getElementById('selectedMood').value = '';
         document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
         
@@ -548,7 +529,7 @@ class Journal {
         const form = document.getElementById('reminderForm');
         
         form.reset();
-        document.getElementById('reminderDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('reminderDate').value = this.getISTDate();
         document.getElementById('reminderTime').value = '08:00';
         
         modal.style.display = 'block';
@@ -730,7 +711,7 @@ class Journal {
         localStorage.setItem('weeklyCount', weeklyCount.toString());
         
         // Get reminder count for today
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.getISTDate();
         const todayReminders = this.reminders.filter(reminder => reminder.date === today);
         localStorage.setItem('reminderCount', todayReminders.length.toString());
         
@@ -750,8 +731,11 @@ class Journal {
     }
 
     calculateWeeklyCount() {
-        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const weeklyEntries = this.entries.filter(entry => entry.date >= oneWeekAgo);
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const oneWeekAgoFormatted = this.getISTDate(oneWeekAgo);
+        
+        const weeklyEntries = this.entries.filter(entry => entry.date >= oneWeekAgoFormatted);
         return weeklyEntries.length;
     }
 
@@ -944,5 +928,3 @@ let journal;
 document.addEventListener('DOMContentLoaded', function() {
     journal = new Journal();
 });
-
-
