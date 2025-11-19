@@ -29,8 +29,8 @@ Alzheimer's Support is an AI-powered companion designed to serve as an extension
  6. Accessibility Features
  7. Caregiver Support Features
 
-## USER EXPERIENCE FEATURES 📱
-# 1. For Patients:
+## User Experience Features 📱
+### 1. For Patients:
 - Simple, intuitive interface designed for cognitive support
 
 - Memory aids with visual and textual cues
@@ -39,7 +39,7 @@ Alzheimer's Support is an AI-powered companion designed to serve as an extension
 
 - Emotional tracking via journal mood monitoring
 
-# 2. For Caregivers:
+### 2. For Caregivers:
 - Activity monitoring through comprehensive logs
 
 - Location safety features
@@ -48,7 +48,6 @@ Alzheimer's Support is an AI-powered companion designed to serve as an extension
 
 - Remote support capabilities
 
-  ## License 📝
+## License 📝
 
 This project is licensed under the [MIT License](LICENSE).
-
