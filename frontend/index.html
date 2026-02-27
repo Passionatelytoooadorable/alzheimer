@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alzheimer's Support Platform</title>
+    <title>Alzheimer's Support - Brain Scan Analysis</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Simple default favicon -->
-    <link rel="icon" href="#" id="dynamic-favicon">
-    <script src="favicon-config.js"></script>
+    <link rel="stylesheet" href="scan.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
 </head>
 <body>
     <header class="header">
@@ -15,42 +14,137 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="login.html">Login</a>
-        </nav>
+        <nav class="nav-links" id="mainNav"></nav>
     </header>
 
-    <main class="main-content">
-        <section class="welcome-section">
-            <h1>Welcome to Alzheimer's Support Platform</h1>
-            <p>A compassionate space for patients, caregivers, and families affected by Alzheimer's disease.</p>
-            <p>Access resources, connect with support networks, and find tools to help navigate the journey.</p>
-             <div class="button-group">
-                <a href="login.html" class="cta-button">Access Your Dashboard</a>
+    <main class="scan-main">
+        <section class="scan-hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <div class="hero-badge">🔬 AI-Powered Medical Analysis</div>
+                    <h1>Alzheimer's Detection<br><span class="highlight">Made Simple</span></h1>
+                    <p>Upload your medical test report (PDF) and our advanced AI model will analyze it to assess Alzheimer's risk indicators — privately, securely, and instantly.</p>
+                    <div class="hero-features">
+                        <div class="hero-feat"><span>🔒</span> Private &amp; Secure</div>
+                        <div class="hero-feat"><span>⚡</span> Instant Results</div>
+                        <div class="hero-feat"><span>🤖</span> AI-Powered</div>
+                        <div class="hero-feat"><span>📋</span> PDF Reports</div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="brain-animation">
+                        <div class="brain-ring ring-1"></div>
+                        <div class="brain-ring ring-2"></div>
+                        <div class="brain-ring ring-3"></div>
+                        <div class="brain-icon">🧠</div>
+                        <div class="pulse-dot dot-1"></div>
+                        <div class="pulse-dot dot-2"></div>
+                        <div class="pulse-dot dot-3"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="features">
-            <div class="feature-card">
-                <div class="feature-icon">📚</div>
-                <h3>Educational Resources</h3>
-                <p>Access comprehensive information about Alzheimer's disease and care strategies.</p>
+        <section class="upload-section">
+            <div class="upload-container">
+                <!-- Upload Card -->
+                <div class="upload-card" id="uploadCard">
+                    <h2>📄 Upload Medical Report</h2>
+                    <p class="upload-subtitle">Upload a PDF of your brain scan, MRI report, or cognitive assessment</p>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon-large">📁</div>
+                        <p class="upload-main-text">Drag &amp; Drop your PDF here</p>
+                        <p class="upload-or">— or —</p>
+                        <button class="upload-btn" id="uploadBtn">Browse Files</button>
+                        <input type="file" id="pdfInput" accept=".pdf" hidden>
+                        <p class="upload-hint">PDF files only • Max 10MB</p>
+                    </div>
+                    <div class="file-selected" id="fileSelected" style="display:none;">
+                        <div class="file-info">
+                            <span class="file-icon">📄</span>
+                            <div class="file-details">
+                                <span class="file-name" id="fileName">document.pdf</span>
+                                <span class="file-size" id="fileSize">2.4 MB</span>
+                            </div>
+                            <button class="remove-file" id="removeFile">✕</button>
+                        </div>
+                        <button class="analyze-btn" id="analyzeBtn">🔍 Analyze Report</button>
+                    </div>
+                </div>
+
+                <!-- Analysis Progress -->
+                <div class="analysis-card" id="analysisCard" style="display:none;">
+                    <div class="analysis-header">
+                        <div class="analysis-anim">🧠</div>
+                        <h2>Analyzing Your Report...</h2>
+                        <p>Our AI model is processing your medical data</p>
+                    </div>
+                    <div class="progress-steps">
+                        <div class="step" id="step1"><div class="step-icon">📤</div><div class="step-info"><span class="step-name">Uploading PDF</span><div class="step-bar"><div class="step-fill" id="fill1"></div></div></div><span class="step-status" id="status1">⏳</span></div>
+                        <div class="step" id="step2"><div class="step-icon">📝</div><div class="step-info"><span class="step-name">Extracting Medical Data</span><div class="step-bar"><div class="step-fill" id="fill2"></div></div></div><span class="step-status" id="status2">⏳</span></div>
+                        <div class="step" id="step3"><div class="step-icon">🤖</div><div class="step-info"><span class="step-name">Running AI Analysis</span><div class="step-bar"><div class="step-fill" id="fill3"></div></div></div><span class="step-status" id="status3">⏳</span></div>
+                        <div class="step" id="step4"><div class="step-icon">📊</div><div class="step-info"><span class="step-name">Generating Report</span><div class="step-bar"><div class="step-fill" id="fill4"></div></div></div><span class="step-status" id="status4">⏳</span></div>
+                    </div>
+                </div>
+
+                <!-- Result: Positive -->
+                <div class="result-card positive-result" id="positiveResult" style="display:none;">
+                    <div class="result-header"><div class="result-icon">⚠️</div><h2>Analysis Complete</h2></div>
+                    <div class="result-badge positive-badge">Alzheimer's Indicators Detected</div>
+                    <div class="risk-meter">
+                        <div class="risk-label">Risk Assessment Score</div>
+                        <div class="risk-bar-container"><div class="risk-bar-fill" id="riskBarFill"></div></div>
+                        <div class="risk-percent" id="riskPercent">72%</div>
+                    </div>
+                    <div class="result-findings" id="resultFindings"></div>
+                    <div class="result-message positive-msg"><p>🏥 Based on your report, we recommend consultation with a neurologist. Our platform provides tools to help you and your caregivers manage and track your condition.</p></div>
+                    <div class="result-actions">
+                        <button class="action-primary" id="goToDashboard">Access Your Dashboard →</button>
+                        <button class="action-secondary" id="scanAgain">Upload Different Report</button>
+                    </div>
+                </div>
+
+                <!-- Result: Negative -->
+                <div class="result-card negative-result" id="negativeResult" style="display:none;">
+                    <div class="result-header"><div class="result-icon">✅</div><h2>Analysis Complete</h2></div>
+                    <div class="result-badge negative-badge">No Significant Indicators Found</div>
+                    <div class="result-message negative-msg"><p>🎉 Great news! Your report does not show significant Alzheimer's risk indicators at this time. Continue to maintain a healthy lifestyle and consult your doctor regularly.</p></div>
+                    <div class="healthy-tips">
+                        <h4>💡 Maintaining Brain Health</h4>
+                        <div class="tips-grid">
+                            <div class="tip-item">🏃 Regular exercise</div>
+                            <div class="tip-item">🥦 Healthy diet</div>
+                            <div class="tip-item">😴 Quality sleep</div>
+                            <div class="tip-item">🧩 Mental stimulation</div>
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <button class="action-secondary" id="scanAgainNeg">Upload Different Report</button>
+                    </div>
+                </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">👥</div>
-                <h3>Support Community</h3>
-                <p>Connect with others who understand your journey in a safe, supportive environment.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔔</div>
-                <h3>Daily Reminders</h3>
-                <p>Helpful tools for medication schedules, appointments, and daily activities.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">💬</div>
-                <h3>Memory Aids</h3>
-                <p>Tools to support memory and cognitive function with personalized approaches.</p>
+
+            <!-- Info Sidebar -->
+            <div class="info-sidebar">
+                <div class="info-card">
+                    <h3>📋 What We Analyze</h3>
+                    <ul class="info-list">
+                        <li>🧬 Biomarker levels (Amyloid, Tau)</li>
+                        <li>🔬 Cognitive assessment scores</li>
+                        <li>📊 MRI / CT scan findings</li>
+                        <li>🩺 Neurological test results</li>
+                        <li>💊 Medication history markers</li>
+                        <li>📅 Symptom progression data</li>
+                    </ul>
+                </div>
+                <div class="info-card disclaimer-card">
+                    <h3>⚠️ Medical Disclaimer</h3>
+                    <p>This AI analysis is for informational purposes only and should not replace professional medical advice. Always consult a qualified neurologist for a formal diagnosis.</p>
+                </div>
+                <div class="info-card privacy-card">
+                    <h3>🔒 Your Privacy</h3>
+                    <p>Your uploaded documents are processed securely and never stored permanently. All analysis happens in real-time and is deleted after processing.</p>
+                </div>
             </div>
         </section>
     </main>
@@ -59,7 +153,6 @@
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
-    <script src="script.js"></script>
-    <script src="index.js"></script>
+    <script src="scan.js"></script>
 </body>
 </html>

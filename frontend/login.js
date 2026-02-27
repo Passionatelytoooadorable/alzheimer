@@ -1,201 +1,101 @@
-// Login page JavaScript - Updated with Live Backend API
-document.addEventListener('DOMContentLoaded', function() {
+// login.js — Smart Auth Routing
+document.addEventListener('DOMContentLoaded', function () {
+    const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
+
+    // KEY FIX: Already logged-in → go straight to dashboard, never show login page
+    if (localStorage.getItem('token')) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
     const loginForm = document.getElementById('loginForm');
     const textSizeBtn = document.getElementById('textSize');
     const highContrastBtn = document.getElementById('highContrast');
-    
-    const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
-    // Initialize login functionality
-    initLoginForm();
-    initAccessibility();
-
-    function initLoginForm() {
-        if (!loginForm) return;
-
-        loginForm.addEventListener('submit', handleLogin);
-    }
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
     function handleLogin(e) {
         e.preventDefault();
-        
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
-        
-        // Validation
-        if (!validateInputs(username, password)) return;
-        
-        // Attempt login with backend API
-        attemptBackendLogin(username, password);
+        if (!username || !password) { showMessage('Please fill in all fields', 'error'); return; }
+        attemptLogin(username, password);
     }
 
-    function validateInputs(username, password) {
-        if (!username || !password) {
-            showMessage('Please fill in all fields', 'error');
-            return false;
-        }
-        return true;
-    }
+    async function attemptLogin(username, password) {
+        const btn = loginForm.querySelector('.login-button');
+        const orig = btn.textContent;
+        btn.textContent = 'Signing In...';
+        btn.disabled = true;
 
-    async function attemptBackendLogin(username, password) {
-        const submitBtn = loginForm.querySelector('.login-button');
-        const originalText = submitBtn.textContent;
-        
-        // Show loading state
-        setButtonLoading(submitBtn, true, 'Signing In...');
-        
         try {
-            const credentials = {
-                email: username, // Backend accepts email or username
-                password: password
-            };
-
-            const response = await fetch(`${API_BASE}/auth/signin`, {
+            const res = await fetch(API_BASE + '/auth/signin', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(credentials)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: username, password })
             });
-            
-            const result = await response.json();
-            
+            const result = await res.json();
+
             if (result.token) {
-                loginSuccess(result, submitBtn, originalText);
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userName', result.user.name);
+                localStorage.setItem('userEmail', result.user.email);
+                showMessage('Login successful! Redirecting...', 'success');
+                // Registered user always goes to dashboard
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
             } else {
-                loginFailed(submitBtn, originalText, result.message || 'Invalid username or password');
+                btn.textContent = orig;
+                btn.disabled = false;
+                showMessage(result.message || 'Invalid username or password', 'error');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
             }
-        } catch (error) {
-            console.error('Login API error:', error);
-            loginFailed(submitBtn, originalText, 'Network error. Please try again later.');
+        } catch (err) {
+            btn.textContent = orig;
+            btn.disabled = false;
+            showMessage('Network error. Please try again later.', 'error');
         }
-    }
-
-    function loginSuccess(loginData, submitBtn, originalText) {
-        showMessage('Login successful! Redirecting...', 'success');
-        
-        // Store user session with backend data
-        localStorage.setItem('token', loginData.token);
-        localStorage.setItem('user', JSON.stringify(loginData.user));
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userName', loginData.user.name);
-        localStorage.setItem('userEmail', loginData.user.email);
-        
-        // Redirect to dashboard after successful login
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 1500);
-    }
-
-    function loginFailed(submitBtn, originalText, message) {
-        showMessage(message, 'error');
-        setButtonLoading(submitBtn, false, originalText);
-        
-        // Clear password field and refocus
-        document.getElementById('password').value = '';
-        document.getElementById('password').focus();
-    }
-
-    function setButtonLoading(button, isLoading, text) {
-        button.textContent = text;
-        button.disabled = isLoading;
     }
 
     function showMessage(message, type) {
-        // Remove existing messages
-        removeExistingMessages();
-        
-        // Create new message
-        const messageDiv = createMessageElement(message, type);
-        
-        // Insert in login card
-        const loginCard = document.querySelector('.login-card');
-        if (loginCard) {
-            loginCard.insertBefore(messageDiv, loginCard.querySelector('.login-footer'));
-        }
+        const existing = document.querySelector('.login-message');
+        if (existing) existing.remove();
+        const div = document.createElement('div');
+        div.className = 'login-message';
+        div.textContent = message;
+        Object.assign(div.style, {
+            padding: '1rem', margin: '1rem 0', borderRadius: '8px',
+            textAlign: 'center', fontWeight: '500', fontSize: '0.9rem',
+            background: type === 'success' ? '#d4edda' : '#f8d7da',
+            color: type === 'success' ? '#155724' : '#721c24',
+            border: type === 'success' ? '1px solid #c3e6cb' : '1px solid #f5c6cb'
+        });
+        setTimeout(() => { if (div.parentNode) div.remove(); }, 5000);
+        const footer = document.querySelector('.login-footer');
+        if (footer) footer.insertAdjacentElement('beforebegin', div);
     }
 
-    function removeExistingMessages() {
-        const existingMessage = document.querySelector('.login-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-    }
-
-    function createMessageElement(message, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `login-message ${type}`;
-        messageDiv.textContent = message;
-        
-        const styles = {
-            padding: '1rem',
-            margin: '1rem 0',
-            borderRadius: '8px',
-            textAlign: 'center',
-            fontWeight: '500',
-            fontSize: '0.9rem'
-        };
-        
-        if (type === 'success') {
-            Object.assign(styles, {
-                background: '#d4edda',
-                color: '#155724',
-                border: '1px solid #c3e6cb'
-            });
-        } else {
-            Object.assign(styles, {
-                background: '#f8d7da',
-                color: '#721c24',
-                border: '1px solid #f5c6cb'
-            });
-        }
-        
-        // Apply styles
-        Object.assign(messageDiv.style, styles);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (messageDiv.parentNode) {
-                messageDiv.remove();
-            }
-        }, 5000);
-        
-        return messageDiv;
-    }
-
-    function initAccessibility() {
-        // Text size toggle
-        if (textSizeBtn) {
-            let textSizeIncreased = false;
-            textSizeBtn.addEventListener('click', function() {
-                document.body.classList.toggle('large-text');
-                textSizeIncreased = !textSizeIncreased;
-                textSizeBtn.textContent = textSizeIncreased ? 
-                    'Decrease Text Size' : 'Increase Text Size';
-            });
-        }
-        
-        // High contrast toggle
-        if (highContrastBtn) {
-            let highContrastEnabled = false;
-            highContrastBtn.addEventListener('click', function() {
-                document.body.classList.toggle('high-contrast');
-                highContrastEnabled = !highContrastEnabled;
-                highContrastBtn.textContent = highContrastEnabled ? 
-                    'Normal Contrast' : 'High Contrast';
-            });
-        }
-        
-        // Focus management
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.classList.add('focused');
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.classList.remove('focused');
-            });
+    // Accessibility
+    if (textSizeBtn) {
+        let big = false;
+        textSizeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('large-text');
+            big = !big;
+            textSizeBtn.textContent = big ? 'Decrease Text Size' : 'Increase Text Size';
         });
     }
+    if (highContrastBtn) {
+        let hc = false;
+        highContrastBtn.addEventListener('click', () => {
+            document.body.classList.toggle('high-contrast');
+            hc = !hc;
+            highContrastBtn.textContent = hc ? 'Normal Contrast' : 'High Contrast';
+        });
+    }
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => input.parentElement.classList.add('focused'));
+        input.addEventListener('blur', () => input.parentElement.classList.remove('focused'));
+    });
 });

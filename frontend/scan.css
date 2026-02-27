@@ -1,0 +1,141 @@
+/* ===== SCAN PAGE STYLES ===== */
+.scan-main { flex: 1; display: flex; flex-direction: column; }
+
+/* Hero */
+.scan-hero { background: linear-gradient(135deg, #a8d0e6 0%, #8bc1e3 50%, #6baed6 100%); padding: 3rem 2rem; color: white; }
+.hero-content { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 3rem; }
+.hero-text { flex: 1; max-width: 600px; }
+.hero-badge { display: inline-block; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1.2rem; }
+.hero-text h1 { font-size: 2.8rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; color: white; }
+.hero-text h1 .highlight { border-bottom: 3px solid rgba(255,255,255,0.6); }
+.hero-text p { font-size: 1.1rem; line-height: 1.7; opacity: 0.92; margin-bottom: 2rem; }
+.hero-features { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.hero-feat { display: flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.9rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.3); }
+
+/* Brain Animation */
+.hero-visual { flex-shrink: 0; }
+.brain-animation { position: relative; width: 220px; height: 220px; display: flex; align-items: center; justify-content: center; }
+.brain-ring { position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); animation: spin-ring 8s linear infinite; }
+.ring-1 { width: 200px; height: 200px; animation-duration: 8s; }
+.ring-2 { width: 155px; height: 155px; animation-duration: 12s; animation-direction: reverse; border-color: rgba(255,255,255,0.2); }
+.ring-3 { width: 110px; height: 110px; animation-duration: 6s; border-style: dashed; }
+@keyframes spin-ring { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.brain-icon { font-size: 4.5rem; z-index: 2; animation: brain-pulse 3s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(255,255,255,0.4)); }
+@keyframes brain-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.pulse-dot { position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; animation: pulse-anim 2s ease-in-out infinite; }
+.dot-1 { top: 20px; right: 40px; animation-delay: 0s; }
+.dot-2 { bottom: 30px; left: 30px; animation-delay: 0.7s; }
+.dot-3 { top: 50%; right: 10px; animation-delay: 1.4s; }
+@keyframes pulse-anim { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.6); opacity: 0.2; } }
+
+/* Upload Section */
+.upload-section { display: flex; gap: 2rem; max-width: 1200px; margin: 2.5rem auto; padding: 0 2rem; align-items: flex-start; width: 100%; }
+.upload-container { flex: 1; }
+
+/* Upload Card */
+.upload-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 2px solid #e8f4fd; }
+.upload-card h2 { color: #374785; font-size: 1.5rem; margin-bottom: 0.5rem; }
+.upload-subtitle { color: #6c757d; margin-bottom: 1.5rem; font-size: 0.95rem; }
+.upload-area { border: 2.5px dashed #a8d0e6; border-radius: 12px; padding: 2.5rem; text-align: center; background: #f8fbff; transition: all 0.3s ease; cursor: pointer; }
+.upload-area:hover, .upload-area.drag-over { border-color: #374785; background: #e8f4fd; }
+.upload-icon-large { font-size: 3rem; margin-bottom: 1rem; }
+.upload-main-text { font-size: 1.1rem; font-weight: 600; color: #374785; margin-bottom: 0.5rem; }
+.upload-or { color: #aaa; margin: 0.75rem 0; }
+.upload-btn { background: #a8d0e6; color: #374785; border: none; padding: 0.75rem 2rem; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-bottom: 1rem; }
+.upload-btn:hover { background: #374785; color: white; transform: translateY(-2px); }
+.upload-hint { font-size: 0.8rem; color: #aaa; margin-top: 0.5rem; }
+
+/* File Selected */
+.file-selected { margin-top: 1.5rem; }
+.file-info { display: flex; align-items: center; gap: 1rem; background: #f0f7ff; border: 1px solid #a8d0e6; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.file-icon { font-size: 2rem; flex-shrink: 0; }
+.file-details { flex: 1; display: flex; flex-direction: column; }
+.file-name { font-weight: 600; color: #374785; font-size: 0.95rem; word-break: break-all; }
+.file-size { font-size: 0.8rem; color: #6c757d; margin-top: 0.2rem; }
+.remove-file { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.2s; }
+.remove-file:hover { background: #fee; color: #e74c3c; }
+.analyze-btn { width: 100%; background: linear-gradient(135deg, #374785, #4a86e8); color: white; border: none; padding: 1rem; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(55,71,133,0.3); }
+.analyze-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(55,71,133,0.4); }
+
+/* Analysis Card */
+.analysis-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 2px solid #e8f4fd; }
+.analysis-header { text-align: center; margin-bottom: 2rem; }
+.analysis-anim { font-size: 3.5rem; animation: brain-pulse 1.5s ease-in-out infinite; display: block; margin-bottom: 1rem; }
+.analysis-header h2 { color: #374785; margin-bottom: 0.5rem; }
+.analysis-header p { color: #6c757d; }
+.progress-steps { display: flex; flex-direction: column; gap: 1.2rem; }
+.step { display: flex; align-items: center; gap: 1rem; opacity: 0.4; transition: opacity 0.4s; }
+.step.active, .step.done { opacity: 1; }
+.step-icon { font-size: 1.5rem; flex-shrink: 0; width: 2.5rem; text-align: center; }
+.step-info { flex: 1; }
+.step-name { display: block; font-weight: 600; color: #374785; font-size: 0.95rem; margin-bottom: 0.4rem; }
+.step-bar { height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; }
+.step-fill { height: 100%; background: linear-gradient(90deg, #a8d0e6, #374785); border-radius: 3px; width: 0%; transition: width 1.5s ease; }
+.step-status { font-size: 1.2rem; flex-shrink: 0; }
+
+/* Result Cards */
+.result-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+.positive-result { border: 2px solid #ffc107; }
+.negative-result { border: 2px solid #28a745; }
+.result-header { text-align: center; margin-bottom: 1.5rem; }
+.result-icon { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+.result-header h2 { color: #374785; font-size: 1.6rem; }
+.result-badge { display: block; text-align: center; padding: 0.6rem 1.5rem; border-radius: 50px; font-weight: 700; font-size: 1rem; margin-bottom: 1.5rem; }
+.positive-badge { background: #fff3cd; color: #856404; border: 2px solid #ffc107; }
+.negative-badge { background: #d4edda; color: #155724; border: 2px solid #28a745; }
+
+/* Risk Meter */
+.risk-meter { margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 10px; }
+.risk-label { font-weight: 600; color: #374785; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.risk-bar-container { height: 14px; background: #e9ecef; border-radius: 7px; overflow: hidden; margin-bottom: 0.5rem; }
+.risk-bar-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, #ffc107, #e74c3c); transition: width 1.5s ease; width: 0%; }
+.risk-percent { text-align: right; font-size: 1.2rem; font-weight: 700; color: #e74c3c; }
+
+/* Findings */
+.result-findings { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.finding-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #fff8e6; border-radius: 8px; border-left: 3px solid #ffc107; font-size: 0.9rem; color: #495057; }
+
+/* Result Messages */
+.result-message { padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6; }
+.positive-msg { background: #fff8e6; border: 1px solid #ffc107; color: #6b5000; }
+.negative-msg { background: #d4edda; border: 1px solid #28a745; color: #155724; }
+
+/* Healthy Tips */
+.healthy-tips { margin-bottom: 1.5rem; }
+.healthy-tips h4 { color: #374785; margin-bottom: 1rem; }
+.tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.tip-item { background: #f0f7ff; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; color: #374785; font-weight: 500; text-align: center; }
+
+/* Actions */
+.result-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+.action-primary { background: linear-gradient(135deg, #374785, #4a86e8); color: white; border: none; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.action-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(55,71,133,0.4); }
+.action-secondary { background: white; color: #374785; border: 2px solid #a8d0e6; padding: 0.85rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.action-secondary:hover { background: #a8d0e6; }
+
+/* Info Sidebar */
+.info-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1.25rem; }
+.info-card { background: white; border-radius: 14px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid #e8f4fd; }
+.info-card h3 { color: #374785; font-size: 1rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e8f4fd; }
+.info-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.info-list li { font-size: 0.88rem; color: #495057; padding: 0.4rem 0; }
+.disclaimer-card { border-left: 4px solid #ffc107; background: #fffbf0; }
+.disclaimer-card p, .privacy-card p { font-size: 0.85rem; color: #6c757d; line-height: 1.6; }
+.privacy-card { border-left: 4px solid #28a745; background: #f8fff8; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .hero-content { flex-direction: column; text-align: center; }
+    .hero-features { justify-content: center; }
+    .upload-section { flex-direction: column; }
+    .info-sidebar { width: 100%; }
+}
+@media (max-width: 600px) {
+    .hero-text h1 { font-size: 2rem; }
+    .brain-animation { width: 160px; height: 160px; }
+    .ring-1 { width: 150px; height: 150px; }
+    .ring-2 { width: 115px; height: 115px; }
+    .ring-3 { width: 80px; height: 80px; }
+    .brain-icon { font-size: 3rem; }
+    .tips-grid { grid-template-columns: 1fr; }
+}
