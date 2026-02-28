@@ -175,19 +175,36 @@ document.addEventListener('DOMContentLoaded', function () {
         return await res.json();
     }
 
-    function saveReport(result) {
-        // Save to USER-SCOPED storage so it persists per user
-        var reports = UserStore.get('userReports', []);
-        reports.unshift({
-            id:        Date.now(),
+    async function saveReport(result) {
+        var report = {
+            id:        'local_' + Date.now(),
             fileName:  selectedFile ? selectedFile.name : 'report.pdf',
             date:      new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }),
             timestamp: new Date().toISOString(),
             result:    result.positive ? 'Positive' : 'Negative',
             riskScore: result.riskScore || 0,
             findings:  result.findings  || []
-        });
+        };
+
+        // Save to local cache immediately
+        var reports = UserStore.get('userReports', []);
+        reports.unshift(report);
         UserStore.set('userReports', reports);
+
+        // Also save to backend so it appears on every device / browser
+        try {
+            var res  = await API.post('/reports', report);
+            var data = await res.json();
+            if (data.id) {
+                var r2 = UserStore.get('userReports', []);
+                if (r2[0] && String(r2[0].id).startsWith('local_')) {
+                    r2[0].id = data.id;
+                    UserStore.set('userReports', r2);
+                }
+            }
+        } catch (err) {
+            console.warn('Could not save report to backend (saved locally):', err);
+        }
     }
 
     function showResult(result) {

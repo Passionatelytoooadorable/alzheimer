@@ -1,4 +1,9 @@
-// profile.js  —  All data scoped per user via UserStore
+/**
+ * profile.js
+ * All profile data is saved TO and loaded FROM the backend (Neon DB).
+ * LocalStorage (UserStore) is used as an instant-load cache only.
+ * This means data is the same on every device / browser / incognito.
+ */
 document.addEventListener('DOMContentLoaded', function () {
 
     if (!localStorage.getItem('token')) {
@@ -9,30 +14,61 @@ document.addEventListener('DOMContentLoaded', function () {
     // Init nav
     var nav = document.getElementById('profilePageNav');
     if (nav) {
-        var user = JSON.parse(localStorage.getItem('user') || '{}');
-        nav.innerHTML = buildProfileNav(user);
+        nav.innerHTML = buildProfileNav(JSON.parse(localStorage.getItem('user') || '{}'));
         initProfileDropdown();
     }
 
     spawnConfetti();
-    renderAll();
+
+    // Load from backend first, fall back to local cache while loading
+    loadFromBackend();
 
     // ── Event listeners ──────────────────────────────────────────
-
-    // Personal info edit
-    on('editToggleBtn', 'click',  function () { toggleForm('viewMode', 'editForm', 'editToggleBtn', '✏️ Edit Profile'); });
-    on('cancelEditBtn', 'click',  function () { toggleForm('viewMode', 'editForm', 'editToggleBtn', '✏️ Edit Profile'); });
+    on('editToggleBtn', 'click',  function () { toggleForm('viewMode',    'editForm',    'editToggleBtn', '✏️ Edit Profile'); });
+    on('cancelEditBtn', 'click',  function () { toggleForm('viewMode',    'editForm',    'editToggleBtn', '✏️ Edit Profile'); });
     on('editForm',      'submit', savePersonalInfo);
 
-    // Medical info edit
-    on('editMedBtn',  'click',  function () { toggleForm('viewMedMode', 'editMedForm', 'editMedBtn', '✏️ Edit Medical Info'); });
-    on('cancelMedBtn','click',  function () { toggleForm('viewMedMode', 'editMedForm', 'editMedBtn', '✏️ Edit Medical Info'); });
-    on('editMedForm', 'submit', saveMedInfo);
+    on('editMedBtn',   'click',  function () { toggleForm('viewMedMode', 'editMedForm', 'editMedBtn',    '✏️ Edit Medical Info'); });
+    on('cancelMedBtn', 'click',  function () { toggleForm('viewMedMode', 'editMedForm', 'editMedBtn',    '✏️ Edit Medical Info'); });
+    on('editMedForm',  'submit', saveMedInfo);
 
-    // Add report button
     on('addReportBtn', 'click', openAddReportModal);
 
-    // ── Render all sections ──────────────────────────────────────
+    // ── Backend sync ─────────────────────────────────────────────
+
+    async function loadFromBackend() {
+        // Show cached data instantly while we fetch from backend
+        renderFromCache();
+
+        try {
+            // Load profile + reports in parallel
+            var [profRes, repRes] = await Promise.all([
+                API.get('/profile'),
+                API.get('/reports')
+            ]);
+
+            var profData = await profRes.json();
+            var repData  = await repRes.json();
+
+            // Update local cache with fresh data from DB
+            if (profData.profile) {
+                UserStore.set('profileData', profData.profile);
+            }
+            if (profData.medical) {
+                UserStore.set('medicalData', profData.medical);
+            }
+            if (repData.reports) {
+                UserStore.set('userReports', repData.reports);
+            }
+
+            // Re-render with DB data
+            renderAll();
+
+        } catch (err) {
+            console.warn('Could not load from backend, using cache:', err);
+            // Already rendered from cache above — nothing more to do
+        }
+    }
 
     function renderAll() {
         renderProfile();
@@ -40,39 +76,47 @@ document.addEventListener('DOMContentLoaded', function () {
         renderReports();
     }
 
+    function renderFromCache() {
+        renderProfile();
+        renderStats();
+        renderReports();
+    }
+
+    // ── Render functions ─────────────────────────────────────────
+
     function renderProfile() {
         var profile = UserStore.get('profileData', {});
         var user    = JSON.parse(localStorage.getItem('user') || '{}');
-        var name    = profile.name  || user.name  || localStorage.getItem('userName') || 'User';
-        var email   = profile.email || user.email || localStorage.getItem('userEmail') || '—';
-        var phone   = profile.phone || user.phone || '—';
+        var med     = UserStore.get('medicalData', {});
 
-        // Hero
-        setTxt('profileHeroName', name);
-        var av = document.getElementById('profileAvatarBig');
-        if (av) av.textContent = name.charAt(0).toUpperCase();
-        setTxt('profileJoinDate', profile.joinDate || new Date().toLocaleDateString('en-US',{year:'numeric',month:'long'}));
+        var name  = profile.name  || user.name  || localStorage.getItem('userName') || 'User';
+        var email = profile.email || user.email || '—';
+        var phone = profile.phone || '—';
 
-        // Ensure joinDate saved
-        if (!profile.joinDate) {
-            profile.joinDate      = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long'});
+        // Ensure baseline profile saved locally
+        if (!profile.name && user.name) {
+            profile.name      = user.name;
+            profile.email     = user.email || '';
+            profile.joinDate  = profile.joinDate  || new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' });
             profile.joinTimestamp = profile.joinTimestamp || Date.now();
             UserStore.set('profileData', profile);
         }
 
-        // View fields
+        setTxt('profileHeroName', name);
+        var av = document.getElementById('profileAvatarBig');
+        if (av) av.textContent = name.charAt(0).toUpperCase();
+        setTxt('profileJoinDate', profile.joinDate || new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' }));
+
         setTxt('view-name',      name);
         setTxt('view-age',       profile.age       || '—');
         setTxt('view-dob',       profile.dob       || '—');
         setTxt('view-gender',    profile.gender    || '—');
         setTxt('view-blood',     profile.blood     || '—');
         setTxt('view-email',     email);
-        setTxt('view-phone',     phone);
+        setTxt('view-phone',     phone !== '—' ? phone : '—');
         setTxt('view-address',   profile.address   || '—');
         setTxt('view-emergency', profile.emergency || '—');
 
-        // Medical view
-        var med = UserStore.get('medicalData', {});
         setTxt('view-doctor',    med.doctor    || '—');
         setTxt('view-hospital',  med.hospital  || '—');
         setTxt('view-diagnosis', med.diagnosis || '—');
@@ -140,8 +184,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     (r.notes ? '<div style="font-size:0.78rem;color:#888;margin-top:2px;">📝 ' + esc(r.notes) + '</div>' : '') +
                 '</div>' +
                 '<span class="report-badge ' + (r.result === 'Positive' ? 'positive' : 'negative') + '">' + r.result + '</span>' +
-                '<button class="del-report-btn" data-idx="' + idx + '" title="Delete" ' +
-                    'style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 6px;color:#ddd;margin-left:4px;border-radius:4px;" ' +
+                '<button class="del-report-btn" data-idx="' + idx + '" data-id="' + (r.id || '') + '" ' +
+                    'title="Delete" style="background:none;border:none;cursor:pointer;font-size:1.1rem;' +
+                    'padding:4px 6px;color:#ddd;margin-left:4px;border-radius:4px;" ' +
                     'onmouseover="this.style.color=\'#e74c3c\';this.style.background=\'#fff0f0\'" ' +
                     'onmouseout="this.style.color=\'#ddd\';this.style.background=\'none\'">🗑️</button>' +
             '</div>';
@@ -149,34 +194,115 @@ document.addEventListener('DOMContentLoaded', function () {
 
         list.querySelectorAll('.del-report-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var idx = parseInt(this.getAttribute('data-idx'));
-                if (confirm('Delete this report?')) {
-                    var r = UserStore.get('userReports', []);
-                    r.splice(idx, 1);
-                    UserStore.set('userReports', r);
-                    renderReports();
-                    renderStats();
-                    showToast('Report deleted.');
-                }
+                var idx      = parseInt(this.getAttribute('data-idx'));
+                var reportId = this.getAttribute('data-id');
+                if (confirm('Delete this report?')) deleteReport(idx, reportId);
             });
         });
+    }
+
+    async function deleteReport(idx, reportId) {
+        // Remove from local cache immediately (optimistic update)
+        var reports = UserStore.get('userReports', []);
+        reports.splice(idx, 1);
+        UserStore.set('userReports', reports);
+        renderReports();
+        renderStats();
+
+        // Then delete from backend
+        if (reportId) {
+            try {
+                await API.del('/reports/' + reportId);
+            } catch (err) {
+                console.warn('Could not delete from backend:', err);
+            }
+        }
+        showToast('Report deleted.');
+    }
+
+    // ── Save personal info ────────────────────────────────────────
+
+    async function savePersonalInfo(e) {
+        e.preventDefault();
+        var profile = UserStore.get('profileData', {});
+        var updates = {
+            name:      getVal('edit-name'),
+            age:       getVal('edit-age'),
+            dob:       getVal('edit-dob'),
+            gender:    getVal('edit-gender'),
+            blood:     getVal('edit-blood'),
+            phone:     getVal('edit-phone'),
+            address:   getVal('edit-address'),
+            emergency: getVal('edit-emergency')
+        };
+
+        // Merge & preserve join date
+        Object.assign(profile, updates);
+        if (!profile.joinDate) {
+            profile.joinDate      = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' });
+            profile.joinTimestamp = Date.now();
+        }
+
+        // Save to local cache instantly
+        UserStore.set('profileData', profile);
+
+        // Update displayed name in nav
+        var userData  = JSON.parse(localStorage.getItem('user') || '{}');
+        userData.name = profile.name;
+        localStorage.setItem('user',     JSON.stringify(userData));
+        localStorage.setItem('userName', profile.name);
+
+        renderProfile();
+        toggleForm('viewMode', 'editForm', 'editToggleBtn', '✏️ Edit Profile');
+
+        var nav = document.getElementById('profilePageNav');
+        if (nav) { nav.innerHTML = buildProfileNav(userData); initProfileDropdown(); }
+
+        showToast('💾 Saving…');
+
+        // Save to backend (syncs across all devices)
+        try {
+            await API.post('/profile/personal', updates);
+            showToast('✅ Profile saved!');
+        } catch (err) {
+            showToast('⚠️ Saved locally. Will sync when online.', 'warn');
+        }
+    }
+
+    async function saveMedInfo(e) {
+        e.preventDefault();
+        var med = {
+            doctor:    getVal('edit-doctor'),
+            hospital:  getVal('edit-hospital'),
+            diagnosis: getVal('edit-diagnosis'),
+            meds:      getVal('edit-meds'),
+            allergies: getVal('edit-allergies')
+        };
+
+        UserStore.set('medicalData', med);
+        renderProfile();
+        toggleForm('viewMedMode', 'editMedForm', 'editMedBtn', '✏️ Edit Medical Info');
+
+        showToast('💾 Saving…');
+
+        try {
+            await API.post('/profile/medical', med);
+            showToast('✅ Medical info saved!');
+        } catch (err) {
+            showToast('⚠️ Saved locally. Will sync when online.', 'warn');
+        }
     }
 
     // ── Add Report Modal ─────────────────────────────────────────
 
     function openAddReportModal() {
-        var existing = document.getElementById('addReportModal');
-        if (existing) existing.remove();
+        var old = document.getElementById('addReportModal');
+        if (old) old.remove();
 
         var today = new Date().toISOString().split('T')[0];
-
         var m = document.createElement('div');
         m.id = 'addReportModal';
-        m.style.cssText = [
-            'position:fixed;inset:0;z-index:9999',
-            'background:rgba(0,0,0,0.55)',
-            'display:flex;align-items:center;justify-content:center;padding:1rem'
-        ].join(';');
+        m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:1rem;';
 
         m.innerHTML = [
             '<div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:460px;',
@@ -185,20 +311,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     '<h3 style="color:#374785;margin:0;font-size:1.15rem;">➕ Add Report Manually</h3>',
                     '<button id="closeAddModal" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#aaa;">✕</button>',
                 '</div>',
-                field('Report Name / File *', 'text',   'mr-name',   'e.g. MRI Report Jan 2026'),
-                field('Date *',              'date',    'mr-date',   ''),
-                selectField(),
-                '<div id="riskRow" style="display:none;">',
-                    field('Risk Score (0–100)', 'number', 'mr-risk', 'e.g. 72'),
-                '</div>',
-                field('Doctor / Hospital',   'text',   'mr-doctor', 'Optional'),
-                field('Notes',               'text',   'mr-notes',  'Additional notes (optional)'),
+                mField('Report Name *',  'text',   'mr-name',   'e.g. MRI Report Jan 2026'),
+                mField('Date *',         'date',   'mr-date',   ''),
+                mSelect(),
+                '<div id="riskRow" style="display:none;">' + mField('Risk Score (0–100)', 'number', 'mr-risk', 'e.g. 72') + '</div>',
+                mField('Doctor / Hospital', 'text', 'mr-doctor', 'Optional'),
+                mField('Notes',           'text',   'mr-notes',  'Optional'),
                 '<div id="mr-err" style="color:#e74c3c;font-size:0.83rem;margin-top:4px;display:none;"></div>',
                 '<div style="display:flex;gap:0.8rem;margin-top:1.4rem;justify-content:flex-end;">',
-                    '<button id="cancelAddReport" style="background:#fff;border:2px solid #e2e8f0;color:#555;',
-                        'padding:0.6rem 1.3rem;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>',
-                    '<button id="saveAddReport" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;',
-                        'border:none;padding:0.6rem 1.6rem;border-radius:8px;font-weight:600;cursor:pointer;">💾 Save</button>',
+                    '<button id="cancelAdd" style="background:#fff;border:2px solid #e2e8f0;color:#555;padding:0.6rem 1.3rem;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>',
+                    '<button id="saveAdd"   style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:0.6rem 1.6rem;border-radius:8px;font-weight:600;cursor:pointer;">💾 Save</button>',
                 '</div>',
             '</div>'
         ].join('');
@@ -206,20 +328,18 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.appendChild(m);
         document.getElementById('mr-date').value = today;
 
-        // Show risk field only for Positive
         document.getElementById('mr-result').addEventListener('change', function () {
             document.getElementById('riskRow').style.display = this.value === 'Positive' ? 'block' : 'none';
         });
 
-        document.getElementById('closeAddModal').addEventListener('click',   closeModal);
-        document.getElementById('cancelAddReport').addEventListener('click', closeModal);
-        document.getElementById('saveAddReport').addEventListener('click',   doSave);
-        m.addEventListener('click', function (e) { if (e.target === m) closeModal(); });
-        setTimeout(function () { document.getElementById('mr-name').focus(); }, 80);
+        function close() { m.remove(); }
+        on('closeAddModal', 'click', close);
+        on('cancelAdd',     'click', close);
+        on('saveAdd',       'click', doSave);
+        m.addEventListener('click', function (e) { if (e.target === m) close(); });
+        setTimeout(function () { var el = document.getElementById('mr-name'); if (el) el.focus(); }, 80);
 
-        function closeModal() { m.remove(); }
-
-        function doSave() {
+        async function doSave() {
             var name   = document.getElementById('mr-name').value.trim();
             var date   = document.getElementById('mr-date').value;
             var result = document.getElementById('mr-result').value;
@@ -227,18 +347,17 @@ document.addEventListener('DOMContentLoaded', function () {
             var doctor = document.getElementById('mr-doctor').value.trim();
             var notes  = document.getElementById('mr-notes').value.trim();
             var errEl  = document.getElementById('mr-err');
-
             errEl.style.display = 'none';
-            if (!name)   { errEl.textContent = 'Please enter a report name.'; errEl.style.display = 'block'; return; }
-            if (!date)   { errEl.textContent = 'Please select a date.';       errEl.style.display = 'block'; return; }
-            if (!result) { errEl.textContent = 'Please select a result.';     errEl.style.display = 'block'; return; }
 
-            var dateObj = new Date(date + 'T00:00:00');
-            var reports = UserStore.get('userReports', []);
-            reports.unshift({
-                id:        Date.now(),
+            if (!name)   { errEl.textContent = 'Report name is required.'; errEl.style.display = 'block'; return; }
+            if (!date)   { errEl.textContent = 'Date is required.';        errEl.style.display = 'block'; return; }
+            if (!result) { errEl.textContent = 'Result is required.';      errEl.style.display = 'block'; return; }
+
+            var dateObj  = new Date(date + 'T00:00:00');
+            var dateLabel = dateObj.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+            var report = {
                 fileName:  name,
-                date:      dateObj.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }),
+                date:      dateLabel,
                 timestamp: dateObj.toISOString(),
                 result:    result,
                 riskScore: result === 'Positive' ? Math.max(0, Math.min(100, risk)) : 0,
@@ -246,93 +365,55 @@ document.addEventListener('DOMContentLoaded', function () {
                 doctor:    doctor,
                 notes:     notes,
                 manual:    true
-            });
+            };
+
+            // Save to local cache instantly
+            var reports = UserStore.get('userReports', []);
+            reports.unshift(Object.assign({ id: 'local_' + Date.now() }, report));
             UserStore.set('userReports', reports);
-            closeModal();
+            close();
             renderReports();
             renderStats();
-            showToast('✅ Report saved!');
-        }
+            showToast('💾 Saving…');
 
-        function field(label, type, id, ph) {
-            return '<div style="margin-bottom:0.85rem;">' +
-                '<label style="display:block;font-size:0.8rem;font-weight:600;color:#555;text-transform:uppercase;' +
-                    'letter-spacing:0.3px;margin-bottom:4px;">' + label + '</label>' +
-                '<input type="' + type + '" id="' + id + '" placeholder="' + ph + '" ' +
-                    (type === 'number' ? 'min="0" max="100"' : '') + ' ' +
-                    'style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid #e2e8f0;border-radius:8px;' +
-                    'font-size:0.9rem;box-sizing:border-box;">' +
+            // Save to backend
+            try {
+                var res  = await API.post('/reports', report);
+                var data = await res.json();
+                // Update local cache with real DB id
+                if (data.id) {
+                    var r2 = UserStore.get('userReports', []);
+                    if (r2[0] && r2[0].id && String(r2[0].id).startsWith('local_')) {
+                        r2[0].id = data.id;
+                        UserStore.set('userReports', r2);
+                    }
+                }
+                showToast('✅ Report saved!');
+            } catch (err) {
+                showToast('⚠️ Saved locally. Will sync when online.', 'warn');
+            }
+        }
+    }
+
+    function mField(label, type, id, ph) {
+        return '<div style="margin-bottom:0.85rem;">' +
+            '<label style="display:block;font-size:0.8rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">' + label + '</label>' +
+            '<input type="' + type + '" id="' + id + '" placeholder="' + ph + '"' + (type==='number'?' min="0" max="100"':'') +
+            ' style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;box-sizing:border-box;">' +
             '</div>';
-        }
-
-        function selectField() {
-            return '<div style="margin-bottom:0.85rem;">' +
-                '<label style="display:block;font-size:0.8rem;font-weight:600;color:#555;text-transform:uppercase;' +
-                    'letter-spacing:0.3px;margin-bottom:4px;">Result *</label>' +
-                '<select id="mr-result" style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid #e2e8f0;' +
-                    'border-radius:8px;font-size:0.9rem;box-sizing:border-box;">' +
-                    '<option value="">Select result…</option>' +
-                    '<option value="Positive">Positive — Indicators Found</option>' +
-                    '<option value="Negative">Negative — No Indicators</option>' +
-                '</select>' +
-            '</div>';
-        }
     }
 
-    // ── Save personal info ────────────────────────────────────────
-
-    function savePersonalInfo(e) {
-        e.preventDefault();
-        var profile = UserStore.get('profileData', {});
-        profile.name      = getVal('edit-name');
-        profile.age       = getVal('edit-age');
-        profile.dob       = getVal('edit-dob');
-        profile.gender    = getVal('edit-gender');
-        profile.blood     = getVal('edit-blood');
-        profile.phone     = getVal('edit-phone');
-        profile.address   = getVal('edit-address');
-        profile.emergency = getVal('edit-emergency');
-
-        // Preserve join date
-        if (!profile.joinDate) {
-            profile.joinDate      = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long'});
-            profile.joinTimestamp = Date.now();
-        }
-
-        UserStore.set('profileData', profile);
-
-        // Update global user name
-        var userData = JSON.parse(localStorage.getItem('user') || '{}');
-        userData.name = profile.name;
-        localStorage.setItem('user',     JSON.stringify(userData));
-        localStorage.setItem('userName', profile.name);
-
-        renderProfile();
-        renderStats();
-        toggleForm('viewMode', 'editForm', 'editToggleBtn', '✏️ Edit Profile');
-
-        // Refresh nav with new name
-        var nav = document.getElementById('profilePageNav');
-        if (nav) { nav.innerHTML = buildProfileNav(userData); initProfileDropdown(); }
-
-        showToast('✅ Profile saved!');
+    function mSelect() {
+        return '<div style="margin-bottom:0.85rem;">' +
+            '<label style="display:block;font-size:0.8rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;">Result *</label>' +
+            '<select id="mr-result" style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;box-sizing:border-box;">' +
+                '<option value="">Select result…</option>' +
+                '<option value="Positive">Positive — Indicators Found</option>' +
+                '<option value="Negative">Negative — No Indicators</option>' +
+            '</select></div>';
     }
 
-    function saveMedInfo(e) {
-        e.preventDefault();
-        UserStore.set('medicalData', {
-            doctor:    getVal('edit-doctor'),
-            hospital:  getVal('edit-hospital'),
-            diagnosis: getVal('edit-diagnosis'),
-            meds:      getVal('edit-meds'),
-            allergies: getVal('edit-allergies')
-        });
-        renderProfile();
-        toggleForm('viewMedMode', 'editMedForm', 'editMedBtn', '✏️ Edit Medical Info');
-        showToast('✅ Medical info saved!');
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────
+    // ── Toggle edit forms ─────────────────────────────────────────
 
     function toggleForm(viewId, formId, btnId, offLabel) {
         var view   = document.getElementById(viewId);
@@ -344,24 +425,30 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btn)  btn.textContent    = isEdit ? offLabel : '✕ Cancel';
     }
 
-    function showToast(msg) {
+    // ── Helpers ──────────────────────────────────────────────────
+
+    function showToast(msg, type) {
+        var old = document.getElementById('_toast');
+        if (old) old.remove();
         var t = document.createElement('div');
+        t.id = '_toast';
         t.textContent = msg;
+        var bg = type === 'warn' ? '#ffc107' : '#28a745';
+        var co = type === 'warn' ? '#333'    : '#fff';
         Object.assign(t.style, {
-            position: 'fixed', bottom: '2rem', right: '2rem',
-            background: '#28a745', color: 'white',
-            padding: '0.85rem 1.4rem', borderRadius: '10px',
-            fontWeight: '600', fontSize: '0.92rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)', zIndex: '10000',
-            animation: 'none'
+            position:'fixed', bottom:'2rem', right:'2rem',
+            background:bg, color:co,
+            padding:'0.85rem 1.4rem', borderRadius:'10px',
+            fontWeight:'600', fontSize:'0.92rem',
+            boxShadow:'0 4px 20px rgba(0,0,0,0.2)', zIndex:'10000'
         });
         document.body.appendChild(t);
-        setTimeout(function () { if (t.parentNode) t.remove(); }, 3000);
+        setTimeout(function () { if (t.parentNode) t.remove(); }, 3500);
     }
 
     function spawnConfetti() {
-        var container = document.getElementById('heroConfetti');
-        if (!container) return;
+        var c = document.getElementById('heroConfetti');
+        if (!c) return;
         var colors = ['#ff6b9d','#ffd700','#00e5ff','#a8ff78','#ff9a52','#c44dff'];
         for (var i = 0; i < 18; i++) {
             var p = document.createElement('div');
@@ -372,29 +459,24 @@ document.addEventListener('DOMContentLoaded', function () {
             p.style.animationDelay    = (Math.random() * 4) + 's';
             p.style.animationDuration = (3 + Math.random() * 3) + 's';
             p.style.transform        = 'rotate(' + Math.random() * 360 + 'deg)';
-            container.appendChild(p);
+            c.appendChild(p);
         }
     }
 
-    function on(id, event, fn) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener(event, fn);
-    }
+    function on(id, ev, fn)   { var el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
     function setTxt(id, val)  { var el = document.getElementById(id); if (el) el.textContent = val; }
     function setVal(id, val)  { var el = document.getElementById(id); if (el) el.value = val; }
     function getVal(id)       { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
-    function esc(s)           { return String(s || '').replace(/[<>&"]/g, function(c) {
+    function esc(s)           { return String(s || '').replace(/[<>&"]/g, function (c) {
         return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]; }); }
 });
 
 // ── Global nav helpers ───────────────────────────────────────────
 
 function buildProfileNav(user) {
-    var stored = localStorage.getItem('user');
-    var fresh  = stored ? JSON.parse(stored) : {};
-    var pd     = window.UserStore ? UserStore.get('profileData', {}) : {};
-    var name   = pd.name || fresh.name || (user && user.name) || localStorage.getItem('userName') || 'User';
-    var ini    = name.charAt(0).toUpperCase();
+    var pd   = window.UserStore ? UserStore.get('profileData', {}) : {};
+    var name = pd.name || (user && user.name) || localStorage.getItem('userName') || 'User';
+    var ini  = name.charAt(0).toUpperCase();
     return '<a href="dashboard.html" class="nav-link">Dashboard</a>' +
            '<a href="resources.html" class="nav-link">Resources</a>' +
            '<div class="profile-nav-wrap" id="profileNavWrap">' +
@@ -412,8 +494,7 @@ function buildProfileNav(user) {
 
 function initProfileDropdown() {
     var btn = document.getElementById('profileNavBtn');
-    var dd  = document.getElementById('profileDropdown');
-    if (!btn || !dd) return;
+    if (!btn) return;
     var newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
     newBtn.addEventListener('click', function (e) {
@@ -430,8 +511,7 @@ function initProfileDropdown() {
 }
 
 function doLogout() {
-    ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted'].forEach(function (k) {
-        localStorage.removeItem(k);
-    });
+    ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted']
+        .forEach(function (k) { localStorage.removeItem(k); });
     window.location.href = 'signup.html';
 }

@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alzheimer's Support - Create Account</title>
-    <!-- Instant redirect for already logged-in users -->
+    <!-- Prevent bfcache from restoring stale page state -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <script>
-        (function() {
+        // Runs on fresh load AND on bfcache restore (back button)
+        function checkAuthSignup() {
             if (localStorage.getItem('token')) {
                 window.location.replace('dashboard.html');
             }
-        })();
+        }
+        checkAuthSignup();
+        // pageshow fires on bfcache restore — persisted=true means it was cached
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) checkAuthSignup();
+        });
     </script>
     <link rel="stylesheet" href="login.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
@@ -218,6 +226,8 @@
     <footer class="footer">
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
+    <script src="api.js"></script>
+    <script src="user-store.js"></script>
     <script src="signup.js"></script>
 </body>
 </html>

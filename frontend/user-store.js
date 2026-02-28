@@ -1,14 +1,18 @@
 /**
- * user-store.js  —  Per-user scoped localStorage
+ * user-store.js  —  Per-user local cache (fallback when offline)
  *
- * Every key is stored as  "alz:{userEmail}:{dataName}"
- * so Jane's data and Srinjayi's data never overwrite each other,
- * even on the same browser.  Each user always gets their own data back.
+ * Keys are scoped by user email:  "alz:{email}:{dataName}"
+ * so multiple accounts on the same browser never mix data.
+ *
+ * The BACKEND (Neon DB) is the source of truth for profile & reports.
+ * This cache is used for:
+ *   - Instant page loads (no waiting for API)
+ *   - Offline resilience
  */
 (function (global) {
     'use strict';
 
-    function getUserKey() {
+    function userKey() {
         try {
             var u = localStorage.getItem('user');
             if (!u) return 'guest';
@@ -18,38 +22,24 @@
         } catch (e) { return 'guest'; }
     }
 
-    function sk(name) { return 'alz:' + getUserKey() + ':' + name; }
+    function sk(name) { return 'alz:' + userKey() + ':' + name; }
 
-    var UserStore = {
+    global.UserStore = {
         get: function (name, fallback) {
             try {
                 var raw = localStorage.getItem(sk(name));
-                if (raw === null) return (fallback !== undefined ? fallback : null);
+                if (raw === null) return fallback !== undefined ? fallback : null;
                 return JSON.parse(raw);
-            } catch (e) { return (fallback !== undefined ? fallback : null); }
+            } catch (e) { return fallback !== undefined ? fallback : null; }
         },
         set: function (name, value) {
-            try { localStorage.setItem(sk(name), JSON.stringify(value)); return true; }
-            catch (e) { return false; }
+            try { localStorage.setItem(sk(name), JSON.stringify(value)); }
+            catch (e) { console.warn('UserStore.set failed', e); }
         },
         remove: function (name) {
             try { localStorage.removeItem(sk(name)); } catch (e) {}
         },
-        /**
-         * Called once right after login.
-         * If the user has old unscoped data (from before this fix),
-         * move it into their scoped namespace so they don't lose it.
-         */
-        migrateOldData: function () {
-            ['profileData','medicalData','userReports','journalEntries','memories','reminders'].forEach(function (name) {
-                if (!localStorage.getItem(sk(name))) {
-                    var old = localStorage.getItem(name);
-                    if (old) localStorage.setItem(sk(name), old);
-                }
-            });
-        },
-        userKey: getUserKey
+        userKey: userKey
     };
 
-    global.UserStore = UserStore;
 })(window);

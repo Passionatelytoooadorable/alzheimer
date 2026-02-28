@@ -1,8 +1,11 @@
-// login.js
+/**
+ * login.js
+ * Uses API helper (api.js) which handles Render cold-start retries automatically.
+ * Does NOT depend on user-store.js so no crash if it hasn't loaded.
+ */
 document.addEventListener('DOMContentLoaded', function () {
-    const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
-    // Already logged in → dashboard
+    // Already logged in → go to dashboard
     if (localStorage.getItem('token')) {
         window.location.replace('dashboard.html');
         return;
@@ -17,33 +20,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function handleLogin(e) {
         e.preventDefault();
+
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
         if (!username || !password) { showMsg('Please fill in all fields.', 'error'); return; }
 
-        loginBtn.textContent = 'Signing In...';
-        loginBtn.disabled = true;
+        setBtn('Signing In…', true);
+        showMsg('Connecting to server… (first load may take up to 30 seconds)', 'info');
 
         try {
-            var res = await fetch(API_BASE + '/auth/signin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: username, password })
-            });
+            // API.post handles Render cold-start retries automatically
+            var res    = await API.post('/auth/signin', { email: username, password: password });
             var result = await res.json();
 
             if (result.token) {
+                var u = result.user || {};
                 var userData = {
-                    name:     result.user?.name     || username,
-                    email:    result.user?.email    || username,
-                    username: result.user?.username || username,
-                    phone:    result.user?.phone    || '',
-                    id:       result.user?.id       || result.user?._id || ''
+                    id:       u.id       || u._id      || '',
+                    name:     u.name     || username,
+                    email:    u.email    || username,
+                    username: u.username || username,
+                    phone:    u.phone_number || u.phone || ''
                 };
 
-                // Clear old session keys (but NOT scoped data keys)
+                // Clear any old session keys
                 ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted']
-                    .forEach(k => localStorage.removeItem(k));
+                    .forEach(function (k) { localStorage.removeItem(k); });
 
                 localStorage.setItem('token',        result.token);
                 localStorage.setItem('user',         JSON.stringify(userData));
@@ -53,68 +55,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem('isNewUser',    'false');
                 localStorage.setItem('scanCompleted','true');
 
-                // Migrate any old unscoped data → user's scoped namespace
-                UserStore.migrateOldData();
+                showMsg('✅ Login successful! Redirecting…', 'success');
+                setTimeout(function () {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
 
-                // Ensure this user has a profileData entry
-                var existing = UserStore.get('profileData', null);
-                if (!existing) {
-                    UserStore.set('profileData', {
-                        name:          userData.name,
-                        email:         userData.email,
-                        phone:         userData.phone || '',
-                        joinDate:      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
-                        joinTimestamp: Date.now()
-                    });
-                } else if (!existing.name) {
-                    existing.name  = userData.name;
-                    existing.email = userData.email;
-                    UserStore.set('profileData', existing);
-                }
-
-                showMsg('Login successful! Redirecting...', 'success');
-                setTimeout(() => window.location.href = 'dashboard.html', 1200);
             } else {
-                loginBtn.textContent = 'Sign In';
-                loginBtn.disabled = false;
-                showMsg(result.message || 'Invalid username or password.', 'error');
+                setBtn('Sign In', false);
+                showMsg(result.error || result.message || 'Invalid username or password.', 'error');
                 document.getElementById('password').value = '';
                 document.getElementById('password').focus();
             }
+
         } catch (err) {
-            loginBtn.textContent = 'Sign In';
-            loginBtn.disabled = false;
-            showMsg('Network error. Please try again.', 'error');
+            setBtn('Sign In', false);
+            showMsg('⚠️ Could not reach server. Please check your internet and try again.', 'error');
+            console.error('Login error:', err);
         }
     }
 
+    function setBtn(text, disabled) {
+        if (!loginBtn) return;
+        loginBtn.textContent = text;
+        loginBtn.disabled    = disabled;
+    }
+
     function showMsg(msg, type) {
-        document.querySelectorAll('.login-message').forEach(el => el.remove());
+        document.querySelectorAll('.login-message').forEach(function (el) { el.remove(); });
         var div = document.createElement('div');
         div.className = 'login-message';
         div.textContent = msg;
+        var colors = {
+            success: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
+            error:   { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
+            info:    { bg: '#fff3cd', color: '#856404', border: '#ffeeba' }
+        };
+        var c = colors[type] || colors.info;
         Object.assign(div.style, {
             padding: '0.8rem 1rem', margin: '0.6rem 0', borderRadius: '8px',
-            textAlign: 'center', fontWeight: '500', fontSize: '0.9rem',
-            background: type === 'success' ? '#d4edda' : '#f8d7da',
-            color:      type === 'success' ? '#155724' : '#721c24',
-            border:     type === 'success' ? '1px solid #c3e6cb' : '1px solid #f5c6cb'
+            textAlign: 'center', fontWeight: '500', fontSize: '0.88rem',
+            background: c.bg, color: c.color, border: '1px solid ' + c.border
         });
-        if (type !== 'success') setTimeout(() => div.remove && div.remove(), 5000);
-        document.querySelector('.login-footer').insertAdjacentElement('beforebegin', div);
+        var footer = document.querySelector('.login-footer');
+        if (footer) footer.insertAdjacentElement('beforebegin', div);
+        if (type !== 'success' && type !== 'info') {
+            setTimeout(function () { if (div.parentNode) div.remove(); }, 6000);
+        }
     }
 
+    // Accessibility toggles
     if (textSizeBtn) {
         var big = false;
-        textSizeBtn.addEventListener('click', () => {
-            document.body.classList.toggle('large-text'); big = !big;
+        textSizeBtn.addEventListener('click', function () {
+            document.body.classList.toggle('large-text');
+            big = !big;
             textSizeBtn.textContent = big ? 'Decrease Text Size' : 'Increase Text Size';
         });
     }
     if (highContrastBtn) {
         var hc = false;
-        highContrastBtn.addEventListener('click', () => {
-            document.body.classList.toggle('high-contrast'); hc = !hc;
+        highContrastBtn.addEventListener('click', function () {
+            document.body.classList.toggle('high-contrast');
+            hc = !hc;
             highContrastBtn.textContent = hc ? 'Normal Contrast' : 'High Contrast';
         });
     }
