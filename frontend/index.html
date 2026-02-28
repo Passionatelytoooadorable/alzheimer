@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alzheimer's Support - Scan Report</title>
-    <!-- Instant redirect — must run before body renders to prevent flash -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <!-- Instant redirect — runs on load AND bfcache restore -->
     <script>
-        (function() {
+        function checkAuthScan() {
             if (!localStorage.getItem('token')) {
                 window.location.replace('signup.html');
             }
-        })();
+        }
+        checkAuthScan();
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) checkAuthScan();
+        });
     </script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="scan.css">
@@ -168,6 +174,7 @@
     <footer class="footer">
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
+    <script src="user-store.js"></script>
     <script src="scan.js"></script>
 </body>
 </html>

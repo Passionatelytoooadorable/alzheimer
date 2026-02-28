@@ -3,6 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <script>
+        function checkAuthProfile() {
+            if (!localStorage.getItem('token')) {
+                window.location.replace('signup.html');
+            }
+        }
+        checkAuthProfile();
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) checkAuthProfile();
+        });
+    </script>
     <title>My Profile - Alzheimer's Support</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="profile.css">
@@ -175,6 +188,17 @@
                         <span class="pcard-icon">🗂️</span>
                         <h2>Scan Report History</h2>
                         <span class="report-count-badge" id="reportCountBadge">0</span>
+                        <button id="addReportBtn" title="Add report manually" style="
+                            margin-left:auto;
+                            background:linear-gradient(135deg,#667eea,#764ba2);
+                            color:white; border:none; border-radius:20px;
+                            padding:0.35rem 0.9rem; font-size:0.82rem;
+                            font-weight:700; cursor:pointer; white-space:nowrap;
+                            display:flex; align-items:center; gap:4px;
+                            box-shadow:0 2px 8px rgba(102,126,234,0.35);
+                            transition:all 0.2s;">
+                            ➕ Add
+                        </button>
                     </div>
                     <div id="reportsList" class="reports-list">
                         <div class="empty-reports">
@@ -220,6 +244,7 @@
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
+    <script src="user-store.js"></script>
     <script src="profile.js"></script>
 </body>
 </html>

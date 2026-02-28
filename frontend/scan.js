@@ -1,73 +1,90 @@
 // scan.js
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
-document.addEventListener('DOMContentLoaded', function () {
-
-    // Auth guard
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = 'signup.html';
+// bfcache: re-check auth and reset UI on back-button restore
+window.addEventListener('pageshow', function (e) {
+    if (!localStorage.getItem('token')) {
+        window.location.replace('signup.html');
         return;
     }
+    if (e.persisted) {
+        // Reset all cards to upload state
+        ['analysisCard','positiveResult','negativeResult'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        var uc = document.getElementById('uploadCard');
+        var ua = document.getElementById('uploadArea');
+        var fs = document.getElementById('fileSelected');
+        if (uc) uc.style.display = 'block';
+        if (ua) ua.style.display = 'block';
+        if (fs) fs.style.display = 'none';
+        for (var i = 1; i <= 4; i++) {
+            var s  = document.getElementById('step' + i);
+            var f  = document.getElementById('fill' + i);
+            var st = document.getElementById('status' + i);
+            if (s)  s.classList.remove('active','done');
+            if (f)  f.style.width = '0%';
+            if (st) st.textContent = '⏳';
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    var token = localStorage.getItem('token');
+    if (!token) { window.location.replace('signup.html'); return; }
 
     // Build nav
-    const nav     = document.getElementById('scanNav');
-    const rawUser = localStorage.getItem('user');
-    const user    = rawUser ? JSON.parse(rawUser) : {};
-    const scanDone = localStorage.getItem('scanCompleted') === 'true';
+    var nav      = document.getElementById('scanNav');
+    var rawUser  = localStorage.getItem('user');
+    var user     = rawUser ? JSON.parse(rawUser) : {};
+    var scanDone = localStorage.getItem('scanCompleted') === 'true';
 
     if (nav) {
         if (scanDone) {
             nav.innerHTML = buildProfileNav(user);
             initProfileDropdown();
         } else {
-            nav.innerHTML = `<a href="#" id="navLogout" style="font-size:0.88rem;opacity:0.85;">Cancel</a>`;
+            nav.innerHTML = '<a href="#" id="navLogout" style="font-size:0.88rem;opacity:0.85;">&#10005; Cancel &amp; Logout</a>';
             document.getElementById('navLogout').addEventListener('click', function (e) {
                 e.preventDefault(); doLogout();
             });
         }
     }
 
-    // ── DOM refs ──
-    const pdfInput     = document.getElementById('pdfInput');
-    const uploadArea   = document.getElementById('uploadArea');
-    const uploadBtn    = document.getElementById('uploadBtn');
-    const fileSelected = document.getElementById('fileSelected');
-    const fileNameEl   = document.getElementById('fileName');
-    const fileSizeEl   = document.getElementById('fileSize');
-    const removeFileBtn= document.getElementById('removeFile');
-    const analyzeBtn   = document.getElementById('analyzeBtn');
-    let   selectedFile = null;
+    // DOM refs
+    var pdfInput     = document.getElementById('pdfInput');
+    var uploadArea   = document.getElementById('uploadArea');
+    var uploadBtn    = document.getElementById('uploadBtn');
+    var fileSelected = document.getElementById('fileSelected');
+    var fileNameEl   = document.getElementById('fileName');
+    var fileSizeEl   = document.getElementById('fileSize');
+    var removeFileBtn= document.getElementById('removeFile');
+    var analyzeBtn   = document.getElementById('analyzeBtn');
+    var selectedFile = null;
 
-    // ── File selection ──
-    // Button click → open file dialog
     uploadBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         pdfInput.click();
     });
-
-    // Clicking anywhere else on upload area also opens dialog
     uploadArea.addEventListener('click', function (e) {
         if (e.target !== uploadBtn) pdfInput.click();
     });
-
     pdfInput.addEventListener('change', function () {
         if (this.files && this.files[0]) handleFile(this.files[0]);
     });
-
-    // Drag & drop
     uploadArea.addEventListener('dragover',  function (e) { e.preventDefault(); uploadArea.classList.add('drag-over'); });
     uploadArea.addEventListener('dragleave', function ()  { uploadArea.classList.remove('drag-over'); });
     uploadArea.addEventListener('drop',      function (e) {
         e.preventDefault();
         uploadArea.classList.remove('drag-over');
-        const f = e.dataTransfer.files[0];
+        var f = e.dataTransfer.files[0];
         if (f) handleFile(f);
     });
 
     function handleFile(file) {
-        // Accept .pdf extension OR pdf mime type
-        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        var isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
         if (!isPdf) { alert('Please upload a PDF file only.'); return; }
         if (file.size > 10 * 1024 * 1024) { alert('File size must be under 10MB.'); return; }
         selectedFile = file;
@@ -94,37 +111,30 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectedFile) startAnalysis();
     });
 
-    // ── Analysis ──
     function showCard(id) {
-        ['uploadCard', 'analysisCard', 'positiveResult', 'negativeResult'].forEach(function (cid) {
-            const el = document.getElementById(cid);
+        ['uploadCard','analysisCard','positiveResult','negativeResult'].forEach(function (cid) {
+            var el = document.getElementById(cid);
             if (el) el.style.display = (cid === id) ? 'block' : 'none';
         });
     }
 
     async function startAnalysis() {
         showCard('analysisCard');
-
-        // Animate steps sequentially
         await animateStep(1, 1100);
         await animateStep(2, 1400);
         await animateStep(3, 1800);
         await animateStep(4, 900);
 
-        let result;
+        var result;
         try {
             result = await callAnalysisAPI(selectedFile);
-            // Ensure required fields exist
             if (typeof result.positive === 'undefined') throw new Error('Bad response');
         } catch (err) {
-            // Fallback simulation — 60% chance positive
-            const isPositive = Math.random() > 0.4;
+            var isPositive = Math.random() > 0.4;
             result = {
                 positive:  isPositive,
-                riskScore: isPositive
-                    ? Math.floor(55 + Math.random() * 35)
-                    : Math.floor(8  + Math.random() * 22),
-                findings: isPositive ? [
+                riskScore: isPositive ? Math.floor(55 + Math.random() * 35) : Math.floor(8 + Math.random() * 22),
+                findings:  isPositive ? [
                     '⚠️ Elevated Amyloid-beta protein levels detected',
                     '⚠️ Tau protein markers above normal threshold',
                     '⚠️ Reduced hippocampal volume noted in scan',
@@ -139,14 +149,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function animateStep(n, dur) {
         return new Promise(function (resolve) {
-            const step   = document.getElementById('step' + n);
-            const fill   = document.getElementById('fill' + n);
-            const status = document.getElementById('status' + n);
+            var step   = document.getElementById('step' + n);
+            var fill   = document.getElementById('fill' + n);
+            var status = document.getElementById('status' + n);
             if (!step) { resolve(); return; }
             step.classList.add('active');
-            fill.style.width = '100%';
+            if (fill) fill.style.width = '100%';
             setTimeout(function () {
-                status.textContent = '✅';
+                if (status) status.textContent = '✅';
                 step.classList.add('done');
                 resolve();
             }, dur);
@@ -154,9 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function callAnalysisAPI(file) {
-        const fd = new FormData();
+        var fd = new FormData();
         fd.append('pdf', file);
-        const res = await fetch(API_BASE + '/analyze/pdf', {
+        var res = await fetch(API_BASE + '/analyze/pdf', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + token },
             body: fd
@@ -166,48 +176,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function saveReport(result) {
-        const reports = JSON.parse(localStorage.getItem('userReports') || '[]');
+        // Save to USER-SCOPED storage so it persists per user
+        var reports = UserStore.get('userReports', []);
         reports.unshift({
             id:        Date.now(),
             fileName:  selectedFile ? selectedFile.name : 'report.pdf',
-            date:      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            date:      new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }),
             timestamp: new Date().toISOString(),
             result:    result.positive ? 'Positive' : 'Negative',
             riskScore: result.riskScore || 0,
             findings:  result.findings  || []
         });
-        localStorage.setItem('userReports', JSON.stringify(reports));
+        UserStore.set('userReports', reports);
     }
 
     function showResult(result) {
-        // Mark scan done
         localStorage.setItem('scanCompleted', 'true');
-        localStorage.setItem('isNewUser', 'false');
+        localStorage.setItem('isNewUser',     'false');
 
         if (result.positive) {
             showCard('positiveResult');
-
-            // Animate risk bar after a short delay
             setTimeout(function () {
-                const fill    = document.getElementById('riskBarFill');
-                const percent = document.getElementById('riskPercent');
+                var fill    = document.getElementById('riskBarFill');
+                var percent = document.getElementById('riskPercent');
                 if (fill)    fill.style.width   = (result.riskScore || 72) + '%';
                 if (percent) percent.textContent = (result.riskScore || 72) + '%';
             }, 400);
-
-            // Findings list
-            const fe = document.getElementById('resultFindings');
+            var fe = document.getElementById('resultFindings');
             if (fe && result.findings && result.findings.length) {
                 fe.innerHTML = result.findings.map(function (f) {
                     return '<div class="finding-item">' + f + '</div>';
                 }).join('');
             }
-
             document.getElementById('goToDashboard').addEventListener('click', function () {
                 window.location.href = 'dashboard.html';
             });
             document.getElementById('scanAgain').addEventListener('click', resetScan);
-
         } else {
             showCard('negativeResult');
             document.getElementById('goToDashboardNeg').addEventListener('click', function () {
@@ -218,37 +222,38 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function resetScan() {
-        selectedFile   = null;
+        selectedFile = null;
         pdfInput.value = '';
-        for (var i = 1; i <= 4; i++) {
-            var s = document.getElementById('step' + i);
-            var f = document.getElementById('fill' + i);
-            var st= document.getElementById('status' + i);
-            if (s)  { s.classList.remove('active', 'done'); }
-            if (f)  { f.style.width = '0%'; }
-            if (st) { st.textContent = '⏳'; }
-        }
         fileSelected.style.display = 'none';
         uploadArea.style.display   = 'block';
+        for (var i = 1; i <= 4; i++) {
+            var s  = document.getElementById('step' + i);
+            var f  = document.getElementById('fill' + i);
+            var st = document.getElementById('status' + i);
+            if (s)  s.classList.remove('active','done');
+            if (f)  f.style.width = '0%';
+            if (st) st.textContent = '⏳';
+        }
         showCard('uploadCard');
     }
 });
 
-// ── Shared nav helpers (must be global so profile.js can also use them) ──
+// Global nav helpers — must match nav-shared.js
 function buildProfileNav(user) {
-    var name    = (user && user.name) || localStorage.getItem('userName') || 'User';
-    var initial = name.charAt(0).toUpperCase();
-    return '<a href="dashboard.html">Dashboard</a>' +
-           '<a href="resources.html">Resources</a>' +
+    var pd   = UserStore ? UserStore.get('profileData', {}) : {};
+    var name = pd.name || (user && user.name) || localStorage.getItem('userName') || 'User';
+    var ini  = name.charAt(0).toUpperCase();
+    return '<a href="dashboard.html" class="nav-link">Dashboard</a>' +
+           '<a href="resources.html" class="nav-link">Resources</a>' +
            '<div class="profile-nav-wrap" id="profileNavWrap">' +
-               '<button class="profile-nav-btn" id="profileNavBtn">' +
-                   '<div class="profile-avatar-small">' + initial + '</div>' +
+               '<button type="button" class="profile-nav-btn" id="profileNavBtn">' +
+                   '<div class="profile-avatar-small">' + ini + '</div>' +
                    '<span class="profile-name-short">' + name.split(' ')[0] + '</span>' +
-                   '<span class="profile-caret">▾</span>' +
+                   '<span class="profile-caret">&#9660;</span>' +
                '</button>' +
                '<div class="profile-dropdown" id="profileDropdown">' +
-                   '<a href="profile.html" class="dropdown-item">👤 My Profile</a>' +
-                   '<a href="#" class="dropdown-item" id="dropLogout">🚪 Logout</a>' +
+                   '<a href="profile.html" class="dropdown-item">&#128100; My Profile</a>' +
+                   '<a href="#" class="dropdown-item" id="dropLogout">&#128682; Logout</a>' +
                '</div>' +
            '</div>';
 }
@@ -261,13 +266,12 @@ function initProfileDropdown() {
         e.stopPropagation();
         dd.classList.toggle('open');
     });
-    document.addEventListener('click', function () { dd.classList.remove('open'); });
+    document.addEventListener('click', function () {
+        var d = document.getElementById('profileDropdown');
+        if (d) d.classList.remove('open');
+    });
     var logoutEl = document.getElementById('dropLogout');
-    if (logoutEl) {
-        logoutEl.addEventListener('click', function (e) {
-            e.preventDefault(); doLogout();
-        });
-    }
+    if (logoutEl) logoutEl.addEventListener('click', function (e) { e.preventDefault(); doLogout(); });
 }
 
 function doLogout() {

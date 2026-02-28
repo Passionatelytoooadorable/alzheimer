@@ -237,44 +237,88 @@
 .qlink:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
 
 /* ── Profile nav dropdown ── */
-.profile-nav-wrap { position: relative; }
-.profile-nav-btn {
-    display: flex; align-items: center; gap: 0.5rem;
-    background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.4);
-    color: white; padding: 0.45rem 0.9rem; border-radius: 50px;
-    cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
+.profile-nav-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
 }
-.profile-nav-btn:hover { background: rgba(255,255,255,0.25); }
+.profile-nav-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.15) !important;
+    border: 1.5px solid rgba(255,255,255,0.4) !important;
+    color: white !important;
+    padding: 0.45rem 0.9rem !important;
+    border-radius: 50px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s;
+    text-decoration: none !important;
+    /* Ensure it never looks like a plain link */
+    line-height: 1.4 !important;
+    min-height: 36px;
+}
+.profile-nav-btn:hover {
+    background: rgba(255,255,255,0.28) !important;
+}
 .profile-avatar-small {
     width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(255,255,255,0.3); display: flex;
+    background: rgba(255,255,255,0.3);
+    display: inline-flex !important;
     align-items: center; justify-content: center;
     font-size: 0.85rem; font-weight: 700; color: white;
     border: 1.5px solid rgba(255,255,255,0.5);
+    flex-shrink: 0;
 }
-.profile-name-short { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.profile-caret { font-size: 0.7rem; }
+.profile-name-short {
+    max-width: 90px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+    color: white !important;
+}
+.profile-caret { font-size: 0.65rem; color: white !important; }
+
 .profile-dropdown {
-    position: absolute; right: 0; top: calc(100% + 8px);
-    background: white; border-radius: 10px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    min-width: 160px; overflow: hidden;
-    display: none; z-index: 1000;
-    border: 1px solid #e8f0ff;
+    position: absolute; right: 0; top: calc(100% + 10px);
+    background: #ffffff; border-radius: 10px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.18);
+    min-width: 170px; overflow: hidden;
+    display: none; z-index: 9999;
+    border: 1px solid #e0e9ff;
 }
-.profile-dropdown.open { display: block; animation: dropdown-pop 0.2s ease; }
+.profile-dropdown.open {
+    display: block;
+    animation: dropdown-pop 0.2s ease;
+}
 @keyframes dropdown-pop {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.dropdown-item,
-.profile-dropdown a {
-    display: block; padding: 0.75rem 1.1rem;
-    color: #374785 !important; text-decoration: none; font-size: 0.9rem; font-weight: 500;
-    transition: background 0.15s; background: white !important;
+/* Hard override so header's white color does NOT cascade in */
+.profile-dropdown a,
+.profile-dropdown .dropdown-item,
+header .profile-dropdown a,
+header .profile-dropdown .dropdown-item,
+.header .profile-dropdown a {
+    display: block !important;
+    padding: 0.78rem 1.1rem !important;
+    color: #374785 !important;
+    background: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    transition: background 0.15s;
+    border: none !important;
+    border-radius: 0 !important;
 }
-.dropdown-item:hover,
-.profile-dropdown a:hover { background: #f0f4ff !important; }
+.profile-dropdown a:hover,
+.profile-dropdown .dropdown-item:hover,
+header .profile-dropdown a:hover {
+    background: #f0f4ff !important;
+    color: #374785 !important;
+}
+
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
