@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>👤</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links" id="profilePageNav"></nav>
+    </header>
+
+    <main class="profile-main">
+
+        <!-- Hero Banner -->
+        <section class="profile-hero">
+            <div class="hero-confetti" id="heroConfetti"></div>
+            <div class="profile-hero-inner">
+                <div class="profile-avatar-big" id="profileAvatarBig">U</div>
+                <div class="profile-hero-info">
+                    <h1 id="profileHeroName">Loading...</h1>
+                    <p id="profileHeroSub">Member since <span id="profileJoinDate">—</span></p>
+                    <div class="profile-hero-badges">
+                        <span class="hero-badge-tag" id="heroReportsBadge">📋 0 Reports</span>
+                        <span class="hero-badge-tag" id="heroStatusBadge">✅ Active</span>
+                    </div>
+                </div>
+                <button class="edit-profile-btn" id="editToggleBtn">✏️ Edit Profile</button>
+            </div>
+        </section>
+
+        <div class="profile-body">
+
+            <!-- Left: Personal Info Card -->
+            <div class="profile-left">
+                <div class="pcard pcard-info">
+                    <div class="pcard-header">
+                        <span class="pcard-icon">👤</span>
+                        <h2>Personal Information</h2>
+                    </div>
+                    <div id="viewMode">
+                        <div class="info-row"><span class="info-label">Full Name</span><span class="info-value" id="view-name">—</span></div>
+                        <div class="info-row"><span class="info-label">Age</span><span class="info-value" id="view-age">—</span></div>
+                        <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value" id="view-dob">—</span></div>
+                        <div class="info-row"><span class="info-label">Gender</span><span class="info-value" id="view-gender">—</span></div>
+                        <div class="info-row"><span class="info-label">Blood Group</span><span class="info-value" id="view-blood">—</span></div>
+                        <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="view-email">—</span></div>
+                        <div class="info-row"><span class="info-label">Phone</span><span class="info-value" id="view-phone">—</span></div>
+                        <div class="info-row"><span class="info-label">Address</span><span class="info-value" id="view-address">—</span></div>
+                        <div class="info-row"><span class="info-label">Emergency Contact</span><span class="info-value" id="view-emergency">—</span></div>
+                    </div>
+
+                    <!-- Edit Form (hidden by default) -->
+                    <form id="editForm" style="display:none;">
+                        <div class="edit-grid">
+                            <div class="edit-group">
+                                <label>Full Name</label>
+                                <input type="text" id="edit-name" placeholder="Your full name">
+                            </div>
+                            <div class="edit-group">
+                                <label>Age</label>
+                                <input type="number" id="edit-age" placeholder="Your age" min="1" max="120">
+                            </div>
+                            <div class="edit-group">
+                                <label>Date of Birth</label>
+                                <input type="date" id="edit-dob">
+                            </div>
+                            <div class="edit-group">
+                                <label>Gender</label>
+                                <select id="edit-gender">
+                                    <option value="">Select</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Non-binary">Non-binary</option>
+                                    <option value="Prefer not to say">Prefer not to say</option>
+                                </select>
+                            </div>
+                            <div class="edit-group">
+                                <label>Blood Group</label>
+                                <select id="edit-blood">
+                                    <option value="">Select</option>
+                                    <option>A+</option><option>A-</option>
+                                    <option>B+</option><option>B-</option>
+                                    <option>O+</option><option>O-</option>
+                                    <option>AB+</option><option>AB-</option>
+                                </select>
+                            </div>
+                            <div class="edit-group">
+                                <label>Phone Number</label>
+                                <input type="tel" id="edit-phone" placeholder="+1 234 567 8900">
+                            </div>
+                            <div class="edit-group full-width">
+                                <label>Address</label>
+                                <textarea id="edit-address" placeholder="Street, City, State, Country" rows="2"></textarea>
+                            </div>
+                            <div class="edit-group full-width">
+                                <label>Emergency Contact</label>
+                                <input type="text" id="edit-emergency" placeholder="Name: +phone">
+                            </div>
+                        </div>
+                        <div class="edit-actions">
+                            <button type="button" class="btn-cancel" id="cancelEditBtn">Cancel</button>
+                            <button type="submit" class="btn-save">💾 Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Medical Info -->
+                <div class="pcard pcard-medical">
+                    <div class="pcard-header">
+                        <span class="pcard-icon">🏥</span>
+                        <h2>Medical Details</h2>
+                    </div>
+                    <div id="viewMedMode">
+                        <div class="info-row"><span class="info-label">Doctor Name</span><span class="info-value" id="view-doctor">—</span></div>
+                        <div class="info-row"><span class="info-label">Hospital / Clinic</span><span class="info-value" id="view-hospital">—</span></div>
+                        <div class="info-row"><span class="info-label">Diagnosis</span><span class="info-value" id="view-diagnosis">—</span></div>
+                        <div class="info-row"><span class="info-label">Current Medications</span><span class="info-value" id="view-meds">—</span></div>
+                        <div class="info-row"><span class="info-label">Allergies</span><span class="info-value" id="view-allergies">—</span></div>
+                    </div>
+                    <button class="edit-med-btn" id="editMedBtn">✏️ Edit Medical Info</button>
+                    <form id="editMedForm" style="display:none;">
+                        <div class="edit-grid">
+                            <div class="edit-group"><label>Doctor Name</label><input type="text" id="edit-doctor" placeholder="Dr. "></div>
+                            <div class="edit-group"><label>Hospital / Clinic</label><input type="text" id="edit-hospital" placeholder="Hospital name"></div>
+                            <div class="edit-group full-width"><label>Diagnosis</label><input type="text" id="edit-diagnosis" placeholder="e.g. Early stage Alzheimer's"></div>
+                            <div class="edit-group full-width"><label>Current Medications</label><textarea id="edit-meds" rows="2" placeholder="List medications separated by commas"></textarea></div>
+                            <div class="edit-group full-width"><label>Allergies</label><input type="text" id="edit-allergies" placeholder="e.g. Penicillin, Aspirin"></div>
+                        </div>
+                        <div class="edit-actions">
+                            <button type="button" class="btn-cancel" id="cancelMedBtn">Cancel</button>
+                            <button type="submit" class="btn-save">💾 Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Stats + Reports -->
+            <div class="profile-right">
+
+                <!-- Quick Stats -->
+                <div class="stats-row">
+                    <div class="stat-tile" style="background: linear-gradient(135deg,#667eea,#764ba2);">
+                        <div class="stat-tile-icon">📋</div>
+                        <div class="stat-tile-num" id="statReports">0</div>
+                        <div class="stat-tile-label">Total Reports</div>
+                    </div>
+                    <div class="stat-tile" style="background: linear-gradient(135deg,#f093fb,#f5576c);">
+                        <div class="stat-tile-icon">📅</div>
+                        <div class="stat-tile-num" id="statDays">0</div>
+                        <div class="stat-tile-label">Days Member</div>
+                    </div>
+                    <div class="stat-tile" style="background: linear-gradient(135deg,#4facfe,#00f2fe);">
+                        <div class="stat-tile-icon">📝</div>
+                        <div class="stat-tile-num" id="statJournal">0</div>
+                        <div class="stat-tile-label">Journal Entries</div>
+                    </div>
+                    <div class="stat-tile" style="background: linear-gradient(135deg,#43e97b,#38f9d7);">
+                        <div class="stat-tile-icon">💊</div>
+                        <div class="stat-tile-num" id="statReminders">0</div>
+                        <div class="stat-tile-label">Reminders Set</div>
+                    </div>
+                </div>
+
+                <!-- Report History -->
+                <div class="pcard pcard-reports">
+                    <div class="pcard-header">
+                        <span class="pcard-icon">🗂️</span>
+                        <h2>Scan Report History</h2>
+                        <span class="report-count-badge" id="reportCountBadge">0</span>
+                    </div>
+                    <div id="reportsList" class="reports-list">
+                        <div class="empty-reports">
+                            <div class="empty-icon">📋</div>
+                            <p>No reports yet. Upload a PDF scan to get started.</p>
+                            <a href="index.html" class="upload-report-link">Upload Report →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity / Quick Links -->
+                <div class="pcard pcard-links">
+                    <div class="pcard-header">
+                        <span class="pcard-icon">🚀</span>
+                        <h2>Quick Access</h2>
+                    </div>
+                    <div class="quick-links-grid">
+                        <a href="dashboard.html" class="qlink" style="background:linear-gradient(135deg,#a8d0e6,#4a86e8)">
+                            <span>🏠</span><span>Dashboard</span>
+                        </a>
+                        <a href="memory-vault.html" class="qlink" style="background:linear-gradient(135deg,#ffb7c5,#ff6b9d)">
+                            <span>📸</span><span>Memory Vault</span>
+                        </a>
+                        <a href="journal.html" class="qlink" style="background:linear-gradient(135deg,#b8f0b8,#28a745)">
+                            <span>📝</span><span>Journal</span>
+                        </a>
+                        <a href="ai-companion.html" class="qlink" style="background:linear-gradient(135deg,#ffd89b,#f9a825)">
+                            <span>🤖</span><span>AI Companion</span>
+                        </a>
+                        <a href="index.html" class="qlink" style="background:linear-gradient(135deg,#d4b3ff,#7c3aed)">
+                            <span>🔬</span><span>New Scan</span>
+                        </a>
+                        <a href="resources.html" class="qlink" style="background:linear-gradient(135deg,#a0e4f1,#0891b2)">
+                            <span>📚</span><span>Resources</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="profile.js"></script>
+</body>
+</html>

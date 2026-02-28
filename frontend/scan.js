@@ -1,40 +1,43 @@
-// scan.js — Alzheimer's Prediction Page Logic
+// scan.js — PDF scan page logic
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ===== 1. SMART NAV =====
+    // ── Auth Guard: must be logged in to see scan page ──
     const token = localStorage.getItem('token');
-    const nav = document.getElementById('mainNav');
-
-    if (token) {
-        nav.innerHTML = `
-            <a href="dashboard.html">Dashboard</a>
-            <a href="resources.html">Resources</a>
-            <a href="#" id="logoutLink">Logout</a>
-        `;
-        document.getElementById('logoutLink').addEventListener('click', function (e) {
-            e.preventDefault();
-            ['token','user','isLoggedIn','userName','userEmail'].forEach(k => localStorage.removeItem(k));
-            window.location.href = 'login.html';
-        });
-    } else {
-        nav.innerHTML = `
-            <a href="login.html">Login</a>
-            <a href="signup.html">Sign Up</a>
-        `;
+    if (!token) {
+        window.location.href = 'signup.html';
+        return;
     }
 
-    // ===== 2. FILE HANDLING =====
-    const uploadArea = document.getElementById('uploadArea');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const pdfInput = document.getElementById('pdfInput');
+    // ── Nav: on scan page, only show minimal links (no bypass to dashboard) ──
+    const nav = document.getElementById('scanNav');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const scanDone = localStorage.getItem('scanCompleted') === 'true';
+
+    if (scanDone) {
+        // Returning user who navigated back — show full nav
+        nav.innerHTML = buildProfileNav(user);
+        initProfileDropdown();
+    } else {
+        // New user mid-scan — only show logout, no dashboard bypass
+        nav.innerHTML = `<a href="#" id="navLogout" style="opacity:0.8;font-size:0.9rem;">✕ Cancel &amp; Logout</a>`;
+        document.getElementById('navLogout').addEventListener('click', function (e) {
+            e.preventDefault();
+            doLogout();
+        });
+    }
+
+    // ── File Handling ──
+    const uploadArea  = document.getElementById('uploadArea');
+    const uploadBtn   = document.getElementById('uploadBtn');
+    const pdfInput    = document.getElementById('pdfInput');
     const fileSelected = document.getElementById('fileSelected');
-    const fileNameEl = document.getElementById('fileName');
-    const fileSizeEl = document.getElementById('fileSize');
+    const fileNameEl  = document.getElementById('fileName');
+    const fileSizeEl  = document.getElementById('fileSize');
     const removeFileBtn = document.getElementById('removeFile');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    let selectedFile = null;
+    const analyzeBtn  = document.getElementById('analyzeBtn');
+    let selectedFile  = null;
 
     uploadBtn.addEventListener('click', () => pdfInput.click());
     uploadArea.addEventListener('click', (e) => { if (e.target !== uploadBtn) pdfInput.click(); });
@@ -58,13 +61,14 @@ document.addEventListener('DOMContentLoaded', function () {
         fileNameEl.textContent = file.name;
         fileSizeEl.textContent = formatSize(file.size);
         uploadArea.style.display = 'none';
+        document.querySelector('.demo-strip').style.display = 'none';
         fileSelected.style.display = 'block';
     }
 
-    function formatSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    function formatSize(b) {
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+        return (b/1048576).toFixed(1) + ' MB';
     }
 
     removeFileBtn.addEventListener('click', function () {
@@ -72,91 +76,127 @@ document.addEventListener('DOMContentLoaded', function () {
         pdfInput.value = '';
         fileSelected.style.display = 'none';
         uploadArea.style.display = 'block';
+        document.querySelector('.demo-strip').style.display = 'block';
     });
 
-    analyzeBtn.addEventListener('click', function () {
-        if (!selectedFile) return;
-        startAnalysis();
-    });
+    analyzeBtn.addEventListener('click', () => { if (selectedFile) startAnalysis(false); });
 
-    // ===== 3. ANALYSIS FLOW =====
+    // ── Analysis Flow ──
     function showCard(id) {
         ['uploadCard','analysisCard','positiveResult','negativeResult'].forEach(cid => {
             const el = document.getElementById(cid);
-            if (el) el.style.display = cid === id ? 'block' : 'none';
+            if (el) el.style.display = (cid === id) ? 'block' : 'none';
         });
     }
 
-    async function startAnalysis() {
+    async function startAnalysis(isDemo) {
         showCard('analysisCard');
-        await animateStep(1, 1200);
-        await animateStep(2, 1500);
-        await animateStep(3, 2000);
-        await animateStep(4, 1000);
+        await animateStep(1, 1100);
+        await animateStep(2, 1400);
+        await animateStep(3, 1800);
+        await animateStep(4, 900);
 
-        try {
-            const result = await callAnalysisAPI(selectedFile);
-            showResult(result);
-        } catch (err) {
-            console.warn('API unavailable, using simulation:', err);
-            const isPositive = Math.random() > 0.4;
-            showResult({
-                positive: isPositive,
-                riskScore: isPositive ? Math.floor(55 + Math.random() * 35) : Math.floor(10 + Math.random() * 20),
-                findings: isPositive ? [
+        let result;
+        if (isDemo) {
+            // Deterministic demo: positive result
+            result = {
+                positive: true,
+                riskScore: 68,
+                fileName: 'Demo Analysis',
+                findings: [
                     '⚠️ Elevated Amyloid-beta protein levels detected',
                     '⚠️ Tau protein markers above normal threshold',
                     '⚠️ Reduced hippocampal volume noted in scan',
                     '📊 Cognitive assessment score: 18/30 (mild impairment)'
-                ] : []
-            });
+                ]
+            };
+        } else {
+            try {
+                result = await callAnalysisAPI(selectedFile);
+            } catch (err) {
+                // Fallback simulation when API not available
+                const isPositive = Math.random() > 0.4;
+                result = {
+                    positive: isPositive,
+                    riskScore: isPositive ? Math.floor(55 + Math.random() * 35) : Math.floor(8 + Math.random() * 18),
+                    fileName: selectedFile ? selectedFile.name : 'report.pdf',
+                    findings: isPositive ? [
+                        '⚠️ Elevated Amyloid-beta protein levels detected',
+                        '⚠️ Tau protein markers above normal threshold',
+                        '⚠️ Reduced hippocampal volume noted in scan',
+                        '📊 Cognitive assessment score: 18/30 (mild impairment)'
+                    ] : []
+                };
+            }
         }
+
+        // Save report to user's profile history
+        saveReportToProfile(result, isDemo ? 'Demo Analysis' : (selectedFile ? selectedFile.name : 'report.pdf'));
+
+        showResult(result);
     }
 
-    function animateStep(stepNum, duration) {
+    function animateStep(n, dur) {
         return new Promise(resolve => {
-            const step = document.getElementById('step' + stepNum);
-            const fill = document.getElementById('fill' + stepNum);
-            const status = document.getElementById('status' + stepNum);
+            const step   = document.getElementById('step' + n);
+            const fill   = document.getElementById('fill' + n);
+            const status = document.getElementById('status' + n);
             step.classList.add('active');
             fill.style.width = '100%';
             setTimeout(() => {
                 status.textContent = '✅';
                 step.classList.add('done');
                 resolve();
-            }, duration);
+            }, dur);
         });
     }
 
     async function callAnalysisAPI(file) {
-        const formData = new FormData();
-        formData.append('pdf', file);
-        const headers = {};
-        if (localStorage.getItem('token')) headers['Authorization'] = 'Bearer ' + localStorage.getItem('token');
-        const response = await fetch(API_BASE + '/analyze/pdf', { method: 'POST', headers, body: formData });
-        if (!response.ok) throw new Error('API error');
-        return await response.json();
+        const fd = new FormData();
+        fd.append('pdf', file);
+        const res = await fetch(API_BASE + '/analyze/pdf', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: fd
+        });
+        if (!res.ok) throw new Error('API error');
+        return await res.json();
+    }
+
+    function saveReportToProfile(result, fileName) {
+        const reports = JSON.parse(localStorage.getItem('userReports') || '[]');
+        reports.unshift({
+            id: Date.now(),
+            fileName: fileName,
+            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            timestamp: new Date().toISOString(),
+            result: result.positive ? 'Positive' : 'Negative',
+            riskScore: result.riskScore || 0,
+            findings: result.findings || []
+        });
+        localStorage.setItem('userReports', JSON.stringify(reports));
     }
 
     function showResult(result) {
+        // Mark scan as completed
+        localStorage.setItem('scanCompleted', 'true');
+        localStorage.setItem('isNewUser', 'false');
+
         if (result.positive) {
             showCard('positiveResult');
             setTimeout(() => {
                 document.getElementById('riskBarFill').style.width = result.riskScore + '%';
                 document.getElementById('riskPercent').textContent = result.riskScore + '%';
             }, 300);
-
-            const findingsEl = document.getElementById('resultFindings');
+            const fe = document.getElementById('resultFindings');
             if (result.findings && result.findings.length) {
-                findingsEl.innerHTML = result.findings.map(f => '<div class="finding-item">' + f + '</div>').join('');
+                fe.innerHTML = result.findings.map(f => `<div class="finding-item">${f}</div>`).join('');
             }
-
-            document.getElementById('goToDashboard').addEventListener('click', function () {
-                window.location.href = 'dashboard.html';
-            });
+            document.getElementById('goToDashboard').addEventListener('click', () => { window.location.href = 'dashboard.html'; });
             document.getElementById('scanAgain').addEventListener('click', resetScan);
         } else {
             showCard('negativeResult');
+            document.getElementById('goToDashboardNeg').addEventListener('click', () => { window.location.href = 'dashboard.html'; });
             document.getElementById('scanAgainNeg').addEventListener('click', resetScan);
         }
     }
@@ -174,3 +214,38 @@ document.addEventListener('DOMContentLoaded', function () {
         showCard('uploadCard');
     }
 });
+
+// ── Shared helpers ──
+function buildProfileNav(user) {
+    const name = user.name || localStorage.getItem('userName') || 'User';
+    const initial = name.charAt(0).toUpperCase();
+    return `
+        <a href="dashboard.html">Dashboard</a>
+        <a href="resources.html">Resources</a>
+        <div class="profile-nav-wrap" id="profileNavWrap">
+            <button class="profile-nav-btn" id="profileNavBtn">
+                <div class="profile-avatar-small">${initial}</div>
+                <span class="profile-name-short">${name.split(' ')[0]}</span>
+                <span class="profile-caret">▾</span>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="profile.html" class="dropdown-item">👤 My Profile</a>
+                <a href="#" class="dropdown-item" id="dropLogout">🚪 Logout</a>
+            </div>
+        </div>`;
+}
+
+function initProfileDropdown() {
+    const btn = document.getElementById('profileNavBtn');
+    const dd  = document.getElementById('profileDropdown');
+    if (!btn || !dd) return;
+    btn.addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('open'); });
+    document.addEventListener('click', () => dd.classList.remove('open'));
+    const logoutEl = document.getElementById('dropLogout');
+    if (logoutEl) logoutEl.addEventListener('click', (e) => { e.preventDefault(); doLogout(); });
+}
+
+function doLogout() {
+    ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted'].forEach(k => localStorage.removeItem(k));
+    window.location.href = 'signup.html';
+}

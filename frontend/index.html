@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alzheimer's Support - Brain Scan Analysis</title>
+    <title>Alzheimer's Support - Scan Report</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="scan.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
@@ -14,21 +14,27 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <nav class="nav-links" id="mainNav"></nav>
+        <!-- Nav is intentionally minimal on scan page - user must complete scan first -->
+        <nav class="nav-links" id="scanNav">
+            <!-- Filled by scan.js based on auth state -->
+        </nav>
     </header>
 
     <main class="scan-main">
+
+        <!-- Hero — compact -->
         <section class="scan-hero">
             <div class="hero-content">
                 <div class="hero-text">
                     <div class="hero-badge">🔬 AI-Powered Medical Analysis</div>
                     <h1>Alzheimer's Detection<br><span class="highlight">Made Simple</span></h1>
-                    <p>Upload your medical test report (PDF) and our advanced AI model will analyze it to assess Alzheimer's risk indicators — privately, securely, and instantly.</p>
+                    <p>Upload your medical test report (PDF) and our advanced AI model will assess Alzheimer's risk indicators — privately, securely, and instantly.</p>
+                    <!-- 4 feature cards — fixed alignment -->
                     <div class="hero-features">
-                        <div class="hero-feat"><span>🔒</span> Private &amp; Secure</div>
-                        <div class="hero-feat"><span>⚡</span> Instant Results</div>
-                        <div class="hero-feat"><span>🤖</span> AI-Powered</div>
-                        <div class="hero-feat"><span>📋</span> PDF Reports</div>
+                        <div class="hero-feat"><span class="feat-icon">🔒</span><span class="feat-text">Private &amp; Secure</span></div>
+                        <div class="hero-feat"><span class="feat-icon">⚡</span><span class="feat-text">Instant Results</span></div>
+                        <div class="hero-feat"><span class="feat-icon">🤖</span><span class="feat-text">AI-Powered</span></div>
+                        <div class="hero-feat"><span class="feat-icon">📋</span><span class="feat-text">PDF Reports</span></div>
                     </div>
                 </div>
                 <div class="hero-visual">
@@ -45,8 +51,10 @@
             </div>
         </section>
 
+        <!-- Upload / Analysis / Results -->
         <section class="upload-section">
             <div class="upload-container">
+
                 <!-- Upload Card -->
                 <div class="upload-card" id="uploadCard">
                     <h2>📄 Upload Medical Report</h2>
@@ -57,8 +65,9 @@
                         <p class="upload-or">— or —</p>
                         <button class="upload-btn" id="uploadBtn">Browse Files</button>
                         <input type="file" id="pdfInput" accept=".pdf" hidden>
-                        <p class="upload-hint">PDF files only • Max 10MB</p>
+                        <p class="upload-hint">PDF files only &bull; Max 10MB</p>
                     </div>
+
                     <div class="file-selected" id="fileSelected" style="display:none;">
                         <div class="file-info">
                             <span class="file-icon">📄</span>
@@ -66,7 +75,7 @@
                                 <span class="file-name" id="fileName">document.pdf</span>
                                 <span class="file-size" id="fileSize">2.4 MB</span>
                             </div>
-                            <button class="remove-file" id="removeFile">✕</button>
+                            <button class="remove-file" id="removeFile" title="Remove">✕</button>
                         </div>
                         <button class="analyze-btn" id="analyzeBtn">🔍 Analyze Report</button>
                     </div>
@@ -119,9 +128,11 @@
                         </div>
                     </div>
                     <div class="result-actions">
+                        <button class="action-primary" id="goToDashboardNeg">Access Your Dashboard →</button>
                         <button class="action-secondary" id="scanAgainNeg">Upload Different Report</button>
                     </div>
                 </div>
+
             </div>
 
             <!-- Info Sidebar -->

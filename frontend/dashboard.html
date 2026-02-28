@@ -6,6 +6,7 @@
     <title>Dashboard - Alzheimer's Support</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="profile.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
 </head>
 <body>
@@ -14,13 +15,8 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <nav class="nav-links">
-            <!-- Home for logged-in users = dashboard (handled by dashboard.js) -->
-            <a href="dashboard.html">Home</a>
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="resources.html">Resources</a>
-            <a href="login.html" id="logoutLink">Logout</a>
-        </nav>
+        <!-- Profile nav injected by nav-shared.js -->
+        <nav class="nav-links" id="sharedNav"></nav>
     </header>
 
     <section class="welcome-header">
@@ -43,20 +39,16 @@
             </div>
             <div class="floating-icons">
                 <div class="floating-icon" onclick="window.location.href='memory-vault.html'">
-                    <div>📚</div>
-                    <div class="icon-label">Memory</div>
+                    <div>📚</div><div class="icon-label">Memory</div>
                 </div>
                 <div class="floating-icon" onclick="window.location.href='journal.html'">
-                    <div>📝</div>
-                    <div class="icon-label">Journal</div>
+                    <div>📝</div><div class="icon-label">Journal</div>
                 </div>
                 <div class="floating-icon" onclick="window.location.href='location-tracker.html'">
-                    <div>📍</div>
-                    <div class="icon-label">Location</div>
+                    <div>📍</div><div class="icon-label">Location</div>
                 </div>
                 <div class="floating-icon" onclick="window.location.href='ai-companion.html'">
-                    <div>🤖</div>
-                    <div class="icon-label">AI</div>
+                    <div>🤖</div><div class="icon-label">AI</div>
                 </div>
             </div>
         </div>
@@ -100,7 +92,7 @@
                             <button class="call-btn" onclick="callNumber('5559876543')">Call</button>
                         </div>
                     </div>
-                    <button class="emergency-btn" id="emergencyBtn">Emergency Help</button>
+                    <button class="emergency-btn" id="emergencyBtn">🆘 Emergency Help</button>
                 </div>
             </div>
         </div>
@@ -141,7 +133,7 @@
                 <div class="tile-header">
                     <div class="tile-icon">📍</div>
                     <h3>Location Safety</h3>
-                    <div class="tile-status location-on" id="locationStatus">Location on</div>
+                    <div class="tile-status location-on">Location on</div>
                 </div>
                 <div class="tile-content">
                     <p>Share your location with trusted contacts for safety</p>
@@ -155,7 +147,7 @@
                 <div class="tile-header">
                     <div class="tile-icon">🤖</div>
                     <h3>AI Care Companion</h3>
-                    <div class="tile-badge" id="aiBadge">Online</div>
+                    <div class="tile-badge">Online</div>
                 </div>
                 <div class="tile-content">
                     <p>Get help with reminders, questions, and daily assistance</p>
@@ -197,6 +189,7 @@
         </div>
     </div>
 
+    <script src="nav-shared.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>

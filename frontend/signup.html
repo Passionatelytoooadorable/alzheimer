@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alzheimer's Support - Sign Up</title>
+    <title>Alzheimer's Support - Create Account</title>
     <link rel="stylesheet" href="login.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>👤</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
 </head>
 <body>
     <header class="header">
@@ -14,10 +14,8 @@
             <div class="logo-text">Alzheimer's Support</div>
         </div>
         <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="#">Dashboard</a>
-            <a href="#">Resources</a>
-            <a href="login.html">Login</a>
+            <!-- No Dashboard/Resources until logged in -->
+            <a href="login.html">Already have an account? Login</a>
         </nav>
     </header>
 
@@ -56,33 +54,33 @@
             <form id="signupForm" class="login-form">
                 <div class="form-group">
                     <label for="fullName">Full Name</label>
-                    <input type="text" id="fullName" name="fullName" required autocomplete="name">
+                    <input type="text" id="fullName" name="fullName" required autocomplete="name" placeholder="Enter your full name">
                 </div>
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Choose a unique username">
                     <div class="input-hint">Must be unique</div>
                 </div>
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required autocomplete="email">
+                    <input type="email" id="email" name="email" required autocomplete="email" placeholder="your@email.com">
                     <div class="input-hint">Must be unique</div>
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" required autocomplete="tel">
+                    <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="+1 234 567 8900">
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="new-password">
-                    <div class="password-strength">
+                    <input type="password" id="password" name="password" required autocomplete="new-password" placeholder="Create a strong password">
+                    <div class="password-strength-wrap">
                         <div id="strengthBar" style="height:4px;border-radius:2px;background:#dee2e6;width:0%;transition:all 0.3s;margin-top:6px;"></div>
-                        <div id="strengthText" style="font-size:0.8rem;color:#6c757d;margin-top:4px;">Password strength</div>
+                        <div id="strengthText" style="font-size:0.78rem;color:#6c757d;margin-top:4px;">Password strength</div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Repeat your password">
                 </div>
                 <div class="form-group">
                     <label class="remember-me">
@@ -93,8 +91,7 @@
                 <button type="submit" class="login-button" id="submitBtn">Create Account</button>
             </form>
             <div class="login-footer">
-                <!-- FIXED: correctly points to login.html -->
-                <p>Already have an account? <a href="login.html">Sign In</a></p>
+                <p>Already have an account? <a href="login.html">Sign In here</a></p>
             </div>
         </div>
     </main>

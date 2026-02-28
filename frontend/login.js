@@ -1,32 +1,28 @@
-// login.js — Smart Auth Routing
+// login.js — Returning users: login → dashboard
 document.addEventListener('DOMContentLoaded', function () {
     const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
-    // KEY FIX: Already logged-in → go straight to dashboard, never show login page
+    // Already logged in → dashboard
     if (localStorage.getItem('token')) {
         window.location.href = 'dashboard.html';
         return;
     }
 
     const loginForm = document.getElementById('loginForm');
-    const textSizeBtn = document.getElementById('textSize');
+    const loginBtn  = document.getElementById('loginBtn');
+    const textSizeBtn    = document.getElementById('textSize');
     const highContrastBtn = document.getElementById('highContrast');
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
         e.preventDefault();
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
-        if (!username || !password) { showMessage('Please fill in all fields', 'error'); return; }
-        attemptLogin(username, password);
-    }
+        if (!username || !password) { showMsg('Please fill in all fields', 'error'); return; }
 
-    async function attemptLogin(username, password) {
-        const btn = loginForm.querySelector('.login-button');
-        const orig = btn.textContent;
-        btn.textContent = 'Signing In...';
-        btn.disabled = true;
+        loginBtn.textContent = 'Signing In...';
+        loginBtn.disabled = true;
 
         try {
             const res = await fetch(API_BASE + '/auth/signin', {
@@ -42,39 +38,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userName', result.user.name);
                 localStorage.setItem('userEmail', result.user.email);
-                showMessage('Login successful! Redirecting...', 'success');
-                // Registered user always goes to dashboard
+                localStorage.setItem('isNewUser', 'false');
+                localStorage.setItem('scanCompleted', 'true'); // returning user
+
+                showMsg('Login successful! Redirecting to dashboard...', 'success');
+                // Returning users → dashboard directly
                 setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
             } else {
-                btn.textContent = orig;
-                btn.disabled = false;
-                showMessage(result.message || 'Invalid username or password', 'error');
+                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = false;
+                showMsg(result.message || 'Invalid username or password', 'error');
                 document.getElementById('password').value = '';
                 document.getElementById('password').focus();
             }
         } catch (err) {
-            btn.textContent = orig;
-            btn.disabled = false;
-            showMessage('Network error. Please try again later.', 'error');
+            loginBtn.textContent = 'Sign In';
+            loginBtn.disabled = false;
+            showMsg('Network error. Please try again.', 'error');
         }
     }
 
-    function showMessage(message, type) {
-        const existing = document.querySelector('.login-message');
-        if (existing) existing.remove();
+    function showMsg(msg, type) {
+        document.querySelectorAll('.login-message').forEach(el => el.remove());
         const div = document.createElement('div');
         div.className = 'login-message';
-        div.textContent = message;
+        div.textContent = msg;
         Object.assign(div.style, {
-            padding: '1rem', margin: '1rem 0', borderRadius: '8px',
+            padding: '0.85rem 1rem', margin: '0.75rem 0', borderRadius: '8px',
             textAlign: 'center', fontWeight: '500', fontSize: '0.9rem',
             background: type === 'success' ? '#d4edda' : '#f8d7da',
             color: type === 'success' ? '#155724' : '#721c24',
             border: type === 'success' ? '1px solid #c3e6cb' : '1px solid #f5c6cb'
         });
         setTimeout(() => { if (div.parentNode) div.remove(); }, 5000);
-        const footer = document.querySelector('.login-footer');
-        if (footer) footer.insertAdjacentElement('beforebegin', div);
+        document.querySelector('.login-footer').insertAdjacentElement('beforebegin', div);
     }
 
     // Accessibility
@@ -94,8 +91,8 @@ document.addEventListener('DOMContentLoaded', function () {
             highContrastBtn.textContent = hc ? 'Normal Contrast' : 'High Contrast';
         });
     }
-    document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('focus', () => input.parentElement.classList.add('focused'));
-        input.addEventListener('blur', () => input.parentElement.classList.remove('focused'));
+    document.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('focus', () => inp.parentElement.classList.add('focused'));
+        inp.addEventListener('blur',  () => inp.parentElement.classList.remove('focused'));
     });
 });

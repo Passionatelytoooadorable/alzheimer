@@ -14,8 +14,7 @@
             <div class="logo-text">Alzheimer's Support</div>
         </div>
         <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="signup.html">Sign Up</a>
+            <a href="signup.html">New User? Sign Up</a>
         </nav>
     </header>
 
@@ -54,11 +53,11 @@
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="username">Username or Email</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter username or email">
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
                 </div>
                 <div class="form-options">
                     <label class="remember-me">
@@ -67,10 +66,10 @@
                     </label>
                     <a href="#" class="forgot-password">Forgot password?</a>
                 </div>
-                <button type="submit" class="login-button">Sign In</button>
+                <button type="submit" class="login-button" id="loginBtn">Sign In</button>
             </form>
             <div class="login-footer">
-                <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+                <p>New to Alzheimer's Support? <a href="signup.html">Create an account</a></p>
                 <div class="accessibility-options">
                     <button id="textSize" class="accessibility-btn">Increase Text Size</button>
                     <button id="highContrast" class="accessibility-btn">High Contrast</button>
