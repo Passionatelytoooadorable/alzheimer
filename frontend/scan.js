@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
             nav.innerHTML = buildProfileNav(user);
             initProfileDropdown();
         } else {
-            nav.innerHTML = `<a href="#" id="navLogout" style="font-size:0.88rem;opacity:0.85;">✕ Cancel &amp; Logout</a>`;
+            nav.innerHTML = `<a href="#" id="navLogout" style="font-size:0.88rem;opacity:0.85;">✕ Cancel</a>`;
             document.getElementById('navLogout').addEventListener('click', function (e) {
                 e.preventDefault(); doLogout();
             });
