@@ -8,6 +8,10 @@ window.addEventListener('pageshow', function (e) {
         return;
     }
     if (e.persisted) {
+        // Close dropdown immediately — bfcache freezes its open state
+        var dd = document.getElementById('profileDropdown');
+        if (dd) dd.classList.remove('open');
+
         // Reset all cards to upload state
         ['analysisCard','positiveResult','negativeResult'].forEach(function (id) {
             var el = document.getElementById(id);
@@ -46,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
             nav.innerHTML = buildProfileNav(user);
             initProfileDropdown();
         } else {
-            nav.innerHTML = '<a href="#" id="navLogout" style="font-size:0.88rem;opacity:0.85;">&#10005; Cancel</a>';
+            nav.innerHTML = '<a href="#" id="navLogout" style="font-size:0.88rem;opacity:0.85;">&#10005; Cancel &amp; Logout</a>';
             document.getElementById('navLogout').addEventListener('click', function (e) {
                 e.preventDefault(); doLogout();
             });

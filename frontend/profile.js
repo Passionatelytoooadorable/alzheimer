@@ -37,11 +37,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Backend sync ─────────────────────────────────────────────
 
     async function loadFromBackend() {
-        // Show cached data instantly while we fetch from backend
+        // Show cached data instantly while backend loads
         renderFromCache();
 
         try {
-            // Load profile + reports in parallel
             var [profRes, repRes] = await Promise.all([
                 API.get('/profile'),
                 API.get('/reports')
@@ -50,23 +49,49 @@ document.addEventListener('DOMContentLoaded', function () {
             var profData = await profRes.json();
             var repData  = await repRes.json();
 
-            // Update local cache with fresh data from DB
+            // Merge backend profile with any locally-stored join info
             if (profData.profile) {
-                UserStore.set('profileData', profData.profile);
+                // Backend now returns email directly from users table JOIN
+                // Preserve existing joinDate/joinTimestamp if backend doesn't have it
+                var existing = UserStore.get('profileData', {});
+                var merged   = Object.assign({}, existing, profData.profile);
+                if (!merged.joinDate) {
+                    merged.joinDate      = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' });
+                    merged.joinTimestamp = Date.now();
+                }
+                UserStore.set('profileData', merged);
             }
+
             if (profData.medical) {
                 UserStore.set('medicalData', profData.medical);
             }
+
             if (repData.reports) {
                 UserStore.set('userReports', repData.reports);
             }
 
-            // Re-render with DB data
+            // Re-render with fresh DB data
             renderAll();
 
         } catch (err) {
-            console.warn('Could not load from backend, using cache:', err);
-            // Already rendered from cache above — nothing more to do
+            console.warn('Could not reach backend, using local cache:', err);
+            // Cache render already happened above — fine for regular browser
+            // For incognito with empty cache, at least show what login gave us
+            var u = JSON.parse(localStorage.getItem('user') || '{}');
+            if (u.email) {
+                var pd = UserStore.get('profileData', {});
+                if (!pd.email) {
+                    pd.name  = pd.name  || u.name  || '';
+                    pd.email = u.email;
+                    pd.phone = pd.phone || u.phone || '';
+                    if (!pd.joinDate) {
+                        pd.joinDate      = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' });
+                        pd.joinTimestamp = Date.now();
+                    }
+                    UserStore.set('profileData', pd);
+                    renderAll();
+                }
+            }
         }
     }
 

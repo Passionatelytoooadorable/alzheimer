@@ -284,11 +284,11 @@
     background: #ffffff; border-radius: 10px;
     box-shadow: 0 10px 35px rgba(0,0,0,0.18);
     min-width: 170px; overflow: hidden;
-    display: none; z-index: 9999;
+    display: none !important; z-index: 9999;   /* !important prevents bfcache restoring display:block */
     border: 1px solid #e0e9ff;
 }
 .profile-dropdown.open {
-    display: block;
+    display: block !important;
     animation: dropdown-pop 0.2s ease;
 }
 @keyframes dropdown-pop {
