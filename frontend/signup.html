@@ -4,10 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alzheimer's Support - Create Account</title>
+    <!-- Instant redirect for already logged-in users -->
+    <script>
+        (function() {
+            if (localStorage.getItem('token')) {
+                window.location.replace('dashboard.html');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="login.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
     <style>
         .animation-container { background: linear-gradient(135deg, #e8f4fd 0%, #f0e6ff 100%); display:flex; align-items:center; justify-content:center; }
+
+        /* Make illustration section fill full height alongside the taller signup form */
+        .illustration-section {
+            position: sticky;
+            top: 1rem;
+            align-self: flex-start;
+        }
+
+        /* Feature cards below illustration */
+        .signup-features {
+            width: 100%;
+            max-width: 420px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            margin-top: 1.2rem;
+        }
+        .signup-feat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+            border-left: 4px solid #a8d0e6;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .signup-feat-card .feat-emoji { font-size: 1.5rem; }
+        .signup-feat-card h4 { font-size: 0.88rem; color: #374785; font-weight: 700; margin: 0; }
+        .signup-feat-card p  { font-size: 0.78rem; color: #6c757d; margin: 0; line-height: 1.4; }
+        .signup-feat-card:nth-child(2) { border-left-color: #81c784; }
+        .signup-feat-card:nth-child(3) { border-left-color: #f093fb; }
+        .signup-feat-card:nth-child(4) { border-left-color: #ffd54f; }
+
+        /* Trust strip */
+        .trust-strip {
+            width: 100%;
+            max-width: 420px;
+            background: linear-gradient(135deg, #374785, #4a86e8);
+            border-radius: 12px;
+            padding: 1rem 1.3rem;
+            margin-top: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: white;
+        }
+        .trust-strip .trust-icon { font-size: 2rem; flex-shrink: 0; }
+        .trust-strip h4 { font-size: 0.9rem; font-weight: 700; margin: 0 0 0.2rem; }
+        .trust-strip p  { font-size: 0.78rem; opacity: 0.88; margin: 0; line-height: 1.4; }
+
+        @media (max-width: 768px) {
+            .illustration-section { position: static; }
+            .signup-features { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -68,6 +131,39 @@
             <div class="illustration-text">
                 <h2>Join Our Caring Community</h2>
                 <p>Create your account to access personalized support, memory tools, and connect with caregivers.</p>
+            </div>
+
+            <!-- Feature cards to fill space -->
+            <div class="signup-features">
+                <div class="signup-feat-card">
+                    <div class="feat-emoji">🧠</div>
+                    <h4>AI-Powered Scan</h4>
+                    <p>Upload your medical PDF and get instant Alzheimer's risk analysis.</p>
+                </div>
+                <div class="signup-feat-card">
+                    <div class="feat-emoji">📸</div>
+                    <h4>Memory Vault</h4>
+                    <p>Store precious memories with photos, notes, and voice recordings.</p>
+                </div>
+                <div class="signup-feat-card">
+                    <div class="feat-emoji">📝</div>
+                    <h4>Daily Journal</h4>
+                    <p>Track thoughts, feelings, and daily experiences with ease.</p>
+                </div>
+                <div class="signup-feat-card">
+                    <div class="feat-emoji">🤖</div>
+                    <h4>AI Companion</h4>
+                    <p>24/7 AI support for medication reminders and caregiving help.</p>
+                </div>
+            </div>
+
+            <!-- Trust strip -->
+            <div class="trust-strip">
+                <div class="trust-icon">🔒</div>
+                <div>
+                    <h4>Private &amp; Secure Platform</h4>
+                    <p>Your data is encrypted and never shared. HIPAA-compliant infrastructure trusted by thousands of families.</p>
+                </div>
             </div>
         </div>
 
