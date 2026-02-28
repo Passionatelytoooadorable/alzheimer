@@ -1,6 +1,4 @@
 // dashboard.js
-const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // Auth guard
@@ -9,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // Inject shared nav
+    // Inject shared nav — reads fresh user from localStorage
     initSharedNav('dashboard.html');
 
     initializeDashboard();
@@ -19,81 +17,126 @@ document.addEventListener('DOMContentLoaded', function () {
 function initializeDashboard() {
     updateDashboardData();
 
-    const currentDate = new Date().toLocaleDateString('en-US', {
+    var currentDate = new Date().toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
-    document.getElementById('currentDate').textContent = currentDate;
+    var dateEl = document.getElementById('currentDate');
+    if (dateEl) dateEl.textContent = currentDate;
+
     loadReminders();
 }
 
 function updateDashboardData() {
-    const memories = JSON.parse(localStorage.getItem('memories') || '[]');
-    document.getElementById('memoryCount').textContent   = memories.length;
-    document.getElementById('memoryCount2').textContent  = memories.length;
-    document.getElementById('memoryBadge').textContent   = memories.length + ' memories';
+    // ALWAYS read fresh user — check profileData first (user may have updated name there)
+    var profileStored = localStorage.getItem('profileData');
+    var storedUser    = localStorage.getItem('user');
+    var profile = profileStored ? JSON.parse(profileStored) : {};
+    var user    = storedUser    ? JSON.parse(storedUser)    : {};
 
-    let journalCount = 0, weeklyCount = 0;
-    const je = JSON.parse(localStorage.getItem('journalEntries') || '[]');
-    if (je.length > 0) {
-        journalCount = je.length;
-        const oneWeekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
-        weeklyCount = je.filter(e => e.date >= oneWeekAgo).length;
-    } else {
-        journalCount = JSON.parse(localStorage.getItem('journals') || '[]').length;
-        weeklyCount  = parseInt(localStorage.getItem('weeklyCount') || '0');
-    }
+    // Name priority: profileData.name > user.name > userName key > fallback
+    var displayName = profile.name || user.name || localStorage.getItem('userName') || 'User';
 
-    document.getElementById('journalCount').textContent  = journalCount;
-    document.getElementById('journalCount2').textContent = journalCount;
-    document.getElementById('journalBadge').textContent  = journalCount + ' entries';
-    const wEl = document.querySelector('.journal-tile .stat:nth-child(2) strong');
-    if (wEl) wEl.textContent = weeklyCount;
+    var nameEl = document.getElementById('userName');
+    if (nameEl) nameEl.textContent = displayName;
 
-    // User name — prefer profileData name, fallback to user/token
-    const profile = JSON.parse(localStorage.getItem('profileData') || '{}');
-    const user    = JSON.parse(localStorage.getItem('user') || '{}');
-    document.getElementById('userName').textContent = profile.name || user.name || localStorage.getItem('userName') || 'User';
+    // Memories
+    var memories = JSON.parse(localStorage.getItem('memories') || '[]');
+    var memCount  = memories.length;
+    setTxt('memoryCount',  memCount);
+    setTxt('memoryCount2', memCount);
+    var memBadge = document.getElementById('memoryBadge');
+    if (memBadge) memBadge.textContent = memCount + ' memories';
 
-    const reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
-    const today = new Date().toDateString();
-    document.getElementById('reminderCount').textContent = reminders.filter(r => new Date(r.date).toDateString() === today).length;
+    // Journal
+    var je = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+    if (!je.length) je = JSON.parse(localStorage.getItem('journals') || '[]');
+    var journalCount = je.length;
+    var oneWeekAgo   = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    var weeklyCount  = je.filter(function (e) { return e.date && e.date >= oneWeekAgo; }).length
+                    || parseInt(localStorage.getItem('weeklyCount') || '0');
+
+    setTxt('journalCount',  journalCount);
+    setTxt('journalCount2', journalCount);
+    var jBadge = document.getElementById('journalBadge');
+    if (jBadge) jBadge.textContent = journalCount + ' entries';
+
+    var wkEl = document.querySelector('.journal-tile .stat:nth-child(2) strong');
+    if (wkEl) wkEl.textContent = weeklyCount;
+    if (document.getElementById('weeklyCount')) setTxt('weeklyCount', weeklyCount);
+
+    // Reminders
+    var reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+    var today     = new Date().toDateString();
+    var todayCount = reminders.filter(function (r) {
+        return new Date(r.date).toDateString() === today;
+    }).length;
+    setTxt('reminderCount', todayCount);
+}
+
+function setTxt(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
 }
 
 function loadReminders() {
-    const reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
-    const today = new Date().toDateString();
-    const todayR = reminders.filter(r => new Date(r.date).toDateString() === today);
-    const data = todayR.length > 0 ? todayR : [
-        { time: '9:00 AM',  text: 'Take morning medication', status: 'pending' },
+    var reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+    var today     = new Date().toDateString();
+    var todayR    = reminders.filter(function (r) {
+        return new Date(r.date).toDateString() === today;
+    });
+
+    var data = todayR.length > 0 ? todayR : [
+        { time: '9:00 AM',  text: 'Take morning medication', status: 'pending'  },
         { time: '14:00 PM', text: 'Doctor appointment',      status: 'upcoming' },
-        { time: '17:00 PM', text: 'Call family member',      status: 'pending' },
-        { time: '19:00 PM', text: 'Evening walk',            status: 'pending' }
+        { time: '17:00 PM', text: 'Call family member',      status: 'pending'  },
+        { time: '19:00 PM', text: 'Evening walk',            status: 'pending'  }
     ];
-    document.getElementById('remindersList').innerHTML = data.map(r => `
-        <li class="reminder-item">
-            <span class="reminder-time">${r.time}</span>
-            <span class="reminder-text">${r.text}</span>
-            <span class="reminder-status ${r.status}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
-        </li>`).join('');
+
+    var list = document.getElementById('remindersList');
+    if (list) {
+        list.innerHTML = data.map(function (r) {
+            return '<li class="reminder-item">' +
+                '<span class="reminder-time">'   + r.time   + '</span>' +
+                '<span class="reminder-text">'   + r.text   + '</span>' +
+                '<span class="reminder-status '  + r.status + '">' +
+                    r.status.charAt(0).toUpperCase() + r.status.slice(1) +
+                '</span></li>';
+        }).join('');
+    }
 }
 
 function setupEventListeners() {
-    document.querySelector('.add-reminder-btn').addEventListener('click', () => {
-        alert('Add reminder feature — connect to your reminders module.');
+    var addReminderBtn = document.querySelector('.add-reminder-btn');
+    if (addReminderBtn) {
+        addReminderBtn.addEventListener('click', function () {
+            alert('Add reminder feature — connect to your reminders module.');
+        });
+    }
+
+    var emergencyBtn   = document.getElementById('emergencyBtn');
+    var emergencyModal = document.getElementById('emergencyModal');
+    var closeBtn       = document.querySelector('.close');
+
+    if (emergencyBtn && emergencyModal) {
+        emergencyBtn.addEventListener('click', function () {
+            emergencyModal.style.display = 'block';
+        });
+    }
+    if (closeBtn && emergencyModal) {
+        closeBtn.addEventListener('click', function () {
+            emergencyModal.style.display = 'none';
+        });
+    }
+    window.addEventListener('click', function (e) {
+        if (emergencyModal && e.target === emergencyModal) {
+            emergencyModal.style.display = 'none';
+        }
     });
 
-    document.getElementById('emergencyBtn').addEventListener('click', () => {
-        document.getElementById('emergencyModal').style.display = 'block';
-    });
-    document.querySelector('.close').addEventListener('click', () => {
-        document.getElementById('emergencyModal').style.display = 'none';
-    });
-    window.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('emergencyModal'))
-            document.getElementById('emergencyModal').style.display = 'none';
-    });
-    window.addEventListener('storage', (e) => {
-        if (['memories','journalEntries','journals','reminders','weeklyCount','profileData'].includes(e.key)) {
+    // Update if localStorage changes (e.g. from another tab)
+    window.addEventListener('storage', function (e) {
+        var watched = ['memories','journalEntries','journals','reminders','weeklyCount','profileData','user','userName'];
+        if (watched.indexOf(e.key) !== -1) {
             updateDashboardData();
             loadReminders();
         }
@@ -103,5 +146,3 @@ function setupEventListeners() {
 function callNumber(number) {
     alert('Calling ' + number + '. In a real app, this would initiate a phone call.');
 }
-
-window.dashboardFunctions = { updateDashboardData, loadReminders };

@@ -1,54 +1,75 @@
-// nav-shared.js — inject profile nav into any page with id="sharedNav"
-// Include this script on dashboard, memory-vault, journal, ai-companion, resources, location-tracker
+// nav-shared.js — shared profile nav dropdown for all protected pages
+// Usage: add <nav class="nav-links" id="sharedNav"></nav> + <script src="nav-shared.js">
+// Then call initSharedNav() in your page's DOMContentLoaded
 
 function buildProfileNav(user) {
-    const name    = (user && user.name) || localStorage.getItem('userName') || 'User';
-    const initial = name.charAt(0).toUpperCase();
-    return `
-        <a href="dashboard.html" id="navHome">Home</a>
-        <a href="resources.html">Resources</a>
-        <div class="profile-nav-wrap" id="profileNavWrap">
-            <button class="profile-nav-btn" id="profileNavBtn">
-                <div class="profile-avatar-small">${initial}</div>
-                <span class="profile-name-short">${name.split(' ')[0]}</span>
-                <span class="profile-caret">▾</span>
-            </button>
-            <div class="profile-dropdown" id="profileDropdown">
-                <a href="profile.html" class="dropdown-item">👤 My Profile</a>
-                <a href="#" class="dropdown-item" id="dropLogout">🚪 Logout</a>
-            </div>
-        </div>`;
+    // ALWAYS read fresh from localStorage — never trust stale in-memory reference
+    var stored = localStorage.getItem('user');
+    var fresh  = stored ? JSON.parse(stored) : {};
+    var name   = fresh.name || (user && user.name) || localStorage.getItem('userName') || 'User';
+    // Also check profileData for updated name (user may have edited it)
+    var profileStored = localStorage.getItem('profileData');
+    if (profileStored) {
+        var pd = JSON.parse(profileStored);
+        if (pd.name) name = pd.name;
+    }
+    var initial   = name.charAt(0).toUpperCase();
+    var firstName = name.split(' ')[0];
+
+    return '<a href="dashboard.html" class="nav-home-link">Home</a>' +
+           '<a href="resources.html">Resources</a>' +
+           '<div class="profile-nav-wrap" id="profileNavWrap">' +
+               '<button type="button" class="profile-nav-btn" id="profileNavBtn">' +
+                   '<div class="profile-avatar-small">' + initial + '</div>' +
+                   '<span class="profile-name-short">' + firstName + '</span>' +
+                   '<span class="profile-caret">▾</span>' +
+               '</button>' +
+               '<div class="profile-dropdown" id="profileDropdown">' +
+                   '<a href="profile.html" class="dropdown-item">👤 My Profile</a>' +
+                   '<a href="#" class="dropdown-item" id="dropLogout">🚪 Logout</a>' +
+               '</div>' +
+           '</div>';
 }
 
 function initSharedNav(activePage) {
-    const nav  = document.getElementById('sharedNav');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    var nav = document.getElementById('sharedNav');
     if (!nav) return;
-    nav.innerHTML = buildProfileNav(user);
 
-    // Highlight active page
+    // Read user fresh every time nav is initialised
+    var stored = localStorage.getItem('user');
+    var user   = stored ? JSON.parse(stored) : {};
+
+    nav.innerHTML = buildProfileNav(user);
+    initProfileDropdown();
+
+    // Highlight active link
     if (activePage) {
-        const links = nav.querySelectorAll('a');
-        links.forEach(a => {
-            if (a.href.includes(activePage)) a.classList.add('active');
+        var links = nav.querySelectorAll('a');
+        links.forEach(function (a) {
+            if (a.href && a.href.indexOf(activePage) !== -1) {
+                a.style.background = 'rgba(255,255,255,0.25)';
+                a.style.borderRadius = '4px';
+            }
         });
     }
-
-    initProfileDropdown();
 }
 
 function initProfileDropdown() {
-    const btn = document.getElementById('profileNavBtn');
-    const dd  = document.getElementById('profileDropdown');
+    var btn = document.getElementById('profileNavBtn');
+    var dd  = document.getElementById('profileDropdown');
     if (!btn || !dd) return;
-    btn.addEventListener('click', function(e) {
+
+    btn.addEventListener('click', function (e) {
         e.stopPropagation();
         dd.classList.toggle('open');
     });
-    document.addEventListener('click', function() { dd.classList.remove('open'); });
-    const logoutEl = document.getElementById('dropLogout');
+    document.addEventListener('click', function () {
+        if (dd) dd.classList.remove('open');
+    });
+
+    var logoutEl = document.getElementById('dropLogout');
     if (logoutEl) {
-        logoutEl.addEventListener('click', function(e) {
+        logoutEl.addEventListener('click', function (e) {
             e.preventDefault();
             doLogout();
         });
@@ -56,15 +77,17 @@ function initProfileDropdown() {
 }
 
 function doLogout() {
-    ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted'].forEach(k => localStorage.removeItem(k));
+    ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted'].forEach(function (k) {
+        localStorage.removeItem(k);
+    });
     window.location.href = 'signup.html';
 }
 
-// Add profile nav CSS to head if not already linked
-(function injectNavCss() {
+// Inject profile.css dropdown styles if not already present
+(function () {
     if (!document.querySelector('link[href="profile.css"]')) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
+        var link  = document.createElement('link');
+        link.rel  = 'stylesheet';
         link.href = 'profile.css';
         document.head.appendChild(link);
     }

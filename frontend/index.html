@@ -6,7 +6,7 @@
     <title>Alzheimer's Support - Scan Report</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="scan.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
 </head>
 <body>
     <header class="header">
@@ -14,14 +14,10 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <!-- Nav is intentionally minimal on scan page - user must complete scan first -->
-        <nav class="nav-links" id="scanNav">
-            <!-- Filled by scan.js based on auth state -->
-        </nav>
+        <nav class="nav-links" id="scanNav"></nav>
     </header>
 
     <main class="scan-main">
-
         <!-- Hero — compact -->
         <section class="scan-hero">
             <div class="hero-content">
@@ -29,7 +25,6 @@
                     <div class="hero-badge">🔬 AI-Powered Medical Analysis</div>
                     <h1>Alzheimer's Detection<br><span class="highlight">Made Simple</span></h1>
                     <p>Upload your medical test report (PDF) and our advanced AI model will assess Alzheimer's risk indicators — privately, securely, and instantly.</p>
-                    <!-- 4 feature cards — fixed alignment -->
                     <div class="hero-features">
                         <div class="hero-feat"><span class="feat-icon">🔒</span><span class="feat-text">Private &amp; Secure</span></div>
                         <div class="hero-feat"><span class="feat-icon">⚡</span><span class="feat-text">Instant Results</span></div>
@@ -51,7 +46,6 @@
             </div>
         </section>
 
-        <!-- Upload / Analysis / Results -->
         <section class="upload-section">
             <div class="upload-container">
 
@@ -59,12 +53,15 @@
                 <div class="upload-card" id="uploadCard">
                     <h2>📄 Upload Medical Report</h2>
                     <p class="upload-subtitle">Upload a PDF of your brain scan, MRI report, or cognitive assessment</p>
+
+                    <!-- File input OUTSIDE upload-area so it doesn't block clicks -->
+                    <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
+
                     <div class="upload-area" id="uploadArea">
                         <div class="upload-icon-large">📁</div>
                         <p class="upload-main-text">Drag &amp; Drop your PDF here</p>
                         <p class="upload-or">— or —</p>
-                        <button class="upload-btn" id="uploadBtn">Browse Files</button>
-                        <input type="file" id="pdfInput" accept=".pdf" hidden>
+                        <button type="button" class="upload-btn" id="uploadBtn">Browse Files</button>
                         <p class="upload-hint">PDF files only &bull; Max 10MB</p>
                     </div>
 
@@ -75,9 +72,9 @@
                                 <span class="file-name" id="fileName">document.pdf</span>
                                 <span class="file-size" id="fileSize">2.4 MB</span>
                             </div>
-                            <button class="remove-file" id="removeFile" title="Remove">✕</button>
+                            <button type="button" class="remove-file" id="removeFile" title="Remove">✕</button>
                         </div>
-                        <button class="analyze-btn" id="analyzeBtn">🔍 Analyze Report</button>
+                        <button type="button" class="analyze-btn" id="analyzeBtn">🔍 Analyze Report</button>
                     </div>
                 </div>
 
@@ -108,8 +105,8 @@
                     <div class="result-findings" id="resultFindings"></div>
                     <div class="result-message positive-msg"><p>🏥 Based on your report, we recommend consultation with a neurologist. Our platform provides tools to help you and your caregivers manage and track your condition.</p></div>
                     <div class="result-actions">
-                        <button class="action-primary" id="goToDashboard">Access Your Dashboard →</button>
-                        <button class="action-secondary" id="scanAgain">Upload Different Report</button>
+                        <button type="button" class="action-primary" id="goToDashboard">Access Your Dashboard →</button>
+                        <button type="button" class="action-secondary" id="scanAgain">Upload Different Report</button>
                     </div>
                 </div>
 
@@ -128,8 +125,8 @@
                         </div>
                     </div>
                     <div class="result-actions">
-                        <button class="action-primary" id="goToDashboardNeg">Access Your Dashboard →</button>
-                        <button class="action-secondary" id="scanAgainNeg">Upload Different Report</button>
+                        <button type="button" class="action-primary" id="goToDashboardNeg">Access Your Dashboard →</button>
+                        <button type="button" class="action-secondary" id="scanAgainNeg">Upload Different Report</button>
                     </div>
                 </div>
 
@@ -163,7 +160,6 @@
     <footer class="footer">
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
-
     <script src="scan.js"></script>
 </body>
 </html>
