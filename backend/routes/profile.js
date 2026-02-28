@@ -13,8 +13,13 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
+
+    // JOIN users so we always get email (email lives in users, not user_profiles)
     const result = await query(
-      'SELECT * FROM user_profiles WHERE user_id = $1',
+      `SELECT p.*, u.email, u.name AS user_name, u.phone_number AS user_phone
+       FROM users u
+       LEFT JOIN user_profiles p ON p.user_id = u.id
+       WHERE u.id = $1`,
       [userId]
     );
 
@@ -23,18 +28,32 @@ router.get('/', auth, async (req, res) => {
     }
 
     const r = result.rows[0];
+
+    // If no profile row exists yet, return just the basics from users table
+    if (!r.id) {
+      return res.json({
+        profile: {
+          name:  r.user_name || '',
+          email: r.email     || '',
+          phone: r.user_phone|| ''
+        },
+        medical: null
+      });
+    }
+
     res.json({
       profile: {
-        name:          r.name,
+        name:          r.name          || r.user_name || '',
+        email:         r.email         || '',          // always from users table
         age:           r.age,
         dob:           r.dob,
         gender:        r.gender,
         blood:         r.blood_group,
-        phone:         r.phone,
+        phone:         r.phone         || r.user_phone || '',
         address:       r.address,
         emergency:     r.emergency_contact,
         joinDate:      r.join_date,
-        joinTimestamp: Number(r.join_timestamp)
+        joinTimestamp: Number(r.join_timestamp) || null
       },
       medical: {
         doctor:    r.doctor_name,
