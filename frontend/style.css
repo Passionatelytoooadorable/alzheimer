@@ -52,7 +52,9 @@ body {
     transition: background-color 0.3s;
 }
 
-.nav-links a:hover {
+/* Only apply hover to direct nav links, NOT dropdown items */
+.nav-links > a:hover,
+.nav-links .nav-link:hover {
     background-color: rgba(255,255,255,0.2);
 }
 
