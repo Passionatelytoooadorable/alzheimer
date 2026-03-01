@@ -51,13 +51,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Merge backend profile with any locally-stored join info
             if (profData.profile) {
-                // Backend now returns email directly from users table JOIN
-                // Preserve existing joinDate/joinTimestamp if backend doesn't have it
                 var existing = UserStore.get('profileData', {});
                 var merged   = Object.assign({}, existing, profData.profile);
-                if (!merged.joinDate) {
-                    merged.joinDate      = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' });
-                    merged.joinTimestamp = Date.now();
+                // createdAt from backend (users.created_at) is always authoritative
+                if (profData.profile.createdAt) {
+                    merged.createdAt = profData.profile.createdAt;
+                }
+                // joinDate display label — keep existing if backend doesn't have it
+                if (!merged.joinDate && merged.createdAt) {
+                    merged.joinDate = new Date(merged.createdAt)
+                        .toLocaleDateString('en-US', { year:'numeric', month:'long' });
                 }
                 UserStore.set('profileData', merged);
             }
@@ -120,17 +123,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Ensure baseline profile saved locally
         if (!profile.name && user.name) {
-            profile.name      = user.name;
-            profile.email     = user.email || '';
-            profile.joinDate  = profile.joinDate  || new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' });
-            profile.joinTimestamp = profile.joinTimestamp || Date.now();
+            profile.name  = user.name;
+            profile.email = user.email || '';
             UserStore.set('profileData', profile);
         }
+
+        // joinDate label: derive from createdAt if stored, else keep existing
+        var joinDateLabel = profile.joinDate;
+        if (!joinDateLabel && profile.createdAt) {
+            joinDateLabel = new Date(profile.createdAt)
+                .toLocaleDateString('en-US', { year:'numeric', month:'long' });
+        }
+        joinDateLabel = joinDateLabel || 'February 2026'; // last-resort static fallback
 
         setTxt('profileHeroName', name);
         var av = document.getElementById('profileAvatarBig');
         if (av) av.textContent = name.charAt(0).toUpperCase();
-        setTxt('profileJoinDate', profile.joinDate || new Date().toLocaleDateString('en-US', { year:'numeric', month:'long' }));
+        setTxt('profileJoinDate', joinDateLabel);
 
         setTxt('view-name',      name);
         setTxt('view-age',       profile.age       || '—');
@@ -170,8 +179,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!je.length) je = UserStore.get('journals', []);
         var reminders = UserStore.get('reminders',      []);
         var profile   = UserStore.get('profileData',    {});
-        var joinTs    = profile.joinTimestamp || Date.now();
-        var days      = Math.max(1, Math.floor((Date.now() - joinTs) / 86400000));
+
+        // Use users.created_at (most reliable — set at signup, never changes)
+        // Fall back to joinTimestamp if createdAt not yet in cache
+        var originTs  = profile.createdAt || profile.joinTimestamp || null;
+        var days      = originTs
+            ? Math.max(1, Math.floor((Date.now() - originTs) / 86400000))
+            : 1;
 
         setTxt('statReports',   reports.length);
         setTxt('statDays',      days);
