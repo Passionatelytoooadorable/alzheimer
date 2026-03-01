@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="resources.css">
     <!-- Simple default favicon -->
     <link rel="icon" href="#" id="dynamic-favicon">
-    <script src="api.js"></script>
-    <script src="user-store.js"></script>
-    <script src="nav-shared.js"></script>
     <script src="favicon-config.js"></script>
 </head>
 <body>
@@ -417,6 +414,23 @@
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
+        <script src="api.js"></script>
+    <script src="user-store.js"></script>
+    <script src="nav-shared.js"></script>
+    <script>
+        // Auth guard + nav init
+        (function() {
+            if (!localStorage.getItem('token')) {
+                window.location.replace('login.html');
+                return;
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof initSharedNav === 'function') {
+                    initSharedNav('resources.html');
+                }
+            });
+        })();
+    </script>
     <script src="resources.js"></script>
 </body>
 
