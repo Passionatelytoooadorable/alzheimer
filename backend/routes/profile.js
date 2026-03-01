@@ -16,7 +16,8 @@ router.get('/', auth, async (req, res) => {
 
     // JOIN users so we always get email (email lives in users, not user_profiles)
     const result = await query(
-      `SELECT p.*, u.email, u.name AS user_name, u.phone_number AS user_phone
+      `SELECT p.*, u.email, u.name AS user_name, u.phone_number AS user_phone,
+              u.created_at AS user_created_at
        FROM users u
        LEFT JOIN user_profiles p ON p.user_id = u.id
        WHERE u.id = $1`,
@@ -33,9 +34,10 @@ router.get('/', auth, async (req, res) => {
     if (!r.id) {
       return res.json({
         profile: {
-          name:  r.user_name || '',
-          email: r.email     || '',
-          phone: r.user_phone|| ''
+          name:      r.user_name    || '',
+          email:     r.email        || '',
+          phone:     r.user_phone   || '',
+          createdAt: r.user_created_at ? new Date(r.user_created_at).getTime() : null
         },
         medical: null
       });
@@ -44,7 +46,7 @@ router.get('/', auth, async (req, res) => {
     res.json({
       profile: {
         name:          r.name          || r.user_name || '',
-        email:         r.email         || '',          // always from users table
+        email:         r.email         || '',
         age:           r.age,
         dob:           r.dob,
         gender:        r.gender,
@@ -53,7 +55,8 @@ router.get('/', auth, async (req, res) => {
         address:       r.address,
         emergency:     r.emergency_contact,
         joinDate:      r.join_date,
-        joinTimestamp: Number(r.join_timestamp) || null
+        joinTimestamp: Number(r.join_timestamp) || null,
+        createdAt:     r.user_created_at ? new Date(r.user_created_at).getTime() : null
       },
       medical: {
         doctor:    r.doctor_name,
