@@ -54,11 +54,6 @@ async function loadMemories() {
         const data = await apiFetch('/memories');
         // Map DB column names → frontend shape
         allMemories = data.memories.map(dbToFrontend);
-        // Seed sample memories for brand-new users
-        if (allMemories.length === 0) {
-            await seedSampleMemories();
-            return; // seedSampleMemories calls loadMemories again
-        }
     } catch (err) {
         console.warn('DB fetch failed, using localStorage fallback:', err.message);
         allMemories = JSON.parse(localStorage.getItem('memories')) || [];
@@ -117,20 +112,6 @@ async function apiDeleteMemory(id) {
     await apiFetch(`/memories/${id}`, { method: 'DELETE' });
 }
 
-// ─── Seed samples for new users ──────────────────────────
-async function seedSampleMemories() {
-    const samples = [
-        { name: "Alex", relationship: "Grandchild", memoryType: "habit", description: "Your grandson Alex. His birthday is 19th June. He loves football and visits the beach every summer.", image: "👦", color: "#4ecdc4" },
-        { name: "Ella Johnson", relationship: "Child", memoryType: "general", description: "Your daughter Ella. She's a doctor and visits every weekend. She bakes the best chocolate cake!", image: "👩", color: "#ff6b6b" },
-        { name: "Robert Johnson", relationship: "Spouse/Partner", memoryType: "fact", description: "Your husband Robert. Married 45 years. Loves gardening and mystery novels.", image: "👴", color: "#a8d0e6" },
-        { name: "Sarah & Mike", relationship: "Friend", memoryType: "event", description: "Friends from the book club. You meet every Thursday for tea — 30 years of friendship!", image: "👫", color: "#ffd166" }
-    ];
-    for (const s of samples) {
-        try { await apiSaveMemory(s); } catch (e) { /* skip if offline */ }
-    }
-    await loadMemories();
-}
-
 // ─── Display ─────────────────────────────────────────────
 function showLoadingState() {
     const grid = document.getElementById('memoryGrid');
@@ -148,12 +129,20 @@ function displayMemories(filter = 'all') {
     grid.innerHTML = '';
 
     if (filtered.length === 0) {
-        grid.innerHTML = `
+        const isFiltered = filter !== "all";
+        grid.innerHTML = isFiltered ? `
             <div class="empty-state">
-                <div class="empty-icon">📸</div>
-                <h3>No memories found</h3>
-                <p>Add your first memory to get started!</p>
-                <button class="action-btn primary" onclick="openAddMemoryForm()">Add Your First Memory</button>
+                <div class="empty-icon">🔍</div>
+                <h3>No memories in this category</h3>
+                <p>Try a different filter, or add a new memory for this relationship.</p>
+                <button class="action-btn primary" onclick="openAddMemoryForm()">+ Add Memory</button>
+            </div>` : `
+            <div class="empty-state first-time">
+                <div class="empty-icon">💛</div>
+                <h3>Your Memory Vault is empty</h3>
+                <p>This is your private space to preserve the people who matter most — their faces, voices, stories, and the moments you share.</p>
+                <p style="color:#999;font-size:.9rem;margin-top:.5rem">Start by adding someone close to you.</p>
+                <button class="action-btn primary" onclick="openAddMemoryForm()">+ Add Your First Person</button>
             </div>`;
         return;
     }
