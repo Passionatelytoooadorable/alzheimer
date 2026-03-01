@@ -15,11 +15,13 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-                <!-- Nav injected by nav-shared.js -->
+        <!-- Nav injected by nav-shared.js -->
         <nav class="nav-links" id="sharedNav"></nav>
     </header>
 
     <main class="journal-container">
+
+        <!-- ── PAGE HEADER ── -->
         <section class="journal-header">
             <div class="header-content">
                 <div class="header-text">
@@ -28,15 +30,15 @@
                 </div>
                 <div class="header-stats">
                     <div class="stat">
-                        <span class="stat-number" id="totalEntries">0</span>
+                        <span class="stat-number" id="totalEntries">—</span>
                         <span class="stat-label">Entries</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-number" id="thisWeek">0</span>
+                        <span class="stat-number" id="thisWeek">—</span>
                         <span class="stat-label">This Week</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-number" id="remindersCount">0</span>
+                        <span class="stat-number" id="remindersCount">—</span>
                         <span class="stat-label">Reminders</span>
                     </div>
                 </div>
@@ -51,60 +53,102 @@
             </div>
         </section>
 
+        <!-- ── MAIN LAYOUT ── -->
         <div class="main-content">
+
+            <!-- ── LEFT: JOURNAL CONTENT ── -->
             <div class="journal-content">
+
+                <!-- Quick Action Buttons -->
                 <section class="quick-actions">
                     <button class="action-btn primary" id="newEntryBtn">
-                        <span class="btn-icon">➕</span>
-                        New Journal Entry
+                        <span class="btn-icon">➕</span> New Journal Entry
                     </button>
                     <button class="action-btn secondary" id="voiceEntryBtn">
-                        <span class="btn-icon">🎤</span>
-                        Voice Entry
+                        <span class="btn-icon">🎤</span> Voice Entry
                     </button>
                     <button class="action-btn tertiary" id="promptsBtn">
-                        <span class="btn-icon">💡</span>
-                        Writing Prompts
+                        <span class="btn-icon">💡</span> Writing Prompts
                     </button>
                 </section>
 
+                <!-- ── CONTENT AREA ── -->
                 <div class="content-area">
+
+                    <!-- ENTRIES LIST VIEW -->
                     <section class="entries-section" id="entriesSection">
                         <div class="section-header">
                             <h2>Your Journal Entries</h2>
                             <div class="filter-options">
-                                <button class="filter-btn active" data-filter="all">All Entries</button>
+                                <button class="filter-btn active" data-filter="all">All</button>
                                 <button class="filter-btn" data-filter="today">Today</button>
                                 <button class="filter-btn" data-filter="week">This Week</button>
                                 <button class="filter-btn" data-filter="month">This Month</button>
                             </div>
                         </div>
+
+                        <!-- Search Bar -->
+                        <div class="search-bar-wrap">
+                            <span class="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                id="searchInput"
+                                class="search-input"
+                                placeholder="Search entries by title or content…"
+                                autocomplete="off"
+                            >
+                        </div>
+
                         <div class="entries-list" id="entriesList">
-                            <!-- Entries will be loaded here -->
+                            <!-- Entries injected by JS -->
                         </div>
                     </section>
 
-                    <section class="journal-form-section" id="journalFormSection" style="display: none;">
+                    <!-- JOURNAL FORM (hidden by default) -->
+                    <section class="journal-form-section" id="journalFormSection" style="display:none;">
                         <div class="form-header">
                             <h2 id="formTitle">New Journal Entry</h2>
-                            <button class="close-form-btn" id="closeFormBtn">✕</button>
+                            <button class="close-form-btn" id="closeFormBtn" aria-label="Close form">✕</button>
                         </div>
-                        <form id="journalForm" class="journal-form">
-                            <div class="form-group">
-                                <label for="entryDate">Date</label>
-                                <input type="date" id="entryDate" name="entryDate" required>
+
+                        <form id="journalForm" class="journal-form" novalidate>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="entryDate">Date</label>
+                                    <input type="date" id="entryDate" name="entryDate" required>
+                                </div>
                             </div>
+
                             <div class="form-group">
                                 <label for="entryTitle">Title</label>
-                                <input type="text" id="entryTitle" name="entryTitle" placeholder="Give your entry a title..." required>
+                                <input
+                                    type="text"
+                                    id="entryTitle"
+                                    name="entryTitle"
+                                    placeholder="Give your entry a title…"
+                                    maxlength="120"
+                                    required
+                                >
                             </div>
+
                             <div class="form-group">
-                                <label for="entryContent">Your Thoughts</label>
-                                <textarea id="entryContent" name="entryContent" placeholder="Write about your day, your feelings, or anything you'd like to remember..." required></textarea>
+                                <label for="entryContent">
+                                    Your Thoughts
+                                    <span class="word-count" id="wordCount">0 words</span>
+                                </label>
+                                <textarea
+                                    id="entryContent"
+                                    name="entryContent"
+                                    placeholder="Write about your day, your feelings, or anything you'd like to remember…"
+                                    rows="7"
+                                    required
+                                ></textarea>
                             </div>
+
                             <div class="form-group">
-                                <label for="entryMood">How are you feeling?</label>
-                                <div class="mood-selector">
+                                <label>How are you feeling? <span class="required-hint">*</span></label>
+                                <div class="mood-selector" id="moodSelector">
                                     <button type="button" class="mood-btn" data-mood="😊">😊 Happy</button>
                                     <button type="button" class="mood-btn" data-mood="😌">😌 Calm</button>
                                     <button type="button" class="mood-btn" data-mood="😢">😢 Sad</button>
@@ -113,6 +157,17 @@
                                 </div>
                                 <input type="hidden" id="selectedMood" name="selectedMood">
                             </div>
+
+                            <div class="form-group">
+                                <label for="entryTags">Tags <span class="optional-hint">(optional, comma separated)</span></label>
+                                <input
+                                    type="text"
+                                    id="entryTags"
+                                    name="entryTags"
+                                    placeholder="e.g. Family, Health, Memories"
+                                >
+                            </div>
+
                             <div class="form-actions">
                                 <button type="button" class="btn-secondary" id="cancelEntry">Cancel</button>
                                 <button type="submit" class="btn-primary">Save Entry</button>
@@ -120,81 +175,93 @@
                         </form>
                     </section>
 
-                    <section class="prompts-section" id="promptsSection" style="display: none;">
+                    <!-- WRITING PROMPTS (hidden by default) -->
+                    <section class="prompts-section" id="promptsSection" style="display:none;">
                         <div class="section-header">
-                            <h2>Writing Prompts</h2>
-                            <button class="close-prompts-btn" id="closePromptsBtn">✕</button>
+                            <h2>Writing Prompts 💡</h2>
+                            <button class="close-form-btn" id="closePromptsBtn" aria-label="Close prompts">✕</button>
                         </div>
+                        <p class="prompts-intro">Not sure what to write? Pick a prompt below to get started.</p>
                         <div class="prompts-list">
                             <div class="prompt-card">
                                 <p>"What made you smile today?"</p>
-                                <button class="use-prompt-btn" data-prompt="What made you smile today?">Use This Prompt</button>
+                                <button class="use-prompt-btn" data-prompt="What made you smile today?&#10;&#10;">Use This Prompt</button>
                             </div>
                             <div class="prompt-card">
                                 <p>"Who did you talk to today and what did you discuss?"</p>
-                                <button class="use-prompt-btn" data-prompt="Who did you talk to today and what did you discuss?">Use This Prompt</button>
+                                <button class="use-prompt-btn" data-prompt="Who did you talk to today and what did you discuss?&#10;&#10;">Use This Prompt</button>
                             </div>
                             <div class="prompt-card">
                                 <p>"What are you grateful for today?"</p>
-                                <button class="use-prompt-btn" data-prompt="What are you grateful for today?">Use This Prompt</button>
+                                <button class="use-prompt-btn" data-prompt="What are you grateful for today?&#10;&#10;">Use This Prompt</button>
                             </div>
                             <div class="prompt-card">
                                 <p>"What was the best part of your day?"</p>
-                                <button class="use-prompt-btn" data-prompt="What was the best part of your day?">Use This Prompt</button>
+                                <button class="use-prompt-btn" data-prompt="What was the best part of your day?&#10;&#10;">Use This Prompt</button>
                             </div>
                             <div class="prompt-card">
                                 <p>"Who made you feel loved today?"</p>
-                                <button class="use-prompt-btn" data-prompt="Who made you feel loved today?">Use This Prompt</button>
+                                <button class="use-prompt-btn" data-prompt="Who made you feel loved today?&#10;&#10;">Use This Prompt</button>
                             </div>
                             <div class="prompt-card">
-                                <p>"What did you learn today?"</p>
-                                <button class="use-prompt-btn" data-prompt="What did you learn today?">Use This Prompt</button>
+                                <p>"What did you learn or discover today?"</p>
+                                <button class="use-prompt-btn" data-prompt="What did you learn or discover today?&#10;&#10;">Use This Prompt</button>
                             </div>
                             <div class="prompt-card">
                                 <p>"Describe a happy memory from your past."</p>
-                                <button class="use-prompt-btn" data-prompt="Describe a happy memory from your past.">Use This Prompt</button>
+                                <button class="use-prompt-btn" data-prompt="Describe a happy memory from your past.&#10;&#10;">Use This Prompt</button>
+                            </div>
+                            <div class="prompt-card">
+                                <p>"What would you like tomorrow to be like?"</p>
+                                <button class="use-prompt-btn" data-prompt="What would you like tomorrow to be like?&#10;&#10;">Use This Prompt</button>
                             </div>
                         </div>
                     </section>
-                </div>
-            </div>
 
+                </div><!-- /.content-area -->
+            </div><!-- /.journal-content -->
+
+            <!-- ── RIGHT: SIDEBAR ── -->
             <aside class="calendar-sidebar">
+
+                <!-- Calendar -->
                 <div class="calendar-section">
                     <h3>Memory Calendar</h3>
                     <div class="calendar-container">
                         <div class="calendar-header">
-                            <button class="nav-btn" id="prevMonth">‹</button>
-                            <h4 id="currentMonth">November 2025</h4>
-                            <button class="nav-btn" id="nextMonth">›</button>
+                            <button class="nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+                            <h4 id="currentMonth">Loading…</h4>
+                            <button class="nav-btn" id="nextMonth" aria-label="Next month">›</button>
                         </div>
-                        <div class="calendar-grid" id="calendarGrid">
-                            <!-- Calendar will be loaded here -->
-                        </div>
+                        <div class="calendar-grid" id="calendarGrid"></div>
                     </div>
+                    <p class="calendar-legend">
+                        <span class="legend-dot"></span> Day with an entry
+                    </p>
                 </div>
 
+                <!-- Reminders -->
                 <div class="reminders-section">
                     <div class="section-header">
                         <h3>Today's Reminders</h3>
                         <button class="add-reminder-btn" id="addReminderBtn">+ Add</button>
                     </div>
-                    <div class="reminders-list" id="remindersList">
-                        <!-- Reminders will be loaded here -->
-                    </div>
+                    <div class="reminders-list" id="remindersList"></div>
                 </div>
+
             </aside>
-        </div>
+        </div><!-- /.main-content -->
     </main>
 
-    <div id="reminderModal" class="modal">
+    <!-- ── ADD REMINDER MODAL ── -->
+    <div id="reminderModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="reminderModalTitle">
         <div class="modal-content reminder-modal">
-            <span class="close">&times;</span>
-            <h2>Add Reminder</h2>
+            <button class="close" aria-label="Close">&times;</button>
+            <h2 id="reminderModalTitle">Add Reminder</h2>
             <form id="reminderForm" class="reminder-form">
                 <div class="form-group">
                     <label for="reminderTitle">Reminder</label>
-                    <input type="text" id="reminderTitle" name="reminderTitle" placeholder="E.g., Take morning medication" required>
+                    <input type="text" id="reminderTitle" name="reminderTitle" placeholder="e.g. Take morning medication" required>
                 </div>
                 <div class="form-group">
                     <label for="reminderDate">Date</label>
@@ -225,17 +292,17 @@
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
-        <script src="api.js"></script>
+    <script src="api.js"></script>
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
     <script>
         // Auth guard + nav init
-        (function() {
+        (function () {
             if (!localStorage.getItem('token')) {
                 window.location.replace('login.html');
                 return;
             }
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 if (typeof initSharedNav === 'function') {
                     initSharedNav('journal.html');
                 }
@@ -245,4 +312,3 @@
     <script src="journal.js"></script>
 </body>
 </html>
-
