@@ -52,16 +52,20 @@ document.addEventListener('DOMContentLoaded', function () {
             // Merge backend profile with any locally-stored join info
             if (profData.profile) {
                 var existing = UserStore.get('profileData', {});
-                var merged   = Object.assign({}, existing, profData.profile);
-                // createdAt from backend (users.created_at) is always authoritative
+                // Backend data wins for ALL fields — stale cache must not override it
+                // Only preserve local-only fields that backend doesn't know about
+                var merged = Object.assign({}, existing, profData.profile);
+
+                // createdAt from backend is always authoritative — never let cache override it
                 if (profData.profile.createdAt) {
                     merged.createdAt = profData.profile.createdAt;
                 }
-                // joinDate display label — keep existing if backend doesn't have it
-                if (!merged.joinDate && merged.createdAt) {
+                // Build joinDate label from createdAt if missing
+                if (merged.createdAt && !merged.joinDate) {
                     merged.joinDate = new Date(merged.createdAt)
                         .toLocaleDateString('en-US', { year:'numeric', month:'long' });
                 }
+
                 UserStore.set('profileData', merged);
             }
 
@@ -180,12 +184,18 @@ document.addEventListener('DOMContentLoaded', function () {
         var reminders = UserStore.get('reminders',      []);
         var profile   = UserStore.get('profileData',    {});
 
-        // Use users.created_at (most reliable — set at signup, never changes)
-        // Fall back to joinTimestamp if createdAt not yet in cache
-        var originTs  = profile.createdAt || profile.joinTimestamp || null;
-        var days      = originTs
-            ? Math.max(1, Math.floor((Date.now() - originTs) / 86400000))
-            : 1;
+        // Count calendar days (not 24-hour periods) so Feb 28 → Mar 2 = 2 days
+        // regardless of what time of day the account was created
+        var originTs = profile.createdAt || profile.joinTimestamp || null;
+        var days = 1;
+        if (originTs) {
+            var origin  = new Date(originTs);
+            var today   = new Date();
+            // Strip time — compare dates only
+            var originDay = new Date(origin.getFullYear(), origin.getMonth(), origin.getDate());
+            var todayDay  = new Date(today.getFullYear(),  today.getMonth(),  today.getDate());
+            days = Math.max(1, Math.round((todayDay - originDay) / 86400000) + 1);
+        }
 
         setTxt('statReports',   reports.length);
         setTxt('statDays',      days);
