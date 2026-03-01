@@ -125,40 +125,6 @@
 }
 @keyframes brain-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 
-/* Sweeping radar beam */
-.scan-beam {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 120px;
-    height: 2px;
-    transform-origin: left center;
-    z-index: 3;
-    animation: beam-sweep 2.8s linear infinite;
-}
-.scan-beam::before {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, rgba(0,240,210,0.95) 0%, rgba(0,240,210,0.2) 70%, transparent 100%);
-}
-/* Fan glow behind beam */
-.scan-beam::after {
-    content: '';
-    position: absolute;
-    top: -18px;
-    left: 0;
-    width: 90px;
-    height: 38px;
-    background: conic-gradient(from -10deg, rgba(0,220,200,0.18), transparent 40%);
-    border-radius: 0 50% 50% 0;
-}
-@keyframes beam-sweep {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
 /* Horizontal scan line that moves top to bottom */
 .scan-line {
     position: absolute;
@@ -180,27 +146,6 @@
     8%   { opacity: 1; }
     92%  { opacity: 1; }
     100% { top: 262px; opacity: 0;   }
-}
-
-/* Microscope icon — top-right corner */
-.microscope-wrap {
-    position: absolute;
-    right: 0px;
-    top: 4px;
-    z-index: 6;
-    animation: micro-bob 3.5s ease-in-out infinite;
-}
-@keyframes micro-bob {
-    0%,100% { transform: translateY(0) rotate(0deg); }
-    30%     { transform: translateY(-5px) rotate(-2deg); }
-    70%     { transform: translateY(-3px) rotate(1deg); }
-}
-
-/* SVG microscope drawn inline */
-.microscope-svg {
-    width: 64px;
-    height: 64px;
-    filter: drop-shadow(0 0 10px rgba(0,220,200,0.7));
 }
 
 /* Data blip dots */
@@ -385,7 +330,6 @@
     .ring-3 { width: 95px;  height: 95px; }
     .brain-icon { font-size: 3.2rem; }
     .tips-grid { grid-template-columns: 1fr; }
-    .microscope-svg { width: 46px; height: 46px; }
 }
 
 /* ══════════════════════════════════════════════
