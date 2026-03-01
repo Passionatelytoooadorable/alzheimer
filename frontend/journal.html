@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="journal.css">
     <link rel="icon" href="#" id="dynamic-favicon">
+    <script src="api.js"></script>
+    <script src="user-store.js"></script>
+    <script src="nav-shared.js"></script>
     <script src="favicon-config.js"></script>
 </head>
 <body>
@@ -15,13 +18,8 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <nav class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="journal.html" class="active">Journal</a>
-            <a href="resources.html">Resources</a>
-            <a href="login.html" id="logout-btn">Logout</a>
-        </nav>
+                <!-- Nav injected by nav-shared.js -->
+        <nav class="nav-links" id="sharedNav"></nav>
     </header>
 
     <main class="journal-container">
