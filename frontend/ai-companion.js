@@ -103,7 +103,7 @@ function setupEventListeners() {
         btn.addEventListener('click', handleQuickAction);
     });
 
-    document.querySelectorAll('.game-btn-horizontal').forEach(btn => {
+    document.querySelectorAll('.game-btn-v').forEach(btn => {
         btn.addEventListener('click', startGame);
     });
 
@@ -256,21 +256,10 @@ function getChatsToday() {
 
 // ─── Stats Display ────────────────────────────────────────────────────────────
 function updateStats() {
-    const today = new Date().toISOString().split('T')[0];
-    const todayReminders = currentReminders.filter(r => r.date === today);
-
-    const vals = {
-        days: getDaysActive(),
-        reminders: todayReminders.length,
-        chats: getChatsToday()
-    };
-
-    document.querySelectorAll('.stat-number').forEach(el => {
-        const label = (el.nextElementSibling?.textContent || '').toLowerCase();
-        if (label.includes('day')) el.textContent = vals.days;
-        else if (label.includes('reminder')) el.textContent = vals.reminders;
-        else if (label.includes('chat')) el.textContent = vals.chats;
-    });
+    const daysEl = document.getElementById('daysActiveStat');
+    const chatsEl = document.getElementById('chatSessions');
+    if (daysEl) daysEl.textContent = getDaysActive();
+    if (chatsEl) chatsEl.textContent = getChatsToday();
 }
 
 // ─── Send Message ─────────────────────────────────────────────────────────────
