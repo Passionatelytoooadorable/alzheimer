@@ -177,7 +177,7 @@ class Journal {
 
     // ── API ───────────────────────────────────────────────────────────────────
     async _api(path, opts = {}) {
-        // 35s timeout — covers Render cold start (~25s)
+        // 35s timeout — enough to survive a Render cold start (~25s)
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 35000);
 
@@ -193,34 +193,22 @@ class Journal {
             });
             clearTimeout(timer);
 
-            // Always parse body so we can read error messages
-            let data;
-            try { data = await res.json(); } catch (_) { data = {}; }
-
-            // Log every API call to console for easy debugging
-            console.log(`[Journal API] ${opts.method || 'GET'} ${path} → ${res.status}`, data);
-
-            // ── 401/403: token expired or invalid → force re-login ───────────
+            // ── Session expired / unauthorised ───────────────────────────────
             if (res.status === 401 || res.status === 403) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                this.showNotification('Your session expired. Redirecting to login…', 'error');
+                this.showNotification('Your session has expired. Redirecting to login…', 'error');
                 setTimeout(() => window.location.href = 'login.html', 2200);
                 throw new Error('SESSION_EXPIRED');
             }
 
-            // ── 500: database/server error ───────────────────────────────────
-            if (res.status === 500) {
-                const detail = data.error || 'Internal server error';
-                console.error('[Journal API] 500 error:', detail);
-                throw new Error('SERVER_ERROR:' + detail);
-            }
-
+            const data = await res.json();
             if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
             return data;
 
         } catch (err) {
             clearTimeout(timer);
+            // AbortController fired → request timed out
             if (err.name === 'AbortError') throw new Error('TIMEOUT');
             throw err;
         }
@@ -240,27 +228,16 @@ class Journal {
             this._renderEntries(this.entries);
             this.updateCalendar(this.currentCalendarDate);
         } catch (err) {
-            // Session expired — _api already handles notify + redirect
+            // Session expired — _api already shows notification + redirects
             if (err.message === 'SESSION_EXPIRED') return;
 
             // Show entries from localStorage while explaining what happened
             this._localFallback();
 
-            let msg;
-            if (err.message === 'TIMEOUT') {
-                msg = '⏳ Server is waking up — showing local entries. Refresh in ~30 seconds.';
-            } else if (err.message && err.message.startsWith('SERVER_ERROR:')) {
-                const detail = err.message.replace('SERVER_ERROR:', '');
-                // Most common 500 cause: journals table not created yet
-                if (detail.includes('journals') || detail.includes('relation') || detail.includes('does not exist')) {
-                    msg = '⚠️ Database table missing. Please run the SQL migration in your Neon dashboard.';
-                } else {
-                    msg = `⚠️ Server error: ${detail}`;
-                }
-            } else {
-                msg = '⚠️ Could not reach server — showing locally saved entries.';
-            }
-            this.showNotification(msg, 'error');
+            const msg = err.message === 'TIMEOUT'
+                ? '⏳ Server is waking up — showing local entries. Refresh in ~30 seconds.'
+                : '⚠️ Could not reach server — showing locally saved entries.';
+            this.showNotification(msg, 'info');
         }
     }
 
@@ -753,19 +730,33 @@ class Journal {
     }
 
     // ── Reminders ─────────────────────────────────────────────────────────────
-    loadReminders() {
-        try { this.reminders = JSON.parse(localStorage.getItem('reminders') || '[]'); }
-        catch (_) { this.reminders = []; }
+    // ── Load reminders from DB ────────────────────────────────────────────────
+    async loadReminders() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const data  = await this._api(`/reminders?date=${today}`);
+            this.reminders = data.reminders || [];
+            // Sync localStorage for dashboard stats
+            localStorage.setItem('reminders', JSON.stringify(this.reminders));
+        } catch (err) {
+            if (err.message === 'SESSION_EXPIRED') return;
+            // Offline fallback
+            try { this.reminders = JSON.parse(localStorage.getItem('reminders') || '[]'); }
+            catch (_) { this.reminders = []; }
+        }
         this.displayReminders();
     }
 
     displayReminders() {
         const today  = new Date().toISOString().split('T')[0];
-        const todayR = this.reminders.filter(r => r.date === today);
+        // Support both DB field (reminder_date) and legacy localStorage field (date)
+        const todayR = this.reminders.filter(r =>
+            (r.reminder_date || r.date || '').toString().startsWith(today));
         const list   = document.getElementById('remindersList');
         const cEl    = document.getElementById('remindersCount');
 
-        if (cEl) cEl.textContent = todayR.length;
+        const pendingCount = todayR.filter(r => !r.completed).length;
+        if (cEl) cEl.textContent = pendingCount;
         if (!list) return;
 
         if (todayR.length === 0) {
@@ -775,32 +766,86 @@ class Journal {
         }
 
         list.innerHTML = '';
-        todayR.sort((a, b) => a.time.localeCompare(b.time)).forEach(r => {
+        // Sort by time (nulls last)
+        todayR.sort((a, b) => {
+            const ta = a.reminder_time || a.time || '99:99';
+            const tb = b.reminder_time || b.time || '99:99';
+            return ta.localeCompare(tb);
+        }).forEach(r => {
+            const timeStr = r.reminder_time || r.time || '';
             const item = document.createElement('div');
             item.className = `reminder-item${r.completed ? ' done' : ''}`;
             item.style.cursor = 'pointer';
+
+            // Priority colour strip
+            const priorityColor = r.priority === 'high' ? '#ff6b6b'
+                : r.priority === 'low' ? '#96ceb4' : '#f9ca24';
+
             item.innerHTML = `
                 <div style="font-size:1rem;flex-shrink:0;">${r.completed ? '✅' : '⬜'}</div>
                 <div style="flex:1;min-width:0;">
-                    <div class="reminder-time">${this._fmtTime(r.time)}</div>
+                    <div class="reminder-time">${timeStr ? this._fmtTime(timeStr) : 'All day'}</div>
                     <div class="reminder-text">${this._esc(r.title)}</div>
                 </div>
-                <div class="reminder-status ${r.completed ? 'completed' : 'pending'}">
-                    ${r.completed ? 'Done' : 'Pending'}
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:${priorityColor};flex-shrink:0;"
+                          title="${r.priority || 'medium'} priority"></span>
+                    <div class="reminder-status ${r.completed ? 'completed' : 'pending'}">
+                        ${r.completed ? 'Done' : 'Pending'}
+                    </div>
+                    <button class="entry-btn delete" data-del-reminder="${r.id}"
+                        style="padding:.25rem .6rem;font-size:.7rem;">✕</button>
                 </div>`;
-            item.addEventListener('click', () => this._toggleReminder(r.id));
+
+            // Toggle complete on click (but not on delete button)
+            item.addEventListener('click', e => {
+                if (e.target.dataset.delReminder) {
+                    e.stopPropagation();
+                    this._deleteReminder(parseInt(e.target.dataset.delReminder));
+                    return;
+                }
+                this._toggleReminder(r.id);
+            });
+
             list.appendChild(item);
         });
     }
 
-    _toggleReminder(id) {
-        const r = this.reminders.find(x => x.id === id);
-        if (r) {
-            r.completed = !r.completed;
-            localStorage.setItem('reminders', JSON.stringify(this.reminders));
+    async _toggleReminder(id) {
+        try {
+            const data = await this._api(`/reminders/${id}/complete`, { method: 'PATCH' });
+            // Update local copy
+            const idx = this.reminders.findIndex(x => x.id === id);
+            if (idx !== -1) this.reminders[idx] = data.reminder;
             this.displayReminders();
             this._updateDashboardStats();
-            this.showNotification(`Reminder ${r.completed ? 'completed ✅' : 'pending'}`, 'success');
+            this.showNotification(
+                data.reminder.completed ? 'Reminder completed ✅' : 'Reminder marked as pending',
+                'success'
+            );
+        } catch (err) {
+            if (err.message === 'SESSION_EXPIRED') return;
+            // Offline fallback — toggle locally
+            const r = this.reminders.find(x => x.id === id);
+            if (r) {
+                r.completed = !r.completed;
+                localStorage.setItem('reminders', JSON.stringify(this.reminders));
+                this.displayReminders();
+                this.showNotification(`Reminder ${r.completed ? 'completed ✅' : 'pending'} (offline)`, 'info');
+            }
+        }
+    }
+
+    async _deleteReminder(id) {
+        try {
+            await this._api(`/reminders/${id}`, { method: 'DELETE' });
+            this.reminders = this.reminders.filter(r => r.id !== id);
+            this.displayReminders();
+            this._updateDashboardStats();
+            this.showNotification('Reminder deleted.', 'success');
+        } catch (err) {
+            if (err.message === 'SESSION_EXPIRED') return;
+            this.showNotification('Could not delete reminder. Try again.', 'error');
         }
     }
 
@@ -820,22 +865,60 @@ class Journal {
         if (m) m.style.display = 'none';
     }
 
-    _handleReminderSubmit(e) {
+    async _handleReminderSubmit(e) {
         e.preventDefault();
         const fd = new FormData(e.target);
-        this.reminders.push({
-            id: Date.now(),
-            title:     fd.get('reminderTitle'),
-            date:      fd.get('reminderDate'),
-            time:      fd.get('reminderTime'),
-            repeat:    fd.get('reminderRepeat'),
-            completed: false
-        });
-        localStorage.setItem('reminders', JSON.stringify(this.reminders));
-        this.closeReminderModal();
-        this.displayReminders();
-        this._updateDashboardStats();
-        this.showNotification('Reminder added! ⏰', 'success');
+
+        const payload = {
+            title:         fd.get('reminderTitle'),
+            reminder_date: fd.get('reminderDate'),
+            reminder_time: fd.get('reminderTime') || null,
+            repeat_type:   fd.get('reminderRepeat') || 'none',
+            priority:      fd.get('reminderPriority') || 'medium'
+        };
+
+        if (!payload.title) {
+            this.showNotification('Please enter a reminder title.', 'error');
+            return;
+        }
+
+        const saveBtn = document.querySelector('#reminderForm .btn-primary');
+        if (saveBtn) { saveBtn.textContent = 'Saving…'; saveBtn.disabled = true; }
+
+        try {
+            const data = await this._api('/reminders', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            this.reminders.push(data.reminder);
+            localStorage.setItem('reminders', JSON.stringify(this.reminders));
+            this.closeReminderModal();
+            this.displayReminders();
+            this._updateDashboardStats();
+            this.showNotification('Reminder added! ⏰', 'success');
+        } catch (err) {
+            if (err.message === 'SESSION_EXPIRED') return;
+            // Offline fallback — save locally
+            const local = {
+                id: Date.now(),
+                title:         payload.title,
+                reminder_date: payload.reminder_date,
+                reminder_time: payload.reminder_time,
+                date:          payload.reminder_date,
+                time:          payload.reminder_time,
+                repeat_type:   payload.repeat_type,
+                priority:      payload.priority,
+                completed:     false
+            };
+            this.reminders.push(local);
+            localStorage.setItem('reminders', JSON.stringify(this.reminders));
+            this.closeReminderModal();
+            this.displayReminders();
+            this._updateDashboardStats();
+            this.showNotification('Reminder saved locally (server offline).', 'info');
+        } finally {
+            if (saveBtn) { saveBtn.textContent = 'Save Reminder'; saveBtn.disabled = false; }
+        }
     }
 
     // ── Calendar ──────────────────────────────────────────────────────────────
