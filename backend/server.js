@@ -35,9 +35,9 @@ app.use('/api/reports',   reportRoutes);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI Chat Proxy — forwards requests to Anthropic Claude API
-// Requires environment variable: ANTHROPIC_API_KEY
+// Requires environment variable: GROQ_API_KEY
 // ─────────────────────────────────────────────────────────────────────────────
-const CLAUDE_SYSTEM_PROMPT = `You are a warm, caring AI companion for an Alzheimer's support platform.
+const GROQ_SYSTEM_PROMPT = `You are a warm, caring AI companion for an Alzheimer's support platform.
 Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
 
 Guidelines:
@@ -59,25 +59,23 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Invalid request: messages array is required' });
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('❌ ANTHROPIC_API_KEY environment variable is not set');
+    if (!process.env.GROQ_API_KEY) {
+      console.error('❌ GROQ_API_KEY environment variable is not set');
       return res.status(500).json({ error: 'AI service is not configured' });
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        system: CLAUDE_SYSTEM_PROMPT,
-        messages: messages
-      })
-    });
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 1024,
+      messages: [
+        { role: 'system', content: GROQ_SYSTEM_PROMPT },
+        ...messages
+      ]
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -88,10 +86,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const data = await response.json();
-    const replyText = data.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('');
+    const replyText = data.choices[0]?.message?.content || '';
 
     console.log('✅ AI chat response sent successfully');
     res.json({ reply: replyText });
