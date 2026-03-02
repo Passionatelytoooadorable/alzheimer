@@ -33,23 +33,16 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/profile',   profileRoutes);
 app.use('/api/reports',   reportRoutes);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AI Chat Proxy — forwards requests to Anthropic Claude API
-// Requires environment variable: GROQ_API_KEY
-// ─────────────────────────────────────────────────────────────────────────────
-const GROQ_SYSTEM_PROMPT = `You are a warm, caring AI companion for an Alzheimer's support platform.
-Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
-
-Guidelines:
-- Be empathetic, patient, and supportive at all times
-- Answer any question the user asks - general knowledge, health info, daily life, storytelling, recipes, etc.
-- Keep responses concise and easy to read (2-4 sentences for most replies, longer only when needed)
-- Use simple, clear language - avoid jargon
-- When users seem distressed, acknowledge their feelings first before offering information
-- Gently remind users to consult healthcare professionals for medical decisions
-- Be encouraging and positive without being dismissive of real concerns
-- If asked to tell a story, share a short comforting one
-- You know the user may have memory challenges, so be patient if they repeat themselves`;
+const getSystemPrompt = () => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit'
+  });
+  return "You are a warm, caring AI companion for an Alzheimer's support platform.\nYour role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.\n\nToday's date is " + dateStr + " and the current time is " + timeStr + ".\n\nGuidelines:\n- Be empathetic, patient, and supportive at all times\n- Answer any question the user asks - general knowledge, health info, daily life, storytelling, recipes, etc.\n- Keep responses concise and easy to read (2-4 sentences for most replies, longer only when needed)\n- Use simple, clear language - avoid jargon\n- When users seem distressed, acknowledge their feelings first before offering information\n- Gently remind users to consult healthcare professionals for medical decisions\n- Be encouraging and positive without being dismissive of real concerns\n- If asked to tell a story, share a short comforting one\n- You know the user may have memory challenges, so be patient if they repeat themselves";
+};
 
 app.post('/api/chat', async (req, res) => {
   try {
@@ -68,13 +61,13 @@ app.post('/api/chat', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        'Authorization': 'Bearer ' + process.env.GROQ_API_KEY
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         max_tokens: 1024,
         messages: [
-          { role: 'system', content: GROQ_SYSTEM_PROMPT },
+          { role: 'system', content: getSystemPrompt() },
           ...messages
         ]
       })
@@ -99,14 +92,13 @@ app.post('/api/chat', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-// ─────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 app.get('/api/test', (req, res) => {
-  res.json({ message: '✅ Backend is working!', status: 'SUCCESS' });
+  res.json({ message: 'Backend is working!', status: 'SUCCESS' });
 });
 
 app.use('*', (req, res) => {
@@ -114,5 +106,5 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log('Server running on port ' + PORT);
 });
