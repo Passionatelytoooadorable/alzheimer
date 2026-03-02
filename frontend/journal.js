@@ -177,17 +177,41 @@ class Journal {
 
     // ── API ───────────────────────────────────────────────────────────────────
     async _api(path, opts = {}) {
-        const res = await fetch(`${API_BASE}${path}`, {
-            ...opts,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.token}`,
-                ...(opts.headers || {})
+        // 35s timeout — enough to survive a Render cold start (~25s)
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 35000);
+
+        try {
+            const res = await fetch(`${API_BASE}${path}`, {
+                ...opts,
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`,
+                    ...(opts.headers || {})
+                }
+            });
+            clearTimeout(timer);
+
+            // ── Session expired / unauthorised ───────────────────────────────
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                this.showNotification('Your session has expired. Redirecting to login…', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2200);
+                throw new Error('SESSION_EXPIRED');
             }
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
-        return data;
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+            return data;
+
+        } catch (err) {
+            clearTimeout(timer);
+            // AbortController fired → request timed out
+            if (err.name === 'AbortError') throw new Error('TIMEOUT');
+            throw err;
+        }
     }
 
     // ── Fetch entries from DB ─────────────────────────────────────────────────
@@ -203,9 +227,17 @@ class Journal {
             this._updateDashboardStats();
             this._renderEntries(this.entries);
             this.updateCalendar(this.currentCalendarDate);
-        } catch (_) {
+        } catch (err) {
+            // Session expired — _api already shows notification + redirects
+            if (err.message === 'SESSION_EXPIRED') return;
+
+            // Show entries from localStorage while explaining what happened
             this._localFallback();
-            this.showNotification('Server unreachable — showing local entries.', 'info');
+
+            const msg = err.message === 'TIMEOUT'
+                ? '⏳ Server is waking up — showing local entries. Refresh in ~30 seconds.'
+                : '⚠️ Could not reach server — showing locally saved entries.';
+            this.showNotification(msg, 'info');
         }
     }
 
