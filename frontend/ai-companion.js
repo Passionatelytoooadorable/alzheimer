@@ -39,6 +39,8 @@ async function initializeApp() {
     updateStats();
     setupConsoleCommands();
     loadChatBackups();
+    startISTClock();
+    setupMoodAndPromptButtons();
 
     if (!hasShownWelcome) {
         showWelcomeGreeting();
@@ -47,7 +49,6 @@ async function initializeApp() {
 
     setTimeout(() => {
         if (window.dailyTips && window.dailyTips.showStatistics) {
-            console.log('📊 Initial Tips Statistics:');
             window.dailyTips.showStatistics();
         }
     }, 2000);
@@ -85,6 +86,90 @@ async function callClaudeAPI(userText) {
     apiMessages.push({ role: 'assistant', content: assistantText });
 
     return assistantText;
+}
+
+// ─── IST Live Clock ───────────────────────────────────────────────────────────
+function startISTClock() {
+    function updateClock() {
+        const now = new Date();
+        // Convert to IST (UTC+5:30)
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        const ist = new Date(utc + istOffset);
+
+        const dateEl = document.getElementById('headerDate');
+        const timeEl = document.getElementById('headerTime');
+
+        if (dateEl) {
+            dateEl.textContent = ist.toLocaleDateString('en-IN', {
+                weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+            });
+        }
+        if (timeEl) {
+            timeEl.textContent = ist.toLocaleTimeString('en-IN', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+            });
+        }
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+}
+
+// ─── Mood + Quick Prompt Buttons ─────────────────────────────────────────────
+function setupMoodAndPromptButtons() {
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const prompt = this.dataset.prompt;
+            const userMessage = {
+                type: 'user',
+                text: prompt,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            addMessageToChat(userMessage);
+            chatHistory.push(userMessage);
+            incrementChatCount();
+            updateStats();
+            showTypingIndicator();
+            saveChatToStorage();
+            try {
+                const reply = await callClaudeAPI(prompt);
+                const aiMessage = { type: 'companion', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                addMessageToChat(aiMessage);
+                chatHistory.push(aiMessage);
+            } catch {
+                addMessageToChat({ type: 'companion', text: "I'm here with you! Tell me more about how you're feeling. 💙", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            }
+            saveChatToStorage();
+        });
+    });
+
+    document.querySelectorAll('.prompt-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const prompt = this.dataset.prompt;
+            const userMessage = {
+                type: 'user',
+                text: prompt,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            addMessageToChat(userMessage);
+            chatHistory.push(userMessage);
+            incrementChatCount();
+            updateStats();
+            showTypingIndicator();
+            saveChatToStorage();
+            try {
+                const reply = await callClaudeAPI(prompt);
+                const aiMessage = { type: 'companion', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                addMessageToChat(aiMessage);
+                chatHistory.push(aiMessage);
+            } catch {
+                addMessageToChat({ type: 'companion', text: "I'm having trouble right now. Please try again! 💙", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            }
+            saveChatToStorage();
+        });
+    });
 }
 
 // ─── Event Listeners ──────────────────────────────────────────────────────────
@@ -417,8 +502,7 @@ async function handleQuickAction(event) {
 
 // ─── Games ───────────────────────────────────────────────────────────────────
 function startGame(event) {
-    const gameCard = event.currentTarget.closest('.game-card-horizontal');
-    const gameName = gameCard.querySelector('h4').textContent;
+    const gameName = event.currentTarget.dataset.game || event.currentTarget.closest('.game-card-vertical')?.querySelector('h4')?.textContent || '';
 
     showNotification(`Opening ${gameName}...`, 'info');
 

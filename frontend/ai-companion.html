@@ -19,29 +19,31 @@
     </header>
 
     <main class="ai-companion-container">
-        <!-- Header Banner -->
+
+        <!-- Compact Header Banner -->
         <section class="companion-header">
             <div class="header-content">
-                <div class="header-text">
+                <div class="header-left">
                     <h1>AI Care Companion 🤖</h1>
-                    <p>Your friendly virtual assistant - always here to chat and support you</p>
+                    <p>Your friendly virtual assistant — always here to chat and support you</p>
                 </div>
-                <div class="header-stats">
-                    <div class="stat">
-                        <span class="stat-number" id="daysActiveStat">0</span>
-                        <span class="stat-label">Days Active</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number" id="chatSessions">0</span>
-                        <span class="stat-label">Chats Today</span>
+                <div class="header-center">
+                    <div class="live-clock-widget">
+                        <div class="clock-date" id="headerDate"></div>
+                        <div class="clock-time" id="headerTime"></div>
+                        <div class="clock-label">India Standard Time</div>
                     </div>
                 </div>
-                <div class="header-animation">
-                    <div class="floating-icons">
-                        <div class="companion-icon icon-1">🤖</div>
-                        <div class="companion-icon icon-2">💬</div>
-                        <div class="companion-icon icon-3">🧠</div>
-                        <div class="companion-icon icon-4">🎮</div>
+                <div class="header-right">
+                    <div class="header-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="daysActiveStat">0</span>
+                            <span class="stat-label">Days Active</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="chatSessions">0</span>
+                            <span class="stat-label">Chats Today</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -50,46 +52,33 @@
         <!-- 3-Column Layout -->
         <div class="main-content">
 
-            <!-- LEFT SIDEBAR: Companion Features -->
+            <!-- LEFT SIDEBAR: Live Clock + Mood + Quick Prompts -->
             <aside class="left-sidebar">
-                <div class="feature-section">
-                    <h3>Companion Features</h3>
-                    <div class="feature-card">
-                        <div class="feature-icon">💬</div>
-                        <div class="feature-content">
-                            <h4>Friendly Chat</h4>
-                            <p>Talk about your day, feelings, or anything on your mind</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🎮</div>
-                        <div class="feature-content">
-                            <h4>Brain Games</h4>
-                            <p>Simple games to keep your mind active and engaged</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📚</div>
-                        <div class="feature-content">
-                            <h4>Memory Support</h4>
-                            <p>Help recalling names, dates, and important information</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">💡</div>
-                        <div class="feature-content">
-                            <h4>Daily Tips</h4>
-                            <p>Helpful brain health tips that change every day</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📖</div>
-                        <div class="feature-content">
-                            <h4>Stories</h4>
-                            <p>Ask for a comforting story anytime you like</p>
-                        </div>
+
+                <!-- Mood Check-in -->
+                <div class="mood-widget">
+                    <h3>😊 How are you feeling?</h3>
+                    <div class="mood-options">
+                        <button class="mood-btn" data-mood="happy" data-prompt="I'm feeling happy today!">😄<span>Happy</span></button>
+                        <button class="mood-btn" data-mood="calm" data-prompt="I'm feeling calm and peaceful today.">😌<span>Calm</span></button>
+                        <button class="mood-btn" data-mood="sad" data-prompt="I'm feeling a bit sad today.">😢<span>Sad</span></button>
+                        <button class="mood-btn" data-mood="anxious" data-prompt="I'm feeling a bit anxious or worried today.">😰<span>Anxious</span></button>
+                        <button class="mood-btn" data-mood="tired" data-prompt="I'm feeling tired today.">😴<span>Tired</span></button>
+                        <button class="mood-btn" data-mood="confused" data-prompt="I'm feeling a bit confused today, can you help me?">😕<span>Confused</span></button>
                     </div>
                 </div>
+
+                <!-- Quick Prompts -->
+                <div class="quick-prompts-widget">
+                    <h3>💬 Quick Topics</h3>
+                    <button class="prompt-btn" data-prompt="What are some good brain exercises I can do today?">🧠 Brain Exercises</button>
+                    <button class="prompt-btn" data-prompt="Tell me something interesting about today in history.">📅 Today in History</button>
+                    <button class="prompt-btn" data-prompt="Can you share a short relaxing story?">📖 Tell me a Story</button>
+                    <button class="prompt-btn" data-prompt="What are some tips for a good night's sleep?">🌙 Sleep Tips</button>
+                    <button class="prompt-btn" data-prompt="What healthy foods are good for brain health?">🥗 Brain Foods</button>
+                    <button class="prompt-btn" data-prompt="Can you teach me a simple breathing exercise to feel calm?">🌬️ Calm Me Down</button>
+                </div>
+
             </aside>
 
             <!-- CENTER: Chat -->
@@ -119,7 +108,7 @@
                     <div class="chat-messages" id="chatMessages"></div>
 
                     <div class="quick-actions">
-                        <button class="quick-action-btn medication" data-prompt="Can you remind me about my medication?">
+                        <button class="quick-action-btn medication" data-prompt="Can you remind me about my medication and give tips for remembering to take it?">
                             <span class="action-icon">💊</span>
                             <span class="action-text">Medication</span>
                         </button>
@@ -127,7 +116,7 @@
                             <span class="action-icon">🧠</span>
                             <span class="action-text">Memory Game</span>
                         </button>
-                        <button class="quick-action-btn stories" data-prompt="Tell me a comforting story">
+                        <button class="quick-action-btn stories" data-prompt="Please tell me a short comforting story.">
                             <span class="action-icon">📖</span>
                             <span class="action-text">Story</span>
                         </button>
@@ -147,13 +136,14 @@
 
             <!-- RIGHT SIDEBAR: Daily Tip + Games -->
             <aside class="right-sidebar">
-                <!-- Daily Tip - sticky note style -->
+
+                <!-- Sticky Note Tip -->
                 <div class="sticky-tip-card">
                     <div class="sticky-tip-header">💡 Tip of the Day</div>
                     <div id="tipsContainer"></div>
                 </div>
 
-                <!-- Games - vertical list -->
+                <!-- Games vertical -->
                 <div class="games-sidebar">
                     <h3>🎮 Quick Games</h3>
                     <div class="game-card-vertical">
@@ -162,7 +152,7 @@
                             <h4>Memory Match</h4>
                             <p>Test your memory</p>
                         </div>
-                        <button class="game-btn-v">Play</button>
+                        <button class="game-btn-v" data-game="Memory Match">Play</button>
                     </div>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">❓</div>
@@ -170,7 +160,7 @@
                             <h4>Simple Trivia</h4>
                             <p>Challenge your mind</p>
                         </div>
-                        <button class="game-btn-v">Play</button>
+                        <button class="game-btn-v" data-game="Simple Trivia">Play</button>
                     </div>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">🔗</div>
@@ -178,11 +168,11 @@
                             <h4>Word Association</h4>
                             <p>Connect words</p>
                         </div>
-                        <button class="game-btn-v">Play</button>
+                        <button class="game-btn-v" data-game="Word Association">Play</button>
                     </div>
                 </div>
-            </aside>
 
+            </aside>
         </div>
     </main>
 
@@ -237,7 +227,7 @@
             </div>
             <div class="settings-info">
                 <p><strong>Note:</strong> Your chats are automatically saved locally in your browser.</p>
-                <p style="margin-top: 0.5rem; font-size: 0.8rem;">💡 <strong>Tip:</strong> Export important chats to keep them safe across devices.</p>
+                <p style="margin-top:0.5rem;font-size:0.8rem;">💡 <strong>Tip:</strong> Export important chats to keep them safe across devices.</p>
             </div>
         </div>
     </div>
@@ -259,9 +249,7 @@
                 return;
             }
             document.addEventListener('DOMContentLoaded', function() {
-                if (typeof initSharedNav === 'function') {
-                    initSharedNav('ai-companion.html');
-                }
+                if (typeof initSharedNav === 'function') initSharedNav('ai-companion.html');
             });
         })();
     </script>
