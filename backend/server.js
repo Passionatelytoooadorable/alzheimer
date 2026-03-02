@@ -9,8 +9,8 @@ const memoryRoutes   = require('./routes/memories');
 const journalRoutes  = require('./routes/journals');
 const reminderRoutes = require('./routes/reminders');
 const locationRoutes = require('./routes/locations');
-const profileRoutes  = require('./routes/profile');   // NEW
-const reportRoutes   = require('./routes/reports');   // NEW
+const profileRoutes  = require('./routes/profile');
+const reportRoutes   = require('./routes/reports');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -30,8 +30,78 @@ app.use('/api/memories',  memoryRoutes);
 app.use('/api/journals',  journalRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/locations', locationRoutes);
-app.use('/api/profile',   profileRoutes);  // NEW
-app.use('/api/reports',   reportRoutes);   // NEW
+app.use('/api/profile',   profileRoutes);
+app.use('/api/reports',   reportRoutes);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Chat Proxy — forwards requests to Anthropic Claude API
+// Requires environment variable: ANTHROPIC_API_KEY
+// ─────────────────────────────────────────────────────────────────────────────
+const CLAUDE_SYSTEM_PROMPT = `You are a warm, caring AI companion for an Alzheimer's support platform.
+Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
+
+Guidelines:
+- Be empathetic, patient, and supportive at all times
+- Answer any question the user asks - general knowledge, health info, daily life, storytelling, recipes, etc.
+- Keep responses concise and easy to read (2-4 sentences for most replies, longer only when needed)
+- Use simple, clear language - avoid jargon
+- When users seem distressed, acknowledge their feelings first before offering information
+- Gently remind users to consult healthcare professionals for medical decisions
+- Be encouraging and positive without being dismissive of real concerns
+- If asked to tell a story, share a short comforting one
+- You know the user may have memory challenges, so be patient if they repeat themselves`;
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Invalid request: messages array is required' });
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('❌ ANTHROPIC_API_KEY environment variable is not set');
+      return res.status(500).json({ error: 'AI service is not configured' });
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: CLAUDE_SYSTEM_PROMPT,
+        messages: messages
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ Anthropic API error:', errorData);
+      return res.status(response.status).json({
+        error: errorData.error?.message || 'AI service error'
+      });
+    }
+
+    const data = await response.json();
+    const replyText = data.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('');
+
+    console.log('✅ AI chat response sent successfully');
+    res.json({ reply: replyText });
+
+  } catch (error) {
+    console.error('❌ Chat proxy error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
