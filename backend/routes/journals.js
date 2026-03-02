@@ -15,14 +15,14 @@ router.post('/', auth, async (req, res) => {
 
     const newJournal = await query(
       `INSERT INTO journals (user_id, title, content, mood, tags, entry_date, is_voice_entry)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       VALUES ($1, $2, $3, $4, $5::text[], $6, $7)
        RETURNING *`,
       [
         userId,
         title.trim(),
         content.trim(),
         mood || '😊',
-        tags || [],
+        tags && tags.length ? tags : [],
         entry_date || new Date().toISOString().split('T')[0],
         is_voice_entry || false
       ]
@@ -140,10 +140,10 @@ router.put('/:id', auth, async (req, res) => {
 
     const updated = await query(
       `UPDATE journals
-       SET title = $1, content = $2, mood = $3, tags = $4, entry_date = $5, updated_at = NOW()
+       SET title = $1, content = $2, mood = $3, tags = $4::text[], entry_date = $5, updated_at = NOW()
        WHERE id = $6 AND user_id = $7
        RETURNING *`,
-      [title.trim(), content.trim(), mood || '😊', tags || [], entry_date, id, userId]
+      [title.trim(), content.trim(), mood || '😊', tags && tags.length ? tags : [], entry_date, id, userId]
     );
 
     res.json({
