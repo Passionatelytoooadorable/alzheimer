@@ -53,50 +53,34 @@ async function initializeApp() {
     }, 2000);
 }
 
-// ─── Claude API Chat ─────────────────────────────────────────────────────────
-const CLAUDE_SYSTEM_PROMPT = `You are a warm, caring AI companion for an Alzheimer's support platform. 
-Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
-
-Guidelines:
-- Be empathetic, patient, and supportive at all times
-- Answer any question the user asks - general knowledge, health info, daily life, storytelling, recipes, etc.
-- Keep responses concise and easy to read (2-4 sentences for most replies, longer only when needed)
-- Use simple, clear language - avoid jargon
-- When users seem distressed, acknowledge their feelings first before offering information
-- Gently remind users to consult healthcare professionals for medical decisions
-- Be encouraging and positive without being dismissive of real concerns
-- If asked to tell a story, share a short comforting one
-- You know the user may have memory challenges, so be patient if they repeat themselves`;
+// ─── Claude API Chat (via backend proxy) ─────────────────────────────────────
+// Calls your Render backend which securely forwards to Anthropic.
+// This avoids CORS issues and keeps your API key server-side.
+const BACKEND_URL = 'https://alzheimer-backend-new.onrender.com';
 
 async function callClaudeAPI(userText) {
-    // Build messages array - keep last 20 turns to stay within context
+    // Keep last 20 turns for context (10 back-and-forth exchanges)
     const recentMessages = apiMessages.slice(-20);
+    const messagesPayload = [...recentMessages, { role: 'user', content: userText }];
 
-    const requestBody = {
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: CLAUDE_SYSTEM_PROMPT,
-        messages: [...recentMessages, { role: 'user', content: userText }]
-    };
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`${BACKEND_URL}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ messages: messagesPayload })
     });
 
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API error ${response.status}`);
+        throw new Error(err.error || `Server error ${response.status}`);
     }
 
     const data = await response.json();
-    const assistantText = data.content
-        .filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join('');
+    const assistantText = data.reply;
 
-    // Update the conversation history for context
+    // Update conversation context for follow-up messages
     apiMessages.push({ role: 'user', content: userText });
     apiMessages.push({ role: 'assistant', content: assistantText });
 
