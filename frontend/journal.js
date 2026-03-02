@@ -177,7 +177,7 @@ class Journal {
 
     // ── API ───────────────────────────────────────────────────────────────────
     async _api(path, opts = {}) {
-        // 35s timeout — enough to survive a Render cold start (~25s)
+        // 35s timeout — covers Render cold start (~25s)
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 35000);
 
@@ -193,22 +193,34 @@ class Journal {
             });
             clearTimeout(timer);
 
-            // ── Session expired / unauthorised ───────────────────────────────
+            // Always parse body so we can read error messages
+            let data;
+            try { data = await res.json(); } catch (_) { data = {}; }
+
+            // Log every API call to console for easy debugging
+            console.log(`[Journal API] ${opts.method || 'GET'} ${path} → ${res.status}`, data);
+
+            // ── 401/403: token expired or invalid → force re-login ───────────
             if (res.status === 401 || res.status === 403) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                this.showNotification('Your session has expired. Redirecting to login…', 'error');
+                this.showNotification('Your session expired. Redirecting to login…', 'error');
                 setTimeout(() => window.location.href = 'login.html', 2200);
                 throw new Error('SESSION_EXPIRED');
             }
 
-            const data = await res.json();
+            // ── 500: database/server error ───────────────────────────────────
+            if (res.status === 500) {
+                const detail = data.error || 'Internal server error';
+                console.error('[Journal API] 500 error:', detail);
+                throw new Error('SERVER_ERROR:' + detail);
+            }
+
             if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
             return data;
 
         } catch (err) {
             clearTimeout(timer);
-            // AbortController fired → request timed out
             if (err.name === 'AbortError') throw new Error('TIMEOUT');
             throw err;
         }
@@ -228,16 +240,27 @@ class Journal {
             this._renderEntries(this.entries);
             this.updateCalendar(this.currentCalendarDate);
         } catch (err) {
-            // Session expired — _api already shows notification + redirects
+            // Session expired — _api already handles notify + redirect
             if (err.message === 'SESSION_EXPIRED') return;
 
             // Show entries from localStorage while explaining what happened
             this._localFallback();
 
-            const msg = err.message === 'TIMEOUT'
-                ? '⏳ Server is waking up — showing local entries. Refresh in ~30 seconds.'
-                : '⚠️ Could not reach server — showing locally saved entries.';
-            this.showNotification(msg, 'info');
+            let msg;
+            if (err.message === 'TIMEOUT') {
+                msg = '⏳ Server is waking up — showing local entries. Refresh in ~30 seconds.';
+            } else if (err.message && err.message.startsWith('SERVER_ERROR:')) {
+                const detail = err.message.replace('SERVER_ERROR:', '');
+                // Most common 500 cause: journals table not created yet
+                if (detail.includes('journals') || detail.includes('relation') || detail.includes('does not exist')) {
+                    msg = '⚠️ Database table missing. Please run the SQL migration in your Neon dashboard.';
+                } else {
+                    msg = `⚠️ Server error: ${detail}`;
+                }
+            } else {
+                msg = '⚠️ Could not reach server — showing locally saved entries.';
+            }
+            this.showNotification(msg, 'error');
         }
     }
 
