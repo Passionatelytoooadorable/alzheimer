@@ -60,26 +60,29 @@ app.post('/api/chat', async (req, res) => {
     }
 
     if (!process.env.GROQ_API_KEY) {
-      console.error('❌ GROQ_API_KEY environment variable is not set');
+      console.error('GROQ_API_KEY not set');
       return res.status(500).json({ error: 'AI service is not configured' });
     }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 1024,
-      messages: [
-        { role: 'system', content: GROQ_SYSTEM_PROMPT },
-        ...messages
-      ]
-    })
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1024,
+        messages: [
+          { role: 'system', content: GROQ_SYSTEM_PROMPT },
+          ...messages
+        ]
+      })
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('❌ Anthropic API error:', errorData);
+      console.error('Groq API error:', JSON.stringify(errorData));
       return res.status(response.status).json({
         error: errorData.error?.message || 'AI service error'
       });
@@ -88,11 +91,11 @@ app.post('/api/chat', async (req, res) => {
     const data = await response.json();
     const replyText = data.choices[0]?.message?.content || '';
 
-    console.log('✅ AI chat response sent successfully');
+    console.log('AI chat response sent successfully');
     res.json({ reply: replyText });
 
   } catch (error) {
-    console.error('❌ Chat proxy error:', error.message);
+    console.error('Chat proxy error:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
