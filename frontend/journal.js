@@ -1,940 +1,972 @@
-// ─── journal.js ───────────────────────────────────────────────────────────────
-// Full rewrite: DB-backed entries, working voice, search, mood chart, all fixes
+// ─────────────────────────────────────────────────────────────────────────────
+// journal.js  —  Full rewrite for Alzheimer's Support Journal
+// Matches the exact HTML at alzheimer-support.vercel.app/journal.html
+// Features: DB-backed CRUD, working voice entry, search, writing prompts,
+//           calendar, reminders, auto-save draft, word count, mood validation
 // ─────────────────────────────────────────────────────────────────────────────
 
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 class Journal {
-  constructor() {
-    this.entries     = [];
-    this.reminders   = [];
-    this.token       = localStorage.getItem('token');
-    this.user        = JSON.parse(localStorage.getItem('user') || '{}');
-    this.isRecording = false;
-    this.recognition = null;
-    this.transcript  = '';
-    this.draftTimer  = null;
-    this.currentCalendarDate = new Date();
-
-    if (!this.token) {
-      window.location.replace('login.html');
-      return;
-    }
-
-    document.addEventListener('DOMContentLoaded', () => this.init());
-  }
-
-  // ─── INIT ────────────────────────────────────────────────────────────────
-  async init() {
-    this.setupEventListeners();
-    this.loadReminders();
-    this.updateCalendar(this.currentCalendarDate);
-    await this.fetchEntries();
-    this.setupVoiceRecognition();
-    this.restoreDraft();
-  }
-
-  // ─── API HELPERS ─────────────────────────────────────────────────────────
-  async apiFetch(path, options = {}) {
-    const res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`,
-        ...(options.headers || {})
-      }
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Request failed');
-    return data;
-  }
-
-  // ─── FETCH ENTRIES FROM DB ────────────────────────────────────────────────
-  async fetchEntries(filter = 'all', search = '') {
-    this.showListLoader();
-    try {
-      const params = new URLSearchParams();
-      if (filter !== 'all') params.set('filter', filter);
-      if (search)           params.set('search', search);
-
-      const data = await this.apiFetch(`/journals?${params.toString()}`);
-      this.entries = data.journals || [];
-
-      this.updateStats(data.stats || {});
-      this.updateDashboardStats();
-      this.displayEntries(this.entries);
-      this.updateCalendar(this.currentCalendarDate);
-    } catch (err) {
-      this.showNotification('Could not load journal entries. Please try again.', 'error');
-      this.displayEntries([]);
-    }
-  }
-
-  // ─── CREATE / UPDATE ENTRY ────────────────────────────────────────────────
-  async saveEntry(entryData, editingId = null) {
-    const btn = document.querySelector('#journalForm .btn-primary');
-    btn.textContent = 'Saving…';
-    btn.disabled    = true;
-
-    try {
-      if (editingId) {
-        await this.apiFetch(`/journals/${editingId}`, {
-          method: 'PUT',
-          body: JSON.stringify(entryData)
-        });
-        this.showNotification('Entry updated! ✨', 'success');
-      } else {
-        await this.apiFetch('/journals', {
-          method: 'POST',
-          body: JSON.stringify(entryData)
-        });
-        this.showNotification('Entry saved! 📝', 'success');
-      }
-
-      this.clearDraft();
-      this.closeNewEntryForm();
-      const activeFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
-      await this.fetchEntries(activeFilter);
-    } catch (err) {
-      this.showNotification(err.message || 'Could not save entry. Please try again.', 'error');
-    } finally {
-      btn.textContent = 'Save Entry';
-      btn.disabled    = false;
-    }
-  }
-
-  // ─── DELETE ENTRY ─────────────────────────────────────────────────────────
-  async deleteEntry(id) {
-    this.showDeleteModal(id);
-  }
-
-  async confirmDelete(id) {
-    this.closeDeleteModal();
-    try {
-      await this.apiFetch(`/journals/${id}`, { method: 'DELETE' });
-      this.showNotification('Entry deleted.', 'success');
-      const activeFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
-      await this.fetchEntries(activeFilter);
-    } catch (err) {
-      this.showNotification('Could not delete entry. Try again.', 'error');
-    }
-  }
-
-  // ─── EVENT LISTENERS ──────────────────────────────────────────────────────
-  setupEventListeners() {
-    // Action buttons
-    this.on('newEntryBtn',    'click', () => this.openNewEntryForm());
-    this.on('voiceEntryBtn',  'click', () => this.toggleVoiceEntry());
-    this.on('promptsBtn',     'click', () => this.openPrompts());
-    this.on('closeFormBtn',   'click', () => this.closeNewEntryForm());
-    this.on('closePromptsBtn','click', () => this.closePrompts());
-    this.on('cancelEntry',    'click', () => this.closeNewEntryForm());
-    this.on('cancelReminder', 'click', () => this.closeReminderModal());
-    this.on('addReminderBtn', 'click', () => this.openReminderModal());
-
-    // Form submissions
-    this.on('journalForm',  'submit', e => this.handleJournalSubmit(e));
-    this.on('reminderForm', 'submit', e => this.handleReminderSubmit(e));
-
-    // Search
-    this.on('searchInput', 'input', () => this.handleSearch());
-
-    // Filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const search = document.getElementById('searchInput')?.value || '';
-        this.fetchEntries(btn.dataset.filter, search);
-      });
-    });
-
-    // Mood buttons (event delegation on the form)
-    document.addEventListener('click', e => {
-      const moodBtn = e.target.closest('.mood-btn');
-      if (moodBtn) {
-        e.preventDefault();
-        document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-        moodBtn.classList.add('active');
-        const el = document.getElementById('selectedMood');
-        if (el) el.value = moodBtn.dataset.mood;
-      }
-
-      // Writing prompt use
-      const promptBtn = e.target.closest('.use-prompt-btn');
-      if (promptBtn) {
-        this.usePrompt(promptBtn.dataset.prompt);
-      }
-
-      // Delete confirmation
-      if (e.target.id === 'confirmDeleteBtn') {
-        const id = parseInt(e.target.dataset.id);
-        this.confirmDelete(id);
-      }
-      if (e.target.id === 'cancelDeleteBtn') {
-        this.closeDeleteModal();
-      }
-
-      // Modal backdrop close
-      if (e.target.classList.contains('modal')) {
-        e.target.style.display = 'none';
-      }
-    });
-
-    // Mood nudge on save attempt
-    this.on('journalForm', 'submit', () => {
-      if (!document.getElementById('selectedMood')?.value) {
-        document.querySelector('.mood-selector')?.classList.add('mood-nudge');
-        setTimeout(() => document.querySelector('.mood-selector')?.classList.remove('mood-nudge'), 1200);
-      }
-    });
-
-    // Modal close (×) buttons
-    document.querySelectorAll('.modal .close').forEach(btn => {
-      btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none');
-    });
-
-    // Calendar navigation
-    this.on('prevMonth', 'click', () => this.navigateCalendar(-1));
-    this.on('nextMonth', 'click', () => this.navigateCalendar(1));
-
-    // Auto-save draft every 30s
-    this.on('entryContent', 'input', () => {
-      clearTimeout(this.draftTimer);
-      this.draftTimer = setTimeout(() => this.saveDraft(), 30000);
-    });
-  }
-
-  on(id, event, handler) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener(event, handler);
-  }
-
-  // ─── DISPLAY ENTRIES ──────────────────────────────────────────────────────
-  displayEntries(entries) {
-    const list = document.getElementById('entriesList');
-    if (!list) return;
-
-    list.innerHTML = '';
-
-    if (!entries || entries.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📝</div>
-          <h3>No journal entries found</h3>
-          <p>Start writing your first journal entry!</p>
-          <button class="action-btn primary" id="emptyStateBtn" style="margin-top:1rem;max-width:220px;">
-            ✏️ Write Your First Entry
-          </button>
-        </div>`;
-      this.on('emptyStateBtn', 'click', () => this.openNewEntryForm());
-      return;
-    }
-
-    entries.forEach(entry => list.appendChild(this.createEntryCard(entry)));
-  }
-
-  createEntryCard(entry) {
-    const card = document.createElement('div');
-    card.className = 'entry-card';
-    card.dataset.id = entry.id;
-
-    const preview = entry.content.length > 160
-      ? entry.content.slice(0, 160) + '…'
-      : entry.content;
-
-    const voiceBadge = entry.is_voice_entry
-      ? `<span class="voice-badge">🎤 Voice</span>` : '';
-
-    const tags = (entry.tags || []).length > 0
-      ? `<div class="entry-tags">${entry.tags.map(t => `<span class="tag">${this.escapeHtml(t)}</span>`).join('')}</div>`
-      : '';
-
-    card.innerHTML = `
-      <div class="entry-header">
-        <div>
-          <h3 class="entry-title">${this.escapeHtml(entry.title)} ${voiceBadge}</h3>
-          ${tags}
-        </div>
-        <div class="entry-date">${this.formatDate(entry.entry_date)}</div>
-      </div>
-      <div class="entry-preview">${this.escapeHtml(preview)}</div>
-      <div class="entry-footer">
-        <div class="entry-mood" title="Mood">${entry.mood || '😊'}</div>
-        <div class="entry-actions">
-          <button class="entry-btn edit"   data-action="edit"   data-id="${entry.id}">Edit</button>
-          <button class="entry-btn delete" data-action="delete" data-id="${entry.id}">Delete</button>
-        </div>
-      </div>`;
-
-    // Event delegation on the card
-    card.addEventListener('click', e => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) { this.viewEntry(entry.id); return; }
-      e.stopPropagation();
-      if (btn.dataset.action === 'edit')   this.editEntry(entry.id);
-      if (btn.dataset.action === 'delete') this.deleteEntry(entry.id);
-    });
-
-    return card;
-  }
-
-  // ─── FORM OPEN / CLOSE ────────────────────────────────────────────────────
-  openNewEntryForm(promptText = '') {
-    this.showSection('journalFormSection');
-    this.hideSection('entriesSection');
-    this.hideSection('promptsSection');
-
-    const form  = document.getElementById('journalForm');
-    const title = document.getElementById('formTitle');
-
-    form.reset();
-    delete form.dataset.editingId;
-    form.querySelectorAll('input, textarea').forEach(el => el.disabled = false);
-    document.querySelectorAll('.mood-btn').forEach(b => { b.classList.remove('active'); b.disabled = false; });
-    document.getElementById('selectedMood').value = '';
-    document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
-    document.querySelector('#journalForm .btn-primary').style.display = '';
-    document.getElementById('cancelEntry').textContent = 'Cancel';
-    document.getElementById('wordCount').textContent = '0 words';
-    title.textContent = 'New Journal Entry';
-
-    if (promptText) {
-      document.getElementById('entryContent').value = promptText;
-      this.updateWordCount();
-    }
-
-    this.restoreDraft();
-    document.getElementById('entryTitle').focus();
-
-    // Word count live update
-    document.getElementById('entryContent').oninput = () => this.updateWordCount();
-  }
-
-  closeNewEntryForm() {
-    this.showSection('entriesSection');
-    this.hideSection('journalFormSection');
-    this.hideSection('promptsSection');
-    this.stopVoiceRecording();
-  }
-
-  openPrompts() {
-    this.showSection('promptsSection');
-    this.showSection('entriesSection');
-    this.hideSection('journalFormSection');
-  }
-
-  closePrompts() {
-    this.hideSection('promptsSection');
-  }
-
-  usePrompt(text) {
-    this.openNewEntryForm(text);
-  }
-
-  // ─── FORM SUBMIT ─────────────────────────────────────────────────────────
-  async handleJournalSubmit(e) {
-    e.preventDefault();
-
-    const form      = document.getElementById('journalForm');
-    const editingId = form.dataset.editingId || null;
-    const mood      = document.getElementById('selectedMood').value;
-
-    if (!mood) {
-      document.querySelector('.mood-selector').classList.add('mood-nudge');
-      setTimeout(() => document.querySelector('.mood-selector').classList.remove('mood-nudge'), 1200);
-      this.showNotification('Please pick a mood before saving 😊', 'info');
-      return;
-    }
-
-    const tagsRaw = (document.getElementById('entryTags')?.value || '')
-      .split(',').map(t => t.trim()).filter(Boolean);
-
-    const entryData = {
-      title:          document.getElementById('entryTitle').value.trim(),
-      content:        document.getElementById('entryContent').value.trim(),
-      mood,
-      tags:           tagsRaw,
-      entry_date:     document.getElementById('entryDate').value,
-      is_voice_entry: form.dataset.voiceEntry === 'true'
-    };
-
-    await this.saveEntry(entryData, editingId ? parseInt(editingId) : null);
-  }
-
-  // ─── VIEW / EDIT ENTRY ────────────────────────────────────────────────────
-  viewEntry(id) {
-    const entry = this.entries.find(e => e.id === id);
-    if (!entry) return;
-
-    this.openNewEntryForm();
-    document.getElementById('formTitle').textContent = 'View Journal Entry';
-    this.fillForm(entry);
-    document.getElementById('journalForm').querySelectorAll('input, textarea').forEach(el => el.disabled = true);
-    document.querySelectorAll('.mood-btn').forEach(b => b.disabled = true);
-    document.querySelector('#journalForm .btn-primary').style.display = 'none';
-    document.getElementById('cancelEntry').textContent = 'Close';
-  }
-
-  editEntry(id) {
-    const entry = this.entries.find(e => e.id === id);
-    if (!entry) return;
-
-    this.openNewEntryForm();
-    document.getElementById('formTitle').textContent = 'Edit Entry';
-    document.getElementById('journalForm').dataset.editingId = id;
-    this.fillForm(entry);
-  }
-
-  fillForm(entry) {
-    document.getElementById('entryDate').value    = entry.entry_date?.split('T')[0] || entry.entry_date;
-    document.getElementById('entryTitle').value   = entry.title;
-    document.getElementById('entryContent').value = entry.content;
-    document.getElementById('selectedMood').value = entry.mood;
-    if (document.getElementById('entryTags'))
-      document.getElementById('entryTags').value = (entry.tags || []).join(', ');
-
-    document.querySelectorAll('.mood-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.mood === entry.mood);
-    });
-
-    this.updateWordCount();
-  }
-
-  // ─── WORD COUNT ───────────────────────────────────────────────────────────
-  updateWordCount() {
-    const text  = document.getElementById('entryContent')?.value || '';
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const el    = document.getElementById('wordCount');
-    if (el) el.textContent = `${words} word${words !== 1 ? 's' : ''}`;
-  }
-
-  // ─── DRAFT AUTO-SAVE ─────────────────────────────────────────────────────
-  saveDraft() {
-    const title   = document.getElementById('entryTitle')?.value;
-    const content = document.getElementById('entryContent')?.value;
-    if (!title && !content) return;
-
-    localStorage.setItem('journalDraft', JSON.stringify({
-      title, content,
-      mood: document.getElementById('selectedMood')?.value,
-      savedAt: new Date().toISOString()
-    }));
-    this.showNotification('Draft auto-saved 💾', 'info');
-  }
-
-  restoreDraft() {
-    const raw = localStorage.getItem('journalDraft');
-    if (!raw) return;
-
-    try {
-      const draft = JSON.parse(raw);
-      const savedAt = new Date(draft.savedAt);
-      const ageMin  = (Date.now() - savedAt) / 60000;
-      if (ageMin > 60) { this.clearDraft(); return; } // discard drafts older than 1h
-
-      const titleEl   = document.getElementById('entryTitle');
-      const contentEl = document.getElementById('entryContent');
-      if (!titleEl || !contentEl) return;
-
-      // Only restore if fields are empty (new form)
-      if (!titleEl.value && !contentEl.value) {
-        titleEl.value   = draft.title   || '';
-        contentEl.value = draft.content || '';
-        if (draft.mood) {
-          document.getElementById('selectedMood').value = draft.mood;
-          document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', b.dataset.mood === draft.mood));
+    constructor() {
+        this.entries             = [];
+        this.reminders           = [];
+        this.token               = localStorage.getItem('token');
+        this.currentCalendarDate = new Date();
+        this.isRecording         = false;
+        this.recognition         = null;
+        this.voiceTranscript     = '';
+        this._searchTimer        = null;
+        this._draftTimer         = null;
+
+        if (!this.token) {
+            window.location.href = 'login.html';
+            return;
         }
-        this.updateWordCount();
-        this.showNotification('Draft restored from ' + savedAt.toLocaleTimeString() + ' 📄', 'info');
-      }
-    } catch (_) {}
-  }
 
-  clearDraft() {
-    localStorage.removeItem('journalDraft');
-    clearTimeout(this.draftTimer);
-  }
-
-  // ─── SEARCH ───────────────────────────────────────────────────────────────
-  handleSearch() {
-    clearTimeout(this._searchTimer);
-    this._searchTimer = setTimeout(() => {
-      const search = document.getElementById('searchInput')?.value || '';
-      const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
-      this.fetchEntries(filter, search);
-    }, 400);
-  }
-
-  // ─── STATS ────────────────────────────────────────────────────────────────
-  updateStats(stats) {
-    const s = stats || {};
-    this.setText('totalEntries', s.total || this.entries.length);
-    this.setText('thisWeek',     s.this_week || 0);
-    this.setText('remindersCount', this.reminders.filter(r => {
-      const today = new Date().toISOString().split('T')[0];
-      return r.date === today && !r.completed;
-    }).length);
-  }
-
-  updateDashboardStats() {
-    localStorage.setItem('journalCount',  this.entries.length);
-    localStorage.setItem('weeklyCount',   this.entries.filter(e => {
-      const d = new Date(e.entry_date || e.date);
-      return (Date.now() - d) < 7 * 86400000;
-    }).length);
-    localStorage.setItem('reminderCount', this.reminders.filter(r => {
-      return r.date === new Date().toISOString().split('T')[0] && !r.completed;
-    }).length);
-    window.dispatchEvent(new Event('storage'));
-  }
-
-  setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  }
-
-  // ─── VOICE ENTRY ─────────────────────────────────────────────────────────
-  setupVoiceRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      const btn = document.getElementById('voiceEntryBtn');
-      if (btn) {
-        btn.title   = 'Voice entry not supported in your browser';
-        btn.style.opacity = '0.5';
-        btn.style.cursor  = 'not-allowed';
-      }
-      return;
+        // DOM is already ready because <script> is at the bottom of <body>
+        this._boot();
     }
 
-    this.recognition = new SpeechRecognition();
-    this.recognition.continuous      = true;
-    this.recognition.interimResults  = true;
-    this.recognition.lang            = 'en-US';
-    this.recognition.maxAlternatives = 1;
-
-    this.recognition.onstart = () => {
-      this.isRecording = true;
-      this.updateVoiceUI(true);
-    };
-
-    this.recognition.onresult = e => {
-      let interim = '';
-      let final   = '';
-
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        e.results[i].isFinal ? (final += t) : (interim += t);
-      }
-
-      if (final) this.transcript += final + ' ';
-
-      const preview = document.getElementById('voicePreview');
-      if (preview) {
-        preview.textContent = (this.transcript + interim).trim() || 'Listening…';
-      }
-    };
-
-    this.recognition.onerror = e => {
-      const msgs = {
-        'not-allowed':   'Microphone access was denied. Please allow microphone access in your browser settings.',
-        'no-speech':     'No speech detected. Please try again.',
-        'audio-capture': 'No microphone found. Please connect a microphone.',
-        'network':       'Network error during speech recognition.'
-      };
-      this.showNotification(msgs[e.error] || `Voice error: ${e.error}`, 'error');
-      this.stopVoiceRecording();
-    };
-
-    this.recognition.onend = () => {
-      if (this.isRecording) {
-        // Auto-restart if user didn't manually stop
-        try { this.recognition.start(); } catch (_) {}
-      }
-    };
-  }
-
-  toggleVoiceEntry() {
-    if (!this.recognition) {
-      this.showNotification('Voice entry is not supported in your browser. Try Chrome or Edge.', 'error');
-      return;
+    _boot() {
+        this._injectExtras();
+        this._injectStyles();
+        this.setupEventListeners();
+        this.loadReminders();
+        this.updateCalendar(this.currentCalendarDate);
+        this.fetchEntries();
+        this._setupVoice();
     }
 
-    if (this.isRecording) {
-      this.stopVoiceRecording();
-    } else {
-      this.startVoiceRecording();
-    }
-  }
-
-  startVoiceRecording() {
-    this.transcript = '';
-
-    // Open the form first, then show voice panel
-    const formSection = document.getElementById('journalFormSection');
-    if (!formSection || formSection.style.display === 'none') {
-      this.openNewEntryForm();
-    }
-
-    this.showVoicePanel();
-
-    try {
-      this.recognition.start();
-    } catch (e) {
-      this.showNotification('Could not start microphone. Please try again.', 'error');
-    }
-  }
-
-  stopVoiceRecording() {
-    this.isRecording = false;
-    if (this.recognition) {
-      try { this.recognition.stop(); } catch (_) {}
-    }
-    this.updateVoiceUI(false);
-  }
-
-  showVoicePanel() {
-    let panel = document.getElementById('voicePanel');
-    if (!panel) {
-      panel = document.createElement('div');
-      panel.id        = 'voicePanel';
-      panel.className = 'voice-panel';
-      panel.innerHTML = `
-        <div class="voice-panel-inner">
-          <div class="voice-indicator">
-            <div class="voice-pulse"></div>
-            <span class="voice-label">🎤 Listening…</span>
-          </div>
-          <div id="voicePreview" class="voice-preview">Start speaking…</div>
-          <div class="voice-panel-actions">
-            <button class="voice-stop-btn" id="voiceStopBtn">⏹ Stop & Use Text</button>
-            <button class="voice-cancel-btn" id="voiceCancelBtn">✕ Cancel</button>
-          </div>
-        </div>`;
-
-      // Insert before the form
-      const form = document.getElementById('journalForm');
-      form.parentNode.insertBefore(panel, form);
-
-      document.getElementById('voiceStopBtn').addEventListener('click', () => {
-        this.stopVoiceRecording();
-        const final = this.transcript.trim();
-        if (final) {
-          const content = document.getElementById('entryContent');
-          content.value += (content.value ? '\n\n' : '') + final;
-          document.getElementById('journalForm').dataset.voiceEntry = 'true';
-          this.updateWordCount();
-          this.showNotification('Voice text added to your entry! ✅', 'success');
+    // ── Inject new elements into the existing HTML ────────────────────────────
+    _injectExtras() {
+        // 1. Search bar above entriesList
+        const entriesList = document.getElementById('entriesList');
+        if (entriesList && !document.getElementById('searchInput')) {
+            const wrap = document.createElement('div');
+            wrap.className = 'search-bar-wrap';
+            wrap.innerHTML = `<span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input"
+                    placeholder="Search entries by title or content…" autocomplete="off">`;
+            entriesList.parentNode.insertBefore(wrap, entriesList);
         }
-        panel.remove();
-      });
 
-      document.getElementById('voiceCancelBtn').addEventListener('click', () => {
-        this.stopVoiceRecording();
-        this.transcript = '';
-        panel.remove();
-      });
-    }
-  }
+        // 2. Word count next to textarea label
+        const contentLabel = document.querySelector('label[for="entryContent"]');
+        if (contentLabel && !document.getElementById('wordCount')) {
+            const span = document.createElement('span');
+            span.id = 'wordCount';
+            span.className = 'word-count';
+            span.textContent = '0 words';
+            contentLabel.appendChild(span);
+        }
 
-  updateVoiceUI(recording) {
-    const btn   = document.getElementById('voiceEntryBtn');
-    const panel = document.getElementById('voicePanel');
+        // 3. Tags input before form-actions
+        const formActions = document.querySelector('#journalForm .form-actions');
+        if (formActions && !document.getElementById('entryTags')) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.innerHTML = `<label for="entryTags">Tags
+                    <span class="optional-hint">(optional, comma separated)</span></label>
+                <input type="text" id="entryTags" name="entryTags"
+                    placeholder="e.g. Family, Health, Memories">`;
+            formActions.parentNode.insertBefore(group, formActions);
+        }
 
-    if (btn) {
-      btn.innerHTML = recording
-        ? '<span class="btn-icon">⏹</span> Stop Recording'
-        : '<span class="btn-icon">🎤</span> Voice Entry';
-      btn.classList.toggle('recording', recording);
-    }
+        // 4. Calendar legend
+        const calSection = document.querySelector('.calendar-section');
+        if (calSection && !document.querySelector('.calendar-legend')) {
+            const p = document.createElement('p');
+            p.className = 'calendar-legend';
+            p.innerHTML = '<span class="legend-dot"></span> Day with an entry';
+            calSection.appendChild(p);
+        }
 
-    if (panel) {
-      const label = panel.querySelector('.voice-label');
-      const pulse = panel.querySelector('.voice-pulse');
-      if (label) label.textContent = recording ? '🎤 Listening…' : '⏸ Paused';
-      if (pulse) pulse.classList.toggle('active', recording);
-    }
-  }
-
-  // ─── REMINDERS (localStorage) ─────────────────────────────────────────────
-  loadReminders() {
-    try {
-      this.reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
-    } catch (_) {
-      this.reminders = [];
-    }
-    this.displayReminders();
-  }
-
-  displayReminders() {
-    const today    = new Date().toISOString().split('T')[0];
-    const todayR   = this.reminders.filter(r => r.date === today);
-    const list     = document.getElementById('remindersList');
-    const countEl  = document.getElementById('remindersCount');
-
-    if (countEl) countEl.textContent = todayR.length;
-    if (!list)   return;
-
-    if (todayR.length === 0) {
-      list.innerHTML = `<div class="empty-state" style="padding:1.5rem;"><div class="empty-icon">⏰</div><p>No reminders for today</p></div>`;
-      return;
+        // 5. Delete confirmation modal
+        if (!document.getElementById('deleteModal')) {
+            const m = document.createElement('div');
+            m.id = 'deleteModal';
+            m.className = 'modal';
+            m.innerHTML = `
+                <div class="modal-content" style="max-width:420px;text-align:center;">
+                    <div style="font-size:3rem;margin-bottom:1rem;">🗑️</div>
+                    <h2 style="color:#374785;margin-bottom:.75rem;">Delete Entry?</h2>
+                    <p style="color:#6c757d;margin-bottom:2rem;">This cannot be undone.</p>
+                    <div style="display:flex;gap:1rem;">
+                        <button id="cancelDeleteBtn"  class="btn-secondary" style="flex:1;">Keep It</button>
+                        <button id="confirmDeleteBtn" class="btn-primary" data-id=""
+                            style="flex:1;background:#ff6b6b;">Yes, Delete</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(m);
+        }
     }
 
-    list.innerHTML = '';
-    todayR.sort((a, b) => a.time.localeCompare(b.time)).forEach(r => {
-      const item = document.createElement('div');
-      item.className = `reminder-item ${r.completed ? 'done' : ''}`;
-      item.innerHTML = `
-        <div class="reminder-check">${r.completed ? '✅' : '⬜'}</div>
-        <div class="reminder-body">
-          <div class="reminder-time">${this.formatTime(r.time)}</div>
-          <div class="reminder-text">${this.escapeHtml(r.title)}</div>
-        </div>
-        <div class="reminder-status ${r.completed ? 'completed' : 'pending'}">
-          ${r.completed ? 'Done' : 'Pending'}
-        </div>`;
-      item.addEventListener('click', () => this.toggleReminder(r.id));
-      list.appendChild(item);
-    });
-  }
-
-  toggleReminder(id) {
-    const r = this.reminders.find(x => x.id === id);
-    if (r) {
-      r.completed = !r.completed;
-      localStorage.setItem('reminders', JSON.stringify(this.reminders));
-      this.displayReminders();
-      this.updateStats({});
-      this.updateDashboardStats();
-    }
-  }
-
-  handleReminderSubmit(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    this.reminders.push({
-      id:        Date.now(),
-      title:     fd.get('reminderTitle'),
-      date:      fd.get('reminderDate'),
-      time:      fd.get('reminderTime'),
-      repeat:    fd.get('reminderRepeat'),
-      completed: false
-    });
-    localStorage.setItem('reminders', JSON.stringify(this.reminders));
-    this.closeReminderModal();
-    this.displayReminders();
-    this.updateDashboardStats();
-    this.showNotification('Reminder added! ⏰', 'success');
-  }
-
-  openReminderModal() {
-    const modal = document.getElementById('reminderModal');
-    document.getElementById('reminderForm').reset();
-    document.getElementById('reminderDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('reminderTime').value = '09:00';
-    modal.style.display = 'block';
-  }
-
-  closeReminderModal() {
-    document.getElementById('reminderModal').style.display = 'none';
-  }
-
-  // ─── CALENDAR ─────────────────────────────────────────────────────────────
-  initializeCalendar() {
-    this.currentCalendarDate = new Date();
-    this.updateCalendar(this.currentCalendarDate);
-  }
-
-  navigateCalendar(dir) {
-    this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + dir);
-    this.updateCalendar(this.currentCalendarDate);
-  }
-
-  updateCalendar(date) {
-    const monthNames = ['January','February','March','April','May','June',
-                        'July','August','September','October','November','December'];
-
-    this.setText('currentMonth', `${monthNames[date.getMonth()]} ${date.getFullYear()}`);
-
-    const grid      = document.getElementById('calendarGrid');
-    if (!grid) return;
-    grid.innerHTML  = '';
-
-    const firstDay   = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    const today       = new Date().toISOString().split('T')[0];
-
-    // Headers
-    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
-      const el = document.createElement('div');
-      el.className   = 'calendar-day header';
-      el.textContent = d;
-      grid.appendChild(el);
-    });
-
-    // Empty leading cells
-    for (let i = 0; i < firstDay; i++) {
-      const el = document.createElement('div');
-      el.className = 'calendar-day empty';
-      grid.appendChild(el);
+    // ── Inject CSS for new elements only ─────────────────────────────────────
+    _injectStyles() {
+        if (document.getElementById('_jStyles')) return;
+        const s = document.createElement('style');
+        s.id = '_jStyles';
+        s.textContent = `
+        .search-bar-wrap{display:flex;align-items:center;gap:.75rem;background:#f8f9fa;
+            border:2px solid #e9ecef;border-radius:10px;padding:.6rem 1rem;
+            margin-bottom:1.25rem;transition:border-color .25s;}
+        .search-bar-wrap:focus-within{border-color:#96ceb4;}
+        .search-icon{opacity:.5;flex-shrink:0;}
+        .search-input{flex:1;border:none;background:transparent;font-size:.95rem;
+            color:#374785;outline:none;font-family:inherit;}
+        .search-input::placeholder{color:#adb5bd;}
+        .word-count{font-size:.75rem;font-weight:400;color:#adb5bd;margin-left:.5rem;}
+        .optional-hint{font-size:.76rem;color:#adb5bd;font-weight:400;}
+        .entry-preview{color:#495057;line-height:1.6;margin-bottom:1rem;font-size:.93rem;}
+        .voice-badge{display:inline-block;background:linear-gradient(135deg,#ec7cab,#f1736c);
+            color:#fff;font-size:.66rem;font-weight:700;padding:.1rem .45rem;
+            border-radius:20px;margin-left:.4rem;vertical-align:middle;}
+        .entry-tags{margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.3rem;}
+        .entry-tag{background:#e8f4fd;color:#374785;font-size:.7rem;font-weight:600;
+            padding:.12rem .5rem;border-radius:20px;border:1px solid #a8d0e6;}
+        .loading-state{display:flex;flex-direction:column;align-items:center;
+            justify-content:center;padding:3rem 1rem;gap:1rem;color:#6c757d;}
+        .spinner{width:34px;height:34px;border:4px solid #e9ecef;
+            border-top-color:#96ceb4;border-radius:50%;
+            animation:_sp .75s linear infinite;}
+        @keyframes _sp{to{transform:rotate(360deg)}}
+        .voice-panel{background:linear-gradient(135deg,#fff5f7,#fff0f6);
+            border:2px solid #f8c8d4;border-radius:12px;padding:1.4rem;
+            margin-bottom:1.5rem;}
+        .voice-indicator{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;}
+        .voice-pulse{width:14px;height:14px;background:#ff4444;border-radius:50%;flex-shrink:0;}
+        .voice-pulse.active{animation:_vp 1s ease-in-out infinite;}
+        @keyframes _vp{0%,100%{box-shadow:0 0 0 0 rgba(255,68,68,.4)}
+            50%{box-shadow:0 0 0 8px rgba(255,68,68,0)}}
+        .voice-label{font-weight:700;color:#c0392b;font-size:.93rem;}
+        .voice-preview{background:#fff;border:1.5px solid #f8c8d4;border-radius:8px;
+            padding:.8rem 1rem;min-height:54px;font-size:.9rem;color:#374785;
+            line-height:1.6;font-style:italic;margin-bottom:.75rem;}
+        .voice-panel-actions{display:flex;gap:.75rem;}
+        .voice-stop-btn,.voice-cancel-btn{padding:.7rem 1rem;border:none;border-radius:8px;
+            font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;
+            flex:1;font-family:inherit;}
+        .voice-stop-btn{background:#4ecdc4;color:#fff;}
+        .voice-cancel-btn{background:#e9ecef;color:#555;}
+        .action-btn.recording{background:linear-gradient(135deg,#ff4444,#cc0000) !important;
+            animation:_rec 1s ease-in-out infinite;}
+        @keyframes _rec{0%,100%{box-shadow:0 0 0 0 rgba(255,68,68,.4)}
+            50%{box-shadow:0 0 0 10px rgba(255,68,68,0)}}
+        .mood-nudge{border:2px solid #ff6b6b !important;border-radius:10px;
+            animation:_nd .4s ease;}
+        @keyframes _nd{0%,100%{transform:translateX(0)}
+            25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+        .calendar-legend{display:flex;align-items:center;gap:.5rem;margin-top:.7rem;
+            font-size:.76rem;color:#6c757d;}
+        .legend-dot{width:7px;height:7px;background:#4ecdc4;border-radius:50%;flex-shrink:0;}
+        @keyframes _sir{from{transform:translateX(110%);opacity:0}
+            to{transform:translateX(0);opacity:1}}
+        .jn-notif{position:fixed;top:20px;right:20px;color:#fff;border-radius:10px;
+            box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:10000;
+            min-width:280px;max-width:400px;animation:_sir .3s ease;}
+        .jn-inner{display:flex;align-items:center;gap:.7rem;padding:.9rem 1.2rem;}
+        .jn-msg{flex:1;font-weight:600;font-size:.9rem;line-height:1.4;}
+        .jn-close{background:none;border:none;color:#fff;font-size:1.4rem;
+            cursor:pointer;padding:0;line-height:1;}
+        .reminder-item.done{opacity:.65;}
+        .modal{backdrop-filter:blur(2px);}
+        `;
+        document.head.appendChild(s);
     }
 
-    // Days
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      const el      = document.createElement('div');
-      el.className  = 'calendar-day';
-      el.textContent= day;
-
-      if (dateStr === today) el.classList.add('today');
-
-      // Check for entries on this date
-      const hasEntry = this.entries.some(e => (e.entry_date || e.date || '').startsWith(dateStr));
-      if (hasEntry) el.classList.add('has-entry');
-
-      el.addEventListener('click', () => this.showEntriesForDate(dateStr));
-      grid.appendChild(el);
-    }
-  }
-
-  showEntriesForDate(date) {
-    const has = this.entries.some(e => (e.entry_date || e.date || '').startsWith(date));
-    if (has) {
-      // Reset filters, fetch for that day
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector('[data-filter="all"]')?.classList.add('active');
-      this.fetchEntries('all').then(() => {
-        setTimeout(() => {
-          const cards = document.querySelectorAll('.entry-card');
-          cards.forEach(c => {
-            const entryDate = this.entries.find(e => e.id == c.dataset.id)?.entry_date;
-            if (entryDate?.startsWith(date)) {
-              c.style.outline = '3px solid #96ceb4';
-              c.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setTimeout(() => c.style.outline = '', 3000);
+    // ── API ───────────────────────────────────────────────────────────────────
+    async _api(path, opts = {}) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            ...opts,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.token}`,
+                ...(opts.headers || {})
             }
-          });
-        }, 200);
-      });
-    } else {
-      if (confirm(`No entries for ${this.formatDate(date)}. Create one?`)) {
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+        return data;
+    }
+
+    // ── Fetch entries from DB ─────────────────────────────────────────────────
+    async fetchEntries(filter = 'all', search = '') {
+        this._showLoader();
+        try {
+            const q = new URLSearchParams();
+            if (filter !== 'all')  q.set('filter', filter);
+            if (search.trim())     q.set('search', search.trim());
+            const data = await this._api(`/journals?${q}`);
+            this.entries = data.journals || [];
+            this._updateStats(data.stats || {});
+            this._updateDashboardStats();
+            this._renderEntries(this.entries);
+            this.updateCalendar(this.currentCalendarDate);
+        } catch (_) {
+            this._localFallback();
+            this.showNotification('Server unreachable — showing local entries.', 'info');
+        }
+    }
+
+    _localFallback() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+            this.entries = saved.map(e => ({ ...e, entry_date: e.entry_date || e.date }));
+        } catch (_) { this.entries = []; }
+        this._updateStats({});
+        this._renderEntries(this.entries);
+        this.updateCalendar(this.currentCalendarDate);
+    }
+
+    // ── Render entry cards ────────────────────────────────────────────────────
+    _renderEntries(list) {
+        const c = document.getElementById('entriesList');
+        if (!c) return;
+        c.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            c.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No journal entries found</h3>
+                    <p>Start writing your first entry!</p>
+                    <button class="action-btn primary" id="emptyBtn"
+                        style="margin-top:1rem;max-width:220px;">✏️ Write First Entry</button>
+                </div>`;
+            document.getElementById('emptyBtn')?.addEventListener('click', () => this.openNewEntryForm());
+            return;
+        }
+
+        list.forEach(e => c.appendChild(this._makeCard(e)));
+    }
+
+    _makeCard(entry) {
+        const card = document.createElement('div');
+        card.className = 'entry-card';
+        card.dataset.id = entry.id;
+
+        const dateStr = entry.entry_date || entry.date || '';
+        const preview = (entry.content || '').length > 160
+            ? entry.content.slice(0, 160) + '…' : entry.content;
+        const voiceBadge = entry.is_voice_entry ? `<span class="voice-badge">🎤 Voice</span>` : '';
+        const tagsHtml   = (entry.tags || []).length
+            ? `<div class="entry-tags">${entry.tags.map(t =>
+                `<span class="entry-tag">${this._esc(t)}</span>`).join('')}</div>` : '';
+
+        card.innerHTML = `
+            <div class="entry-header">
+                <div>
+                    <h3 class="entry-title">${this._esc(entry.title)}${voiceBadge}</h3>
+                    ${tagsHtml}
+                </div>
+                <div class="entry-date">${this._fmtDate(dateStr)}</div>
+            </div>
+            <div class="entry-preview">${this._esc(preview)}</div>
+            <div class="entry-footer">
+                <div class="entry-mood">${entry.mood || '😊'}</div>
+                <div class="entry-actions">
+                    <button class="entry-btn edit"   data-action="edit"   data-id="${entry.id}">Edit</button>
+                    <button class="entry-btn delete" data-action="delete" data-id="${entry.id}">Delete</button>
+                </div>
+            </div>`;
+
+        card.addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) { this._viewEntry(entry.id); return; }
+            e.stopPropagation();
+            const id = parseInt(btn.dataset.id);
+            btn.dataset.action === 'edit'   ? this._editEntry(id)      :
+            btn.dataset.action === 'delete' ? this._showDeleteModal(id) : null;
+        });
+
+        return card;
+    }
+
+    _showLoader() {
+        const c = document.getElementById('entriesList');
+        if (c) c.innerHTML = `<div class="loading-state">
+            <div class="spinner"></div><p>Loading your entries…</p></div>`;
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+    setupEventListeners() {
+        this._on('newEntryBtn',    'click', () => this.openNewEntryForm());
+        this._on('voiceEntryBtn',  'click', () => this._toggleVoice());
+        this._on('promptsBtn',     'click', () => this._openPrompts());
+        this._on('closeFormBtn',   'click', () => this._closeForm());
+        this._on('closePromptsBtn','click', () => this._closePrompts());
+        this._on('cancelEntry',    'click', () => this._closeForm());
+        this._on('cancelReminder', 'click', () => this.closeReminderModal());
+        this._on('addReminderBtn', 'click', () => this.openReminderModal());
+        this._on('journalForm',    'submit', e => this._handleJournalSubmit(e));
+        this._on('reminderForm',   'submit', e => this._handleReminderSubmit(e));
+
+        // Search
+        this._on('searchInput', 'input', () => {
+            clearTimeout(this._searchTimer);
+            this._searchTimer = setTimeout(() => {
+                const val    = document.getElementById('searchInput')?.value || '';
+                const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+                this.fetchEntries(filter, val);
+            }, 380);
+        });
+
+        // Word count + draft autosave
+        this._on('entryContent', 'input', () => {
+            this._updateWordCount();
+            clearTimeout(this._draftTimer);
+            this._draftTimer = setTimeout(() => this._saveDraft(), 30000);
+        });
+
+        // Filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const search = document.getElementById('searchInput')?.value || '';
+                this.fetchEntries(btn.dataset.filter, search);
+            });
+        });
+
+        // Mood buttons
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const el = document.getElementById('selectedMood');
+                if (el) el.value = btn.dataset.mood;
+            });
+        });
+
+        // Event delegation for dynamic elements (prompts, delete modal)
+        document.addEventListener('click', e => {
+            const pBtn = e.target.closest('.use-prompt-btn');
+            if (pBtn) { this._usePrompt(pBtn.dataset.prompt || ''); return; }
+
+            if (e.target.id === 'confirmDeleteBtn') {
+                this._confirmDelete(parseInt(e.target.dataset.id));
+            }
+            if (e.target.id === 'cancelDeleteBtn') {
+                this._closeDeleteModal();
+            }
+        });
+
+        // Modal × buttons
+        document.querySelectorAll('.modal .close').forEach(btn => {
+            btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none');
+        });
+
+        // Modal backdrop
+        window.addEventListener('click', e => {
+            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+        });
+
+        // Calendar navigation
+        this._on('prevMonth', 'click', () => {
+            this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1);
+            this.updateCalendar(this.currentCalendarDate);
+        });
+        this._on('nextMonth', 'click', () => {
+            this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1);
+            this.updateCalendar(this.currentCalendarDate);
+        });
+    }
+
+    _on(id, evt, fn) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(evt, fn);
+    }
+
+    // ── Form open / close ─────────────────────────────────────────────────────
+    openNewEntryForm(promptText = '') {
+        this._show('journalFormSection');
+        this._hide('entriesSection');
+        this._hide('promptsSection');
+
+        const form = document.getElementById('journalForm');
+        if (!form) return;
+
+        form.reset();
+        delete form.dataset.editingId;
+        delete form.dataset.voiceEntry;
+
+        form.querySelectorAll('input,textarea,select').forEach(el => el.disabled = false);
+        document.querySelectorAll('.mood-btn').forEach(b => { b.classList.remove('active'); b.disabled = false; });
+
+        const selMood = document.getElementById('selectedMood');
+        if (selMood) selMood.value = '';
+
+        document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+
+        const ft = document.getElementById('formTitle');
+        if (ft) ft.textContent = 'New Journal Entry';
+
+        const saveBtn = form.querySelector('.btn-primary');
+        if (saveBtn) { saveBtn.style.display = ''; saveBtn.textContent = 'Save Entry'; saveBtn.disabled = false; }
+
+        const cancelBtn = document.getElementById('cancelEntry');
+        if (cancelBtn) cancelBtn.textContent = 'Cancel';
+
+        const tagsEl = document.getElementById('entryTags');
+        if (tagsEl) tagsEl.value = '';
+
+        if (promptText) {
+            const ce = document.getElementById('entryContent');
+            if (ce) { ce.value = promptText; this._updateWordCount(); }
+        } else {
+            this._restoreDraft();
+        }
+
+        this._updateWordCount();
+        setTimeout(() => document.getElementById('entryTitle')?.focus(), 60);
+    }
+
+    _closeForm() {
+        this._show('entriesSection');
+        this._hide('journalFormSection');
+        this._hide('promptsSection');
+        this._stopVoice();
+        document.getElementById('_voicePanel')?.remove();
+    }
+
+    _openPrompts() {
+        this._show('promptsSection');
+        this._show('entriesSection');
+        this._hide('journalFormSection');
+    }
+
+    _closePrompts() { this._hide('promptsSection'); }
+
+    _usePrompt(text) { this.openNewEntryForm(text); }
+
+    // ── Journal form submit ───────────────────────────────────────────────────
+    async _handleJournalSubmit(e) {
+        e.preventDefault();
+
+        const mood = document.getElementById('selectedMood')?.value;
+        if (!mood) {
+            const sel = document.querySelector('.mood-selector');
+            if (sel) { sel.classList.add('mood-nudge'); setTimeout(() => sel.classList.remove('mood-nudge'), 800); }
+            this.showNotification('Please pick a mood before saving 😊', 'info');
+            return;
+        }
+
+        const form      = document.getElementById('journalForm');
+        const editingId = form.dataset.editingId ? parseInt(form.dataset.editingId) : null;
+
+        const tagsRaw = (document.getElementById('entryTags')?.value || '')
+            .split(',').map(t => t.trim()).filter(Boolean);
+
+        const payload = {
+            title:          document.getElementById('entryTitle').value.trim(),
+            content:        document.getElementById('entryContent').value.trim(),
+            mood,
+            tags:           tagsRaw,
+            entry_date:     document.getElementById('entryDate').value,
+            is_voice_entry: form.dataset.voiceEntry === 'true'
+        };
+
+        if (!payload.title || !payload.content) {
+            this.showNotification('Please fill in title and content.', 'error');
+            return;
+        }
+
+        const saveBtn = form.querySelector('.btn-primary');
+        if (saveBtn) { saveBtn.textContent = 'Saving…'; saveBtn.disabled = true; }
+
+        try {
+            if (editingId) {
+                await this._api(`/journals/${editingId}`, { method:'PUT', body: JSON.stringify(payload) });
+                this.showNotification('Entry updated! ✨', 'success');
+            } else {
+                await this._api('/journals', { method:'POST', body: JSON.stringify(payload) });
+                this.showNotification('Entry saved! 📝', 'success');
+            }
+            this._clearDraft();
+            this._closeForm();
+            await this.fetchEntries(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+        } catch (_) {
+            // Offline — save locally
+            try {
+                let saved = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+                if (editingId) {
+                    saved = saved.map(x => x.id === editingId ? { ...x, ...payload, date: payload.entry_date } : x);
+                } else {
+                    saved.unshift({ id: Date.now(), ...payload, date: payload.entry_date });
+                }
+                localStorage.setItem('journalEntries', JSON.stringify(saved));
+            } catch (_) {}
+            this.showNotification('Saved locally (server offline).', 'info');
+            this._clearDraft();
+            this._closeForm();
+            this._localFallback();
+        } finally {
+            if (saveBtn) { saveBtn.textContent = 'Save Entry'; saveBtn.disabled = false; }
+        }
+    }
+
+    // ── View / Edit ───────────────────────────────────────────────────────────
+    _viewEntry(id) {
+        const entry = this.entries.find(e => e.id === id);
+        if (!entry) return;
         this.openNewEntryForm();
-        document.getElementById('entryDate').value = date;
-      }
+        document.getElementById('formTitle').textContent = 'View Entry';
+        this._fillForm(entry);
+        document.getElementById('journalForm')?.querySelectorAll('input,textarea,select')
+            .forEach(el => el.disabled = true);
+        document.querySelectorAll('.mood-btn').forEach(b => b.disabled = true);
+        const sb = document.querySelector('#journalForm .btn-primary');
+        if (sb) sb.style.display = 'none';
+        const cb = document.getElementById('cancelEntry');
+        if (cb) cb.textContent = 'Close';
     }
-  }
 
-  // ─── DELETE MODAL ─────────────────────────────────────────────────────────
-  showDeleteModal(id) {
-    let modal = document.getElementById('deleteModal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id        = 'deleteModal';
-      modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="modal-content" style="max-width:420px;text-align:center;">
-          <div style="font-size:3rem;margin-bottom:1rem;">🗑️</div>
-          <h2 style="color:#374785;margin-bottom:0.75rem;">Delete Entry?</h2>
-          <p style="color:#6c757d;margin-bottom:2rem;">This cannot be undone. Your journal entry will be permanently removed.</p>
-          <div style="display:flex;gap:1rem;">
-            <button id="cancelDeleteBtn" class="btn-secondary" style="flex:1;">Keep It</button>
-            <button id="confirmDeleteBtn" class="btn-primary" style="flex:1;background:#ff6b6b;">Yes, Delete</button>
-          </div>
+    _editEntry(id) {
+        const entry = this.entries.find(e => e.id === id);
+        if (!entry) return;
+        this.openNewEntryForm();
+        document.getElementById('formTitle').textContent = 'Edit Entry';
+        document.getElementById('journalForm').dataset.editingId = id;
+        this._fillForm(entry);
+    }
+
+    _fillForm(entry) {
+        const dateStr = (entry.entry_date || entry.date || '').split('T')[0];
+        document.getElementById('entryDate').value    = dateStr;
+        document.getElementById('entryTitle').value   = entry.title || '';
+        document.getElementById('entryContent').value = entry.content || '';
+        const sm = document.getElementById('selectedMood');
+        if (sm) sm.value = entry.mood || '';
+        document.querySelectorAll('.mood-btn').forEach(b =>
+            b.classList.toggle('active', b.dataset.mood === entry.mood));
+        const te = document.getElementById('entryTags');
+        if (te) te.value = (entry.tags || []).join(', ');
+        this._updateWordCount();
+    }
+
+    // ── Delete modal ──────────────────────────────────────────────────────────
+    _showDeleteModal(id) {
+        const modal = document.getElementById('deleteModal');
+        if (!modal) return;
+        const btn = document.getElementById('confirmDeleteBtn');
+        if (btn) btn.dataset.id = id;
+        modal.style.display = 'block';
+    }
+
+    _closeDeleteModal() {
+        const m = document.getElementById('deleteModal');
+        if (m) m.style.display = 'none';
+    }
+
+    async _confirmDelete(id) {
+        this._closeDeleteModal();
+        try {
+            await this._api(`/journals/${id}`, { method:'DELETE' });
+        } catch (_) {
+            try {
+                const saved = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+                localStorage.setItem('journalEntries', JSON.stringify(saved.filter(e => e.id !== id)));
+            } catch (_) {}
+        }
+        this.showNotification('Entry deleted.', 'success');
+        await this.fetchEntries(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+    }
+
+    // ── Voice entry ───────────────────────────────────────────────────────────
+    _setupVoice() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            const btn = document.getElementById('voiceEntryBtn');
+            if (btn) { btn.title = 'Voice not supported — use Chrome or Edge'; btn.style.opacity = '.55'; }
+            return;
+        }
+
+        this.recognition = new SR();
+        this.recognition.continuous     = true;
+        this.recognition.interimResults = true;
+        this.recognition.lang           = 'en-US';
+
+        this.recognition.onstart = () => { this.isRecording = true; this._updateVoiceUI(true); };
+
+        this.recognition.onresult = e => {
+            let final = '', interim = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const t = e.results[i][0].transcript;
+                e.results[i].isFinal ? (final += t) : (interim += t);
+            }
+            if (final) this.voiceTranscript += final + ' ';
+            const prev = document.getElementById('_voicePreview');
+            if (prev) prev.textContent = (this.voiceTranscript + interim).trim() || 'Listening…';
+        };
+
+        this.recognition.onerror = e => {
+            const msgs = {
+                'not-allowed':   'Microphone access denied. Please allow it in your browser settings.',
+                'no-speech':     'No speech detected. Please speak clearly.',
+                'audio-capture': 'No microphone found.',
+                'network':       'Network error during speech recognition.'
+            };
+            this.showNotification(msgs[e.error] || `Voice error: ${e.error}`, 'error');
+            this._stopVoice();
+        };
+
+        this.recognition.onend = () => {
+            if (this.isRecording) { try { this.recognition.start(); } catch (_) {} }
+        };
+    }
+
+    _toggleVoice() {
+        if (!this.recognition) {
+            this.showNotification('Voice entry requires Chrome or Edge browser.', 'error');
+            return;
+        }
+        this.isRecording ? this._stopVoice() : this._startVoice();
+    }
+
+    _startVoice() {
+        this.voiceTranscript = '';
+
+        // Open form if not visible
+        const fs = document.getElementById('journalFormSection');
+        if (!fs || fs.style.display === 'none' || fs.style.display === '') {
+            this.openNewEntryForm();
+        }
+
+        if (!document.getElementById('_voicePanel')) {
+            const panel = document.createElement('div');
+            panel.id = '_voicePanel';
+            panel.className = 'voice-panel';
+            panel.innerHTML = `
+                <div class="voice-indicator">
+                    <div class="voice-pulse active" id="_voicePulse"></div>
+                    <span class="voice-label" id="_voiceLabel">🎤 Listening… speak now</span>
+                </div>
+                <div class="voice-preview" id="_voicePreview">Start speaking…</div>
+                <div class="voice-panel-actions">
+                    <button class="voice-stop-btn"   id="_voiceStop">⏹ Stop &amp; Use Text</button>
+                    <button class="voice-cancel-btn" id="_voiceCancel">✕ Cancel</button>
+                </div>`;
+            const form = document.getElementById('journalForm');
+            if (form) form.parentNode.insertBefore(panel, form);
+
+            document.getElementById('_voiceStop').addEventListener('click', () => {
+                this._stopVoice();
+                const text = this.voiceTranscript.trim();
+                if (text) {
+                    const ce = document.getElementById('entryContent');
+                    if (ce) {
+                        ce.value += (ce.value ? '\n\n' : '') + text;
+                        document.getElementById('journalForm').dataset.voiceEntry = 'true';
+                        this._updateWordCount();
+                    }
+                    this.showNotification('Voice text added! ✅', 'success');
+                }
+                panel.remove();
+            });
+
+            document.getElementById('_voiceCancel').addEventListener('click', () => {
+                this._stopVoice();
+                this.voiceTranscript = '';
+                panel.remove();
+            });
+        }
+
+        try { this.recognition.start(); }
+        catch (err) { this.showNotification('Could not start microphone. Please try again.', 'error'); }
+    }
+
+    _stopVoice() {
+        this.isRecording = false;
+        try { if (this.recognition) this.recognition.stop(); } catch (_) {}
+        this._updateVoiceUI(false);
+    }
+
+    _updateVoiceUI(on) {
+        const btn   = document.getElementById('voiceEntryBtn');
+        const pulse = document.getElementById('_voicePulse');
+        const label = document.getElementById('_voiceLabel');
+        if (btn) {
+            btn.innerHTML = on
+                ? '<span class="btn-icon">⏹</span> Stop Recording'
+                : '<span class="btn-icon">🎤</span> Voice Entry';
+            on ? btn.classList.add('recording') : btn.classList.remove('recording');
+        }
+        if (pulse) pulse.classList.toggle('active', on);
+        if (label) label.textContent = on ? '🎤 Listening… speak now' : '⏸ Paused';
+    }
+
+    // ── Reminders ─────────────────────────────────────────────────────────────
+    loadReminders() {
+        try { this.reminders = JSON.parse(localStorage.getItem('reminders') || '[]'); }
+        catch (_) { this.reminders = []; }
+        this.displayReminders();
+    }
+
+    displayReminders() {
+        const today  = new Date().toISOString().split('T')[0];
+        const todayR = this.reminders.filter(r => r.date === today);
+        const list   = document.getElementById('remindersList');
+        const cEl    = document.getElementById('remindersCount');
+
+        if (cEl) cEl.textContent = todayR.length;
+        if (!list) return;
+
+        if (todayR.length === 0) {
+            list.innerHTML = `<div class="empty-state" style="padding:1.5rem;">
+                <div class="empty-icon">⏰</div><p>No reminders for today</p></div>`;
+            return;
+        }
+
+        list.innerHTML = '';
+        todayR.sort((a, b) => a.time.localeCompare(b.time)).forEach(r => {
+            const item = document.createElement('div');
+            item.className = `reminder-item${r.completed ? ' done' : ''}`;
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+                <div style="font-size:1rem;flex-shrink:0;">${r.completed ? '✅' : '⬜'}</div>
+                <div style="flex:1;min-width:0;">
+                    <div class="reminder-time">${this._fmtTime(r.time)}</div>
+                    <div class="reminder-text">${this._esc(r.title)}</div>
+                </div>
+                <div class="reminder-status ${r.completed ? 'completed' : 'pending'}">
+                    ${r.completed ? 'Done' : 'Pending'}
+                </div>`;
+            item.addEventListener('click', () => this._toggleReminder(r.id));
+            list.appendChild(item);
+        });
+    }
+
+    _toggleReminder(id) {
+        const r = this.reminders.find(x => x.id === id);
+        if (r) {
+            r.completed = !r.completed;
+            localStorage.setItem('reminders', JSON.stringify(this.reminders));
+            this.displayReminders();
+            this._updateDashboardStats();
+            this.showNotification(`Reminder ${r.completed ? 'completed ✅' : 'pending'}`, 'success');
+        }
+    }
+
+    openReminderModal() {
+        const modal = document.getElementById('reminderModal');
+        if (!modal) return;
+        document.getElementById('reminderForm')?.reset();
+        const de = document.getElementById('reminderDate');
+        const te = document.getElementById('reminderTime');
+        if (de) de.value = new Date().toISOString().split('T')[0];
+        if (te) te.value = '09:00';
+        modal.style.display = 'block';
+    }
+
+    closeReminderModal() {
+        const m = document.getElementById('reminderModal');
+        if (m) m.style.display = 'none';
+    }
+
+    _handleReminderSubmit(e) {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        this.reminders.push({
+            id: Date.now(),
+            title:     fd.get('reminderTitle'),
+            date:      fd.get('reminderDate'),
+            time:      fd.get('reminderTime'),
+            repeat:    fd.get('reminderRepeat'),
+            completed: false
+        });
+        localStorage.setItem('reminders', JSON.stringify(this.reminders));
+        this.closeReminderModal();
+        this.displayReminders();
+        this._updateDashboardStats();
+        this.showNotification('Reminder added! ⏰', 'success');
+    }
+
+    // ── Calendar ──────────────────────────────────────────────────────────────
+    updateCalendar(date) {
+        const names = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+        const mel = document.getElementById('currentMonth');
+        if (mel) mel.textContent = `${names[date.getMonth()]} ${date.getFullYear()}`;
+
+        const grid = document.getElementById('calendarGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const firstDay    = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        const todayStr    = new Date().toISOString().split('T')[0];
+
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+            const el = document.createElement('div');
+            el.className = 'calendar-day header';
+            el.textContent = d;
+            grid.appendChild(el);
+        });
+
+        for (let i = 0; i < firstDay; i++) {
+            const el = document.createElement('div');
+            el.className = 'calendar-day empty';
+            grid.appendChild(el);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const ds = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const el = document.createElement('div');
+            el.className = 'calendar-day';
+            el.textContent = day;
+            if (ds === todayStr) el.classList.add('today');
+            if (this.entries.some(e => (e.entry_date || e.date || '').startsWith(ds)))
+                el.classList.add('has-entry');
+            el.addEventListener('click', () => this._calendarClick(ds));
+            grid.appendChild(el);
+        }
+    }
+
+    _calendarClick(ds) {
+        const has = this.entries.some(e => (e.entry_date || e.date || '').startsWith(ds));
+        if (has) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-filter="all"]')?.classList.add('active');
+            this._show('entriesSection');
+            this._hide('journalFormSection');
+            this._hide('promptsSection');
+            setTimeout(() => {
+                document.querySelectorAll('.entry-card').forEach(card => {
+                    const entry = this.entries.find(x => x.id == card.dataset.id);
+                    if (entry && (entry.entry_date || entry.date || '').startsWith(ds)) {
+                        card.style.outline = '3px solid #96ceb4';
+                        card.scrollIntoView({ behavior:'smooth', block:'center' });
+                        setTimeout(() => card.style.outline = '', 2800);
+                    }
+                });
+            }, 150);
+        } else {
+            if (confirm(`No entries for ${this._fmtDate(ds)}.\nCreate one?`)) {
+                this.openNewEntryForm();
+                const de = document.getElementById('entryDate');
+                if (de) de.value = ds;
+            }
+        }
+    }
+
+    // ── Stats ─────────────────────────────────────────────────────────────────
+    _updateStats(stats) {
+        const total = stats.total !== undefined ? stats.total : this.entries.length;
+        const week  = stats.this_week !== undefined ? stats.this_week :
+            this.entries.filter(e => {
+                const d = new Date((e.entry_date || e.date || '').split('T')[0] + 'T12:00:00');
+                return (Date.now() - d) < 7 * 86400000;
+            }).length;
+        const todayPending = this.reminders.filter(r =>
+            r.date === new Date().toISOString().split('T')[0] && !r.completed).length;
+
+        const g = id => document.getElementById(id);
+        if (g('totalEntries'))  g('totalEntries').textContent  = total;
+        if (g('thisWeek'))      g('thisWeek').textContent      = week;
+        if (g('remindersCount')) g('remindersCount').textContent = todayPending;
+    }
+
+    _updateDashboardStats() {
+        const week = this.entries.filter(e => {
+            const d = new Date((e.entry_date || e.date || '').split('T')[0] + 'T12:00:00');
+            return (Date.now() - d) < 7 * 86400000;
+        }).length;
+        const todayPending = this.reminders.filter(r =>
+            r.date === new Date().toISOString().split('T')[0] && !r.completed).length;
+        localStorage.setItem('journalCount',  this.entries.length);
+        localStorage.setItem('weeklyCount',   week);
+        localStorage.setItem('reminderCount', todayPending);
+        window.dispatchEvent(new Event('storage'));
+    }
+
+    // ── Word count ────────────────────────────────────────────────────────────
+    _updateWordCount() {
+        const text  = document.getElementById('entryContent')?.value || '';
+        const count = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const el    = document.getElementById('wordCount');
+        if (el) el.textContent = `${count} word${count !== 1 ? 's' : ''}`;
+    }
+
+    // ── Draft ─────────────────────────────────────────────────────────────────
+    _saveDraft() {
+        const t = document.getElementById('entryTitle')?.value;
+        const c = document.getElementById('entryContent')?.value;
+        if (!t && !c) return;
+        localStorage.setItem('_jDraft', JSON.stringify({
+            title: t, content: c,
+            mood: document.getElementById('selectedMood')?.value,
+            tags: document.getElementById('entryTags')?.value,
+            at: Date.now()
+        }));
+        this.showNotification('Draft auto-saved 💾', 'info');
+    }
+
+    _restoreDraft() {
+        try {
+            const raw = localStorage.getItem('_jDraft');
+            if (!raw) return;
+            const d = JSON.parse(raw);
+            if (Date.now() - d.at > 3600000) { this._clearDraft(); return; }
+            const tEl = document.getElementById('entryTitle');
+            const cEl = document.getElementById('entryContent');
+            if (!tEl || !cEl || tEl.value || cEl.value) return;
+            tEl.value = d.title   || '';
+            cEl.value = d.content || '';
+            const sm = document.getElementById('selectedMood');
+            const te = document.getElementById('entryTags');
+            if (sm && d.mood) { sm.value = d.mood; document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', b.dataset.mood === d.mood)); }
+            if (te && d.tags) te.value = d.tags;
+            this._updateWordCount();
+            this.showNotification(`Draft restored from ${new Date(d.at).toLocaleTimeString()} 📄`, 'info');
+        } catch (_) {}
+    }
+
+    _clearDraft() {
+        localStorage.removeItem('_jDraft');
+        clearTimeout(this._draftTimer);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    _show(id) { const el = document.getElementById(id); if (el) el.style.display = 'block'; }
+    _hide(id) { const el = document.getElementById(id); if (el) el.style.display = 'none';  }
+
+    _fmtDate(str) {
+        if (!str) return '';
+        const d = new Date(str.includes('T') ? str : str + 'T12:00:00');
+        return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    }
+
+    _fmtTime(t) {
+        if (!t) return '';
+        const [h, m] = t.split(':').map(Number);
+        return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    }
+
+    _esc(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+    showNotification(msg, type = 'info') {
+        document.querySelectorAll('.jn-notif').forEach(n => n.remove());
+        const colors = { success:'#4CAF50', error:'#f44336', info:'#2196F3' };
+        const icons  = { success:'✅', error:'❌', info:'💡' };
+        const el = document.createElement('div');
+        el.className = 'jn-notif';
+        el.style.background = colors[type] || colors.info;
+        el.innerHTML = `<div class="jn-inner">
+            <span>${icons[type]||'💡'}</span>
+            <span class="jn-msg">${this._esc(msg)}</span>
+            <button class="jn-close" onclick="this.closest('.jn-notif').remove()">×</button>
         </div>`;
-      document.body.appendChild(modal);
+        document.body.appendChild(el);
+        setTimeout(() => el.parentElement && el.remove(), 5000);
     }
-    document.getElementById('confirmDeleteBtn').dataset.id = id;
-    modal.style.display = 'block';
-  }
-
-  closeDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  // ─── LOADING STATE ────────────────────────────────────────────────────────
-  showListLoader() {
-    const list = document.getElementById('entriesList');
-    if (list) {
-      list.innerHTML = `
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading your entries…</p>
-        </div>`;
-    }
-  }
-
-  // ─── SECTION HELPERS ─────────────────────────────────────────────────────
-  showSection(id) { const el = document.getElementById(id); if (el) el.style.display = 'block'; }
-  hideSection(id) { const el = document.getElementById(id); if (el) el.style.display = 'none';  }
-
-  // ─── FORMATTERS ───────────────────────────────────────────────────────────
-  formatDate(dateStr) {
-    if (!dateStr) return '';
-    // entry_date from DB comes as "2025-11-18T00:00:00.000Z" or "2025-11-18"
-    const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00');
-    return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-  }
-
-  formatTime(t) {
-    if (!t) return '';
-    const [h, m] = t.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hour = h % 12 || 12;
-    return `${hour}:${String(m).padStart(2,'0')} ${ampm}`;
-  }
-
-  escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-  }
-
-  // ─── NOTIFICATIONS ────────────────────────────────────────────────────────
-  showNotification(message, type = 'info') {
-    document.querySelectorAll('.notification').forEach(n => n.remove());
-
-    const colors = { success:'#4CAF50', error:'#f44336', info:'#2196F3' };
-    const icons  = { success:'✅', error:'❌', info:'💡' };
-
-    const el = document.createElement('div');
-    el.className = 'notification';
-    el.innerHTML = `
-      <div class="notif-inner">
-        <span class="notif-icon">${icons[type] || '💡'}</span>
-        <span class="notif-msg">${message}</span>
-        <button class="notif-close" onclick="this.parentElement.parentElement.remove()">×</button>
-      </div>`;
-
-    Object.assign(el.style, {
-      position:'fixed', top:'20px', right:'20px',
-      background: colors[type] || colors.info,
-      color:'white', borderRadius:'10px',
-      boxShadow:'0 4px 16px rgba(0,0,0,0.18)',
-      zIndex:'10000', minWidth:'300px', maxWidth:'420px',
-      animation:'slideInRight 0.3s ease'
-    });
-
-    if (!document.getElementById('notifStyle')) {
-      const s = document.createElement('style');
-      s.id = 'notifStyle';
-      s.textContent = `
-        @keyframes slideInRight { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
-        .notif-inner{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;}
-        .notif-icon{font-size:1.2rem;flex-shrink:0;}
-        .notif-msg{flex:1;font-weight:600;font-size:.95rem;line-height:1.4;}
-        .notif-close{background:none;border:none;color:white;font-size:1.4rem;cursor:pointer;padding:0;line-height:1;}
-      `;
-      document.head.appendChild(s);
-    }
-
-    document.body.appendChild(el);
-    setTimeout(() => el.parentElement && el.remove(), 5000);
-  }
 }
 
-// ─── BOOT ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  window.journal = new Journal();
-});
+// ── Boot ──────────────────────────────────────────────────────────────────────
+window.journal = new Journal();
