@@ -45,32 +45,31 @@
     align-items: center;
 }
 
-/* Floating icons - 2x2 overlapping grid like reference image */
+/* Floating icons - 2x2 grid with gaps, all visible, no overlap */
 .floating-icons {
     display: grid;
-    grid-template-columns: 44px 44px;
-    grid-template-rows: 44px 44px;
-    width: 74px;
-    height: 74px;
+    grid-template-columns: 46px 46px;
+    grid-template-rows: 46px 46px;
+    gap: 5px;
 }
 
 .companion-icon {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
-    border: 3px solid rgba(255,255,255,0.9);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    font-size: 1.2rem;
+    border: 2.5px solid rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     animation: iconFloat 5s ease-in-out infinite;
 }
 
-.icon-1 { background: linear-gradient(135deg,#84fab0,#8fd3f4); animation-delay: 0s;   grid-column:1; grid-row:1; z-index:4; }
-.icon-2 { background: linear-gradient(135deg,#f093fb,#f5576c); animation-delay: 1s;   grid-column:2; grid-row:1; z-index:3; margin-left:-12px; }
-.icon-3 { background: linear-gradient(135deg,#fccb90,#d57eeb); animation-delay: 2s;   grid-column:1; grid-row:2; z-index:2; margin-top:-12px; }
-.icon-4 { background: linear-gradient(135deg,#f7971e,#ffd200); animation-delay: 3s;   grid-column:2; grid-row:2; z-index:1; margin-left:-12px; margin-top:-12px; }
+.icon-1 { background: linear-gradient(135deg,#84fab0,#8fd3f4); animation-delay: 0s; }
+.icon-2 { background: linear-gradient(135deg,#f093fb,#f5576c); animation-delay: 1s; }
+.icon-3 { background: linear-gradient(135deg,#fccb90,#d57eeb); animation-delay: 2s; }
+.icon-4 { background: linear-gradient(135deg,#f7971e,#ffd200); animation-delay: 3s; }
 
 @keyframes iconFloat {
     0%,100% { transform: translateY(0) scale(1); }
