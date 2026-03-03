@@ -39,7 +39,7 @@ async function initializeApp() {
     updateStats();
     setupConsoleCommands();
     loadChatBackups();
-    startISTClock();
+    setupBreathingExercise();
     setupMoodAndPromptButtons();
 
     if (!hasShownWelcome) {
@@ -88,43 +88,90 @@ async function callClaudeAPI(userText) {
     return assistantText;
 }
 
-// ─── IST Live Clock ───────────────────────────────────────────────────────────
-function startISTClock() {
-    function updateClock() {
-        // IST = UTC + 5h30m
-        const istMs = Date.now() + (5.5 * 60 * 60 * 1000);
-        const ist = new Date(istMs);
+// ─── Breathing Exercise ───────────────────────────────────────────────────────
+function setupBreathingExercise() {
+    const startBtn  = document.getElementById('breathingStartBtn');
+    const stopBtn   = document.getElementById('breathingStopBtn');
+    const circle    = document.getElementById('breathingCircle');
+    const textEl    = document.getElementById('breathingText');
+    const subEl     = document.getElementById('breathingSubtext');
+    const counterEl = document.getElementById('breathingCounter');
+    const emoji     = circle ? circle.querySelector('.breathing-emoji') : null;
 
-        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const fullDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-        const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if (!startBtn) return;
 
-        const dayShort = days[ist.getUTCDay()];
-        const dayFull = fullDays[ist.getUTCDay()];
-        const monthShort = months[ist.getUTCMonth()];
-        const monthFull = fullMonths[ist.getUTCMonth()];
-        const dateNum = ist.getUTCDate();
-        const year = ist.getUTCFullYear();
-        const h = ist.getUTCHours();
-        const m = String(ist.getUTCMinutes()).padStart(2,'0');
-        const s = String(ist.getUTCSeconds()).padStart(2,'0');
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        const h12 = String(h % 12 || 12).padStart(2,'0');
+    let timer = null;
+    let countTimer = null;
+    let cycles = 0;
+    let isRunning = false;
 
-        const shortDate = `${dayShort}, ${dateNum} ${monthShort} ${year}`;
-        const fullDate = `${dayFull}, ${dateNum} ${monthFull} ${year}`;
-        const timeWithSec = `${h12}:${m}:${s} ${ampm}`;
-        const timeNoSec = `${h12}:${m} ${ampm}`;
+    const phases = [
+        { name: 'Breathe In',  sub: 'Inhale slowly through your nose', cls: 'inhale',  dur: 4000, e: '😮‍💨' },
+        { name: 'Hold',        sub: 'Hold your breath gently',          cls: 'hold',    dur: 4000, e: '😶' },
+        { name: 'Breathe Out', sub: 'Exhale slowly through your mouth', cls: 'exhale',  dur: 4000, e: '😌' },
+        { name: 'Rest',        sub: 'Relax before next cycle',          cls: '',        dur: 2000, e: '🙂' }
+    ];
 
-        // Sidebar clock only (header clock removed)
-        const sidebarDate = document.getElementById('sidebarDate');
-        const sidebarTime = document.getElementById('sidebarTime');
-        if (sidebarDate) sidebarDate.textContent = fullDate;
-        if (sidebarTime) sidebarTime.textContent = timeWithSec;
+    let phaseIndex = 0;
+    let countdown = 0;
+
+    function runPhase() {
+        if (!isRunning) return;
+        const phase = phases[phaseIndex];
+
+        // Update UI
+        textEl.textContent  = phase.name;
+        subEl.textContent   = phase.sub;
+        if (emoji) emoji.textContent = phase.e;
+
+        // Circle animation
+        circle.classList.remove('inhale','hold','exhale');
+        void circle.offsetWidth; // reflow to restart animation
+        if (phase.cls) circle.classList.add(phase.cls);
+
+        // Countdown
+        countdown = Math.floor(phase.dur / 1000);
+        counterEl.textContent = countdown > 0 ? `${countdown}s` : '';
+        clearInterval(countTimer);
+        countTimer = setInterval(() => {
+            countdown--;
+            counterEl.textContent = countdown > 0 ? `${countdown}s` : '';
+        }, 1000);
+
+        // Next phase
+        timer = setTimeout(() => {
+            phaseIndex = (phaseIndex + 1) % phases.length;
+            if (phaseIndex === 0) {
+                cycles++;
+                counterEl.textContent = `✅ ${cycles} cycle${cycles > 1 ? 's' : ''} done`;
+            }
+            runPhase();
+        }, phase.dur);
     }
-    updateClock();
-    setInterval(updateClock, 1000);
+
+    startBtn.addEventListener('click', () => {
+        isRunning = true;
+        cycles = 0;
+        phaseIndex = 0;
+        startBtn.style.display = 'none';
+        stopBtn.style.display  = 'inline-block';
+        subEl.textContent = 'Follow the circle...';
+        runPhase();
+    });
+
+    stopBtn.addEventListener('click', () => {
+        isRunning = false;
+        clearTimeout(timer);
+        clearInterval(countTimer);
+        circle.classList.remove('inhale','hold','exhale');
+        textEl.textContent  = 'Breathe In';
+        subEl.textContent   = 'Press Start when ready';
+        if (emoji) emoji.textContent = '😮‍💨';
+        counterEl.textContent = cycles > 0 ? `Great job! ${cycles} cycle${cycles > 1 ? 's' : ''} completed 🌟` : '';
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display  = 'none';
+        phaseIndex = 0;
+    });
 }
 
 // ─── Mood + Quick Prompt Buttons ─────────────────────────────────────────────

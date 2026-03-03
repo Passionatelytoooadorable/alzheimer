@@ -56,12 +56,22 @@
             <!-- LEFT SIDEBAR: Live Clock + Quick Prompts -->
             <aside class="left-sidebar">
 
-                <!-- Live IST Clock -->
-                <div class="sidebar-clock-widget">
-                    <div class="sidebar-clock-icon">🕐</div>
-                    <div class="sidebar-clock-date" id="sidebarDate"></div>
-                    <div class="sidebar-clock-time" id="sidebarTime"></div>
-                    <div class="sidebar-clock-label">India Standard Time</div>
+                <!-- Breathing Exercise -->
+                <div class="breathing-widget">
+                    <h3>🌬️ Breathing Exercise</h3>
+                    <div class="breathing-circle-container">
+                        <div class="breathing-ring"></div>
+                        <div class="breathing-circle" id="breathingCircle">
+                            <span class="breathing-emoji">😮‍💨</span>
+                        </div>
+                    </div>
+                    <div class="breathing-text" id="breathingText">Breathe In</div>
+                    <div class="breathing-subtext" id="breathingSubtext">Get ready...</div>
+                    <div class="breathing-controls">
+                        <button class="breathing-btn" id="breathingStartBtn">▶ Start</button>
+                        <button class="breathing-btn secondary" id="breathingStopBtn" style="display:none">⏹ Stop</button>
+                    </div>
+                    <div class="breathing-counter" id="breathingCounter"></div>
                 </div>
 
                 <!-- Quick Prompts -->

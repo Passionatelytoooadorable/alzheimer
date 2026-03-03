@@ -111,43 +111,135 @@
     top: 1rem;
 }
 
-/* Sidebar Clock Widget */
-.sidebar-clock-widget {
-    background: linear-gradient(135deg, #11998e, #38ef7d);
+/* Breathing Exercise Widget */
+.breathing-widget {
+    background: white;
     border-radius: 14px;
-    padding: 1.4rem 1rem;
+    padding: 1.2rem 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     text-align: center;
-    color: white;
-    box-shadow: 0 4px 16px rgba(17,153,142,0.35);
 }
 
-.sidebar-clock-icon {
-    font-size: 2rem;
-    margin-bottom: 0.4rem;
-    animation: float 4s ease-in-out infinite;
+.breathing-widget h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374785;
+    margin: 0 0 1rem 0;
+    padding-left: 0.6rem;
+    border-left: 3px solid #4ecdc4;
+    text-align: left;
 }
 
-.sidebar-clock-date {
-    font-size: 0.82rem;
-    opacity: 0.88;
-    margin-bottom: 0.4rem;
-    font-weight: 500;
+.breathing-circle-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.sidebar-clock-time {
-    font-size: 2rem;
+.breathing-ring {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #e0f7fa;
+    background: transparent;
+}
+
+.breathing-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 0 rgba(78,205,196,0.4);
+    transition: transform 0s;
+    position: relative;
+    z-index: 1;
+}
+
+.breathing-circle.inhale {
+    animation: breatheIn 4s ease-in-out forwards;
+}
+
+.breathing-circle.hold {
+    animation: breatheHold 4s ease-in-out forwards;
+}
+
+.breathing-circle.exhale {
+    animation: breatheOut 4s ease-in-out forwards;
+}
+
+@keyframes breatheIn {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(78,205,196,0.4); }
+    100% { transform: scale(1.45); box-shadow: 0 0 0 18px rgba(78,205,196,0.1); }
+}
+
+@keyframes breatheHold {
+    0%,100% { transform: scale(1.45); box-shadow: 0 0 0 18px rgba(78,205,196,0.1); }
+}
+
+@keyframes breatheOut {
+    0%   { transform: scale(1.45); box-shadow: 0 0 0 18px rgba(78,205,196,0.1); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(78,205,196,0.0); }
+}
+
+.breathing-emoji {
+    font-size: 1.6rem;
+}
+
+.breathing-text {
+    font-size: 1.1rem;
     font-weight: 700;
-    letter-spacing: 1px;
-    line-height: 1;
-    margin-bottom: 0.4rem;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.15);
+    color: #374785;
+    margin-bottom: 0.2rem;
 }
 
-.sidebar-clock-label {
-    font-size: 0.68rem;
-    opacity: 0.75;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+.breathing-subtext {
+    font-size: 0.78rem;
+    color: #6c757d;
+    margin-bottom: 0.85rem;
+    min-height: 1.1rem;
+}
+
+.breathing-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.breathing-btn {
+    background: #4ecdc4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.breathing-btn:hover { background: #3dbab0; transform: translateY(-1px); }
+
+.breathing-btn.secondary {
+    background: #e9ecef;
+    color: #555;
+}
+
+.breathing-btn.secondary:hover { background: #dde2e6; }
+
+.breathing-counter {
+    font-size: 0.75rem;
+    color: #a78bfa;
+    font-weight: 600;
+    min-height: 1rem;
 }
 
 .quick-prompts-widget h3,
