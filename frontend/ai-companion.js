@@ -117,13 +117,7 @@ function startISTClock() {
         const timeWithSec = `${h12}:${m}:${s} ${ampm}`;
         const timeNoSec = `${h12}:${m} ${ampm}`;
 
-        // Header clock
-        const headerDate = document.getElementById('headerDate');
-        const headerTime = document.getElementById('headerTime');
-        if (headerDate) headerDate.textContent = shortDate;
-        if (headerTime) headerTime.textContent = timeWithSec;
-
-        // Sidebar clock
+        // Sidebar clock only (header clock removed)
         const sidebarDate = document.getElementById('sidebarDate');
         const sidebarTime = document.getElementById('sidebarTime');
         if (sidebarDate) sidebarDate.textContent = fullDate;

@@ -11,7 +11,7 @@
 .companion-header {
     background: linear-gradient(135deg, #b8a9f8 0%, #9c87f5 50%, #a78bfa 100%);
     color: white;
-    padding: 1rem 2rem;
+    padding: 1.1rem 2rem;
     box-shadow: 0 4px 15px rgba(167,139,250,0.35);
 }
 
@@ -19,13 +19,13 @@
     max-width: 1400px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr auto auto;
     align-items: center;
-    gap: 1.5rem;
+    gap: 2.5rem;
 }
 
 .header-left h1 {
-    font-size: 1.9rem;
+    font-size: 2rem;
     font-weight: 700;
     margin: 0 0 0.2rem 0;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
@@ -37,74 +37,44 @@
     margin: 0;
 }
 
-/* Live clock in header center */
-.live-clock-widget {
-    background: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 14px;
-    padding: 0.7rem 1.4rem;
-    text-align: center;
-    backdrop-filter: blur(8px);
-    min-width: 180px;
-}
-
-.clock-date {
-    font-size: 0.8rem;
-    opacity: 0.9;
-    font-weight: 500;
-    margin-bottom: 0.15rem;
-}
-
-.clock-time {
-    font-size: 1.7rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    line-height: 1;
-}
-
-.clock-label {
-    font-size: 0.68rem;
-    opacity: 0.75;
-    margin-top: 0.15rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+.header-center { display: flex; align-items: center; }
+.header-stats { display: flex; gap: 2.5rem; }
 
 .header-right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.6rem;
+    align-items: center;
 }
 
-.header-stats { display: flex; gap: 2rem; }
-
-/* Floating icons in header */
+/* Floating icons in header - overlapping like image reference */
 .floating-icons {
     display: flex;
-    gap: 0.5rem;
+    flex-direction: row;
 }
 
 .companion-icon {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    border: 2px solid rgba(255,255,255,0.7);
-    animation: float 6s ease-in-out infinite;
+    font-size: 1.3rem;
+    border: 3px solid rgba(255,255,255,0.85);
+    margin-left: -10px;
+    animation: iconFloat 6s ease-in-out infinite;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
 
-.icon-1 { background: linear-gradient(135deg,#e39fcb,#9ddd6e); animation-delay: 0s; }
-.icon-2 { background: linear-gradient(135deg,#f3c09d,#e84d8a); animation-delay: 1.5s; }
-.icon-3 { background: linear-gradient(135deg,#f4c322,#f97ddf); animation-delay: 3s; }
-.icon-4 { background: linear-gradient(135deg,#ea8707,#fa6363); animation-delay: 4.5s; }
+.companion-icon:first-child { margin-left: 0; }
 
-@keyframes float {
-    0%,100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-6px) scale(1.06); }
+.icon-1 { background: linear-gradient(135deg,#84fab0,#8fd3f4); animation-delay: 0s; z-index: 4; }
+.icon-2 { background: linear-gradient(135deg,#f093fb,#f5576c); animation-delay: 1s; z-index: 3; }
+.icon-3 { background: linear-gradient(135deg,#fccb90,#d57eeb); animation-delay: 2s; z-index: 2; }
+.icon-4 { background: linear-gradient(135deg,#f7971e,#ffd200); animation-delay: 3s; z-index: 1; }
+
+@keyframes iconFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
 }
 
 .stat { text-align: center; }
@@ -139,12 +109,12 @@
 
 /* Sidebar Clock Widget */
 .sidebar-clock-widget {
-    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+    background: linear-gradient(135deg, #11998e, #38ef7d);
     border-radius: 14px;
     padding: 1.4rem 1rem;
     text-align: center;
     color: white;
-    box-shadow: 0 4px 16px rgba(167,139,250,0.35);
+    box-shadow: 0 4px 16px rgba(17,153,142,0.35);
 }
 
 .sidebar-clock-icon {
