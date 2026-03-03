@@ -34,32 +34,35 @@ app.use('/api/profile',   profileRoutes);
 app.use('/api/reports',   reportRoutes);
 
 const getSystemPrompt = () => {
-  // Compute IST by adding 5h30m to UTC
-  const nowUTC = Date.now();
-  const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000; // 330 minutes in ms
-  const istDate = new Date(nowUTC + IST_OFFSET_MS);
+  // IST = UTC + 5 hours 30 minutes
+  // We manually shift UTC ms by exactly 330 minutes
+  const utcNow = new Date(); // server UTC time
+  const istOffsetMs = 330 * 60 * 1000; // 5h30m in milliseconds
+  const istNow = new Date(utcNow.getTime() + istOffsetMs);
 
-  // Use UTC getters on the shifted date to get IST values
-  const dayNames   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const monthNames = ['January','February','March','April','May','June',
-                      'July','August','September','October','November','December'];
+  // Use getUTC* on the IST-shifted date object
+  const D = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const M = ['January','February','March','April','May','June',
+             'July','August','September','October','November','December'];
 
-  const dayName   = dayNames[istDate.getUTCDay()];
-  const monthName = monthNames[istDate.getUTCMonth()];
-  const date      = istDate.getUTCDate();
-  const year      = istDate.getUTCFullYear();
-  const hh24      = istDate.getUTCHours();
-  const mm        = String(istDate.getUTCMinutes()).padStart(2, '0');
+  const dayName   = D[istNow.getUTCDay()];
+  const monthName = M[istNow.getUTCMonth()];
+  const dd        = istNow.getUTCDate();
+  const yyyy      = istNow.getUTCFullYear();
+  const hh24      = istNow.getUTCHours();
+  const mm        = String(istNow.getUTCMinutes()).padStart(2, '0');
   const ampm      = hh24 >= 12 ? 'PM' : 'AM';
   const hh12      = hh24 % 12 || 12;
 
-  const dateStr = `${dayName}, ${date} ${monthName} ${year}`;
+  const dateStr = `${dayName}, ${dd} ${monthName} ${yyyy}`;
   const timeStr = `${hh12}:${mm} ${ampm} IST`;
 
   return `You are a warm, caring AI companion for an Alzheimer's support platform.
 Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
 
 Today's date is ${dateStr} and the current time is ${timeStr}.
+
+IMPORTANT: Always use this exact date and time when the user asks about the current time or date. Do not guess or use any other time.
 
 Guidelines:
 - Be empathetic, patient, and supportive at all times
