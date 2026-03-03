@@ -33,36 +33,17 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/profile',   profileRoutes);
 app.use('/api/reports',   reportRoutes);
 
-const getSystemPrompt = () => {
-  // IST = UTC + 5 hours 30 minutes
-  // We manually shift UTC ms by exactly 330 minutes
-  const utcNow = new Date(); // server UTC time
-  const istOffsetMs = 330 * 60 * 1000; // 5h30m in milliseconds
-  const istNow = new Date(utcNow.getTime() + istOffsetMs);
-
-  // Use getUTC* on the IST-shifted date object
-  const D = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const M = ['January','February','March','April','May','June',
-             'July','August','September','October','November','December'];
-
-  const dayName   = D[istNow.getUTCDay()];
-  const monthName = M[istNow.getUTCMonth()];
-  const dd        = istNow.getUTCDate();
-  const yyyy      = istNow.getUTCFullYear();
-  const hh24      = istNow.getUTCHours();
-  const mm        = String(istNow.getUTCMinutes()).padStart(2, '0');
-  const ampm      = hh24 >= 12 ? 'PM' : 'AM';
-  const hh12      = hh24 % 12 || 12;
-
-  const dateStr = `${dayName}, ${dd} ${monthName} ${yyyy}`;
-  const timeStr = `${hh12}:${mm} ${ampm} IST`;
+const getSystemPrompt = (currentDate, currentTime) => {
+  // Date and time are sent from the user's browser (always accurate IST)
+  const dateStr = currentDate || 'Unknown date';
+  const timeStr = currentTime || 'Unknown time';
 
   return `You are a warm, caring AI companion for an Alzheimer's support platform.
 Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
 
 Today's date is ${dateStr} and the current time is ${timeStr}.
 
-IMPORTANT: Always use this exact date and time when the user asks about the current time or date. Do not guess or use any other time.
+IMPORTANT: The date and time above are 100% accurate Indian Standard Time sent directly from the user's device. Always use these exact values when asked about the current date or time. Never guess or use any other date/time.
 
 Guidelines:
 - Be empathetic, patient, and supportive at all times
@@ -78,7 +59,7 @@ Guidelines:
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { messages, currentDate, currentTime } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Invalid request: messages array is required' });
@@ -99,7 +80,7 @@ app.post('/api/chat', async (req, res) => {
         model: 'llama-3.3-70b-versatile',
         max_tokens: 1024,
         messages: [
-          { role: 'system', content: getSystemPrompt() },
+          { role: 'system', content: getSystemPrompt(currentDate, currentTime) },
           ...messages
         ]
       })

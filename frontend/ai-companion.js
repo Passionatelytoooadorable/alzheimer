@@ -59,10 +59,38 @@ async function initializeApp() {
 // This avoids CORS issues and keeps your API key server-side.
 const BACKEND_URL = 'https://alzheimer-backend-new.onrender.com';
 
+function getISTDateTime() {
+    // Compute IST directly in the browser — always accurate
+    const now = new Date();
+    const istOffset = 330; // IST = UTC + 330 minutes
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const ist = new Date(utc + istOffset * 60000);
+
+    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    const dayName   = days[ist.getDay()];
+    const monthName = months[ist.getMonth()];
+    const dd        = ist.getDate();
+    const yyyy      = ist.getFullYear();
+    const hh24      = ist.getHours();
+    const mm        = String(ist.getMinutes()).padStart(2, '0');
+    const ampm      = hh24 >= 12 ? 'PM' : 'AM';
+    const hh12      = hh24 % 12 || 12;
+
+    return {
+        date: `${dayName}, ${dd} ${monthName} ${yyyy}`,
+        time: `${hh12}:${mm} ${ampm} IST`
+    };
+}
+
 async function callClaudeAPI(userText) {
     // Keep last 20 turns for context (10 back-and-forth exchanges)
     const recentMessages = apiMessages.slice(-20);
     const messagesPayload = [...recentMessages, { role: 'user', content: userText }];
+
+    // Send current IST date/time from browser — always correct
+    const { date, time } = getISTDateTime();
 
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
         method: 'POST',
@@ -70,7 +98,7 @@ async function callClaudeAPI(userText) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
-        body: JSON.stringify({ messages: messagesPayload })
+        body: JSON.stringify({ messages: messagesPayload, currentDate: date, currentTime: time })
     });
 
     if (!response.ok) {
