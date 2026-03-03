@@ -34,23 +34,41 @@ app.use('/api/profile',   profileRoutes);
 app.use('/api/reports',   reportRoutes);
 
 const getSystemPrompt = () => {
-  // IST = UTC+5:30 — compute reliably without depending on server locale
-  const utcMs = Date.now();
-  const istMs = utcMs + (5.5 * 60 * 60 * 1000);
-  const ist = new Date(istMs);
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  // IST = UTC + 5h30m = UTC + 19800 seconds
+  const nowUTC = Date.now();
+  const istOffset = 5 * 60 * 60 * 1000 + 30 * 60 * 1000; // 19800000ms
+  const ist = new Date(nowUTC + istOffset);
+
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const dayName = days[ist.getUTCDay()];
+
+  const dayName   = days[ist.getUTCDay()];
   const monthName = months[ist.getUTCMonth()];
-  const dateNum = ist.getUTCDate();
-  const year = ist.getUTCFullYear();
-  const hours = ist.getUTCHours();
-  const minutes = String(ist.getUTCMinutes()).padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const hours12 = hours % 12 || 12;
+  const dateNum   = ist.getUTCDate();
+  const year      = ist.getUTCFullYear();
+  const hh24      = ist.getUTCHours();
+  const mm        = String(ist.getUTCMinutes()).padStart(2, '0');
+  const ampm      = hh24 >= 12 ? 'PM' : 'AM';
+  const hh12      = hh24 % 12 || 12;
+
   const dateStr = `${dayName}, ${dateNum} ${monthName} ${year}`;
-  const timeStr = `${hours12}:${minutes} ${ampm} IST`;
-  return "You are a warm, caring AI companion for an Alzheimer's support platform.\nYour role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.\n\nToday's date is " + dateStr + " and the current time is " + timeStr + ".\n\nGuidelines:\n- Be empathetic, patient, and supportive at all times\n- Answer any question the user asks - general knowledge, health info, daily life, storytelling, recipes, etc.\n- Keep responses concise and easy to read (2-4 sentences for most replies, longer only when needed)\n- Use simple, clear language - avoid jargon\n- When users seem distressed, acknowledge their feelings first before offering information\n- Gently remind users to consult healthcare professionals for medical decisions\n- Be encouraging and positive without being dismissive of real concerns\n- If asked to tell a story, share a short comforting one\n- You know the user may have memory challenges, so be patient if they repeat themselves";
+  const timeStr = `${hh12}:${mm} ${ampm} IST`;
+
+  return `You are a warm, caring AI companion for an Alzheimer\'s support platform.
+Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
+
+Today\'s date is ${dateStr} and the current time is ${timeStr}.
+
+Guidelines:
+- Be empathetic, patient, and supportive at all times
+- Answer any question the user asks - general knowledge, health info, daily life, storytelling, recipes, etc.
+- Keep responses concise and easy to read (2-4 sentences for most replies, longer only when needed)
+- Use simple, clear language - avoid jargon
+- When users seem distressed, acknowledge their feelings first before offering information
+- Gently remind users to consult healthcare professionals for medical decisions
+- Be encouraging and positive without being dismissive of real concerns
+- If asked to tell a story, share a short comforting one
+- You know the user may have memory challenges, so be patient if they repeat themselves`;
 };
 
 app.post('/api/chat', async (req, res) => {

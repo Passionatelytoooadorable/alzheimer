@@ -45,36 +45,36 @@
     align-items: center;
 }
 
-/* Floating icons in header - overlapping like image reference */
+/* Floating icons - 2x2 overlapping grid like reference image */
 .floating-icons {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 44px 44px;
+    grid-template-rows: 44px 44px;
+    width: 74px;
+    height: 74px;
 }
 
 .companion-icon {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
-    border: 3px solid rgba(255,255,255,0.85);
-    margin-left: -10px;
-    animation: iconFloat 6s ease-in-out infinite;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    font-size: 1.25rem;
+    border: 3px solid rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    animation: iconFloat 5s ease-in-out infinite;
 }
 
-.companion-icon:first-child { margin-left: 0; }
-
-.icon-1 { background: linear-gradient(135deg,#84fab0,#8fd3f4); animation-delay: 0s; z-index: 4; }
-.icon-2 { background: linear-gradient(135deg,#f093fb,#f5576c); animation-delay: 1s; z-index: 3; }
-.icon-3 { background: linear-gradient(135deg,#fccb90,#d57eeb); animation-delay: 2s; z-index: 2; }
-.icon-4 { background: linear-gradient(135deg,#f7971e,#ffd200); animation-delay: 3s; z-index: 1; }
+.icon-1 { background: linear-gradient(135deg,#84fab0,#8fd3f4); animation-delay: 0s;   grid-column:1; grid-row:1; z-index:4; }
+.icon-2 { background: linear-gradient(135deg,#f093fb,#f5576c); animation-delay: 1s;   grid-column:2; grid-row:1; z-index:3; margin-left:-12px; }
+.icon-3 { background: linear-gradient(135deg,#fccb90,#d57eeb); animation-delay: 2s;   grid-column:1; grid-row:2; z-index:2; margin-top:-12px; }
+.icon-4 { background: linear-gradient(135deg,#f7971e,#ffd200); animation-delay: 3s;   grid-column:2; grid-row:2; z-index:1; margin-left:-12px; margin-top:-12px; }
 
 @keyframes iconFloat {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    0%,100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-4px) scale(1.05); }
 }
 
 .stat { text-align: center; }
