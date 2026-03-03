@@ -91,25 +91,43 @@ async function callClaudeAPI(userText) {
 // ─── IST Live Clock ───────────────────────────────────────────────────────────
 function startISTClock() {
     function updateClock() {
-        const now = new Date();
-        // Convert to IST (UTC+5:30)
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-        const ist = new Date(utc + istOffset);
+        // IST = UTC + 5h30m
+        const istMs = Date.now() + (5.5 * 60 * 60 * 1000);
+        const ist = new Date(istMs);
 
-        const dateEl = document.getElementById('headerDate');
-        const timeEl = document.getElementById('headerTime');
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const fullDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const fullMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-        if (dateEl) {
-            dateEl.textContent = ist.toLocaleDateString('en-IN', {
-                weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-            });
-        }
-        if (timeEl) {
-            timeEl.textContent = ist.toLocaleTimeString('en-IN', {
-                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-            });
-        }
+        const dayShort = days[ist.getUTCDay()];
+        const dayFull = fullDays[ist.getUTCDay()];
+        const monthShort = months[ist.getUTCMonth()];
+        const monthFull = fullMonths[ist.getUTCMonth()];
+        const dateNum = ist.getUTCDate();
+        const year = ist.getUTCFullYear();
+        const h = ist.getUTCHours();
+        const m = String(ist.getUTCMinutes()).padStart(2,'0');
+        const s = String(ist.getUTCSeconds()).padStart(2,'0');
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = String(h % 12 || 12).padStart(2,'0');
+
+        const shortDate = `${dayShort}, ${dateNum} ${monthShort} ${year}`;
+        const fullDate = `${dayFull}, ${dateNum} ${monthFull} ${year}`;
+        const timeWithSec = `${h12}:${m}:${s} ${ampm}`;
+        const timeNoSec = `${h12}:${m} ${ampm}`;
+
+        // Header clock
+        const headerDate = document.getElementById('headerDate');
+        const headerTime = document.getElementById('headerTime');
+        if (headerDate) headerDate.textContent = shortDate;
+        if (headerTime) headerTime.textContent = timeWithSec;
+
+        // Sidebar clock
+        const sidebarDate = document.getElementById('sidebarDate');
+        const sidebarTime = document.getElementById('sidebarTime');
+        if (sidebarDate) sidebarDate.textContent = fullDate;
+        if (sidebarTime) sidebarTime.textContent = timeWithSec;
     }
     updateClock();
     setInterval(updateClock, 1000);
@@ -117,34 +135,6 @@ function startISTClock() {
 
 // ─── Mood + Quick Prompt Buttons ─────────────────────────────────────────────
 function setupMoodAndPromptButtons() {
-    document.querySelectorAll('.mood-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            const prompt = this.dataset.prompt;
-            const userMessage = {
-                type: 'user',
-                text: prompt,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            addMessageToChat(userMessage);
-            chatHistory.push(userMessage);
-            incrementChatCount();
-            updateStats();
-            showTypingIndicator();
-            saveChatToStorage();
-            try {
-                const reply = await callClaudeAPI(prompt);
-                const aiMessage = { type: 'companion', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-                addMessageToChat(aiMessage);
-                chatHistory.push(aiMessage);
-            } catch {
-                addMessageToChat({ type: 'companion', text: "I'm here with you! Tell me more about how you're feeling. 💙", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
-            }
-            saveChatToStorage();
-        });
-    });
-
     document.querySelectorAll('.prompt-btn').forEach(btn => {
         btn.addEventListener('click', async function() {
             const prompt = this.dataset.prompt;

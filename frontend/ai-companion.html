@@ -45,6 +45,12 @@
                             <span class="stat-label">Chats Today</span>
                         </div>
                     </div>
+                    <div class="floating-icons">
+                        <div class="companion-icon icon-1">🤖</div>
+                        <div class="companion-icon icon-2">💬</div>
+                        <div class="companion-icon icon-3">🧠</div>
+                        <div class="companion-icon icon-4">🎮</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -52,20 +58,15 @@
         <!-- 3-Column Layout -->
         <div class="main-content">
 
-            <!-- LEFT SIDEBAR: Live Clock + Mood + Quick Prompts -->
+            <!-- LEFT SIDEBAR: Live Clock + Quick Prompts -->
             <aside class="left-sidebar">
 
-                <!-- Mood Check-in -->
-                <div class="mood-widget">
-                    <h3>😊 How are you feeling?</h3>
-                    <div class="mood-options">
-                        <button class="mood-btn" data-mood="happy" data-prompt="I'm feeling happy today!">😄<span>Happy</span></button>
-                        <button class="mood-btn" data-mood="calm" data-prompt="I'm feeling calm and peaceful today.">😌<span>Calm</span></button>
-                        <button class="mood-btn" data-mood="sad" data-prompt="I'm feeling a bit sad today.">😢<span>Sad</span></button>
-                        <button class="mood-btn" data-mood="anxious" data-prompt="I'm feeling a bit anxious or worried today.">😰<span>Anxious</span></button>
-                        <button class="mood-btn" data-mood="tired" data-prompt="I'm feeling tired today.">😴<span>Tired</span></button>
-                        <button class="mood-btn" data-mood="confused" data-prompt="I'm feeling a bit confused today, can you help me?">😕<span>Confused</span></button>
-                    </div>
+                <!-- Live IST Clock -->
+                <div class="sidebar-clock-widget">
+                    <div class="sidebar-clock-icon">🕐</div>
+                    <div class="sidebar-clock-date" id="sidebarDate"></div>
+                    <div class="sidebar-clock-time" id="sidebarTime"></div>
+                    <div class="sidebar-clock-label">India Standard Time</div>
                 </div>
 
                 <!-- Quick Prompts -->
