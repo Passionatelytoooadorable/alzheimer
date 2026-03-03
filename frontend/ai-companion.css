@@ -294,8 +294,8 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 210px);
-    min-height: 500px;
+    height: calc(100vh - 170px);
+    min-height: 600px;
 }
 
 .chat-header {

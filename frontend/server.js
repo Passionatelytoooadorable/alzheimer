@@ -34,30 +34,32 @@ app.use('/api/profile',   profileRoutes);
 app.use('/api/reports',   reportRoutes);
 
 const getSystemPrompt = () => {
-  // IST = UTC + 5h30m = UTC + 19800 seconds
+  // Compute IST by adding 5h30m to UTC
   const nowUTC = Date.now();
-  const istOffset = 5 * 60 * 60 * 1000 + 30 * 60 * 1000; // 19800000ms
-  const ist = new Date(nowUTC + istOffset);
+  const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000; // 330 minutes in ms
+  const istDate = new Date(nowUTC + IST_OFFSET_MS);
 
-  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // Use UTC getters on the shifted date to get IST values
+  const dayNames   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
 
-  const dayName   = days[ist.getUTCDay()];
-  const monthName = months[ist.getUTCMonth()];
-  const dateNum   = ist.getUTCDate();
-  const year      = ist.getUTCFullYear();
-  const hh24      = ist.getUTCHours();
-  const mm        = String(ist.getUTCMinutes()).padStart(2, '0');
+  const dayName   = dayNames[istDate.getUTCDay()];
+  const monthName = monthNames[istDate.getUTCMonth()];
+  const date      = istDate.getUTCDate();
+  const year      = istDate.getUTCFullYear();
+  const hh24      = istDate.getUTCHours();
+  const mm        = String(istDate.getUTCMinutes()).padStart(2, '0');
   const ampm      = hh24 >= 12 ? 'PM' : 'AM';
   const hh12      = hh24 % 12 || 12;
 
-  const dateStr = `${dayName}, ${dateNum} ${monthName} ${year}`;
+  const dateStr = `${dayName}, ${date} ${monthName} ${year}`;
   const timeStr = `${hh12}:${mm} ${ampm} IST`;
 
-  return `You are a warm, caring AI companion for an Alzheimer\'s support platform.
+  return `You are a warm, caring AI companion for an Alzheimer's support platform.
 Your role is to chat naturally and helpfully with users who may be patients, caregivers, or family members.
 
-Today\'s date is ${dateStr} and the current time is ${timeStr}.
+Today's date is ${dateStr} and the current time is ${timeStr}.
 
 Guidelines:
 - Be empathetic, patient, and supportive at all times
