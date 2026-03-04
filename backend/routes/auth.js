@@ -5,6 +5,18 @@ const { query } = require('../config/database');
 const auth     = require('../middleware/auth');
 const router   = express.Router();
 
+// ── Cookie config helper ──────────────────────────────────────────────────────
+// Centralised so every route uses identical cookie settings
+function cookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,   // JS cannot read this cookie — blocks XSS token theft
+    secure:   isProd, // HTTPS only in production; plain HTTP allowed in dev
+    sameSite: isProd ? 'none' : 'lax', // 'none' needed for cross-origin (Vercel → Render)
+    maxAge:   24 * 60 * 60 * 1000      // 24 hours in milliseconds
+  };
+}
+
 // ── Sign up ───────────────────────────────────────────────────────────────────
 router.post('/signup', async (req, res) => {
   try {
@@ -37,7 +49,7 @@ router.post('/signup', async (req, res) => {
     await query(
       `INSERT INTO user_sessions (user_id, ip_address, login_timestamp) VALUES ($1, $2, CURRENT_TIMESTAMP)`,
       [newUser.rows[0].id, req.ip]
-    ).catch(() => {}); // non-fatal
+    ).catch(() => {});
 
     await query(
       `INSERT INTO user_activities (user_id, activity_type, description) VALUES ($1, $2, $3)`,
@@ -50,10 +62,13 @@ router.post('/signup', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Set JWT as httpOnly cookie instead of sending it in the body
+    res.cookie('token', token, cookieOptions());
+
     res.status(201).json({
       message: 'User created successfully',
-      user: newUser.rows[0],
-      token
+      user: newUser.rows[0]
+      // token intentionally NOT included in body anymore
     });
 
   } catch (error) {
@@ -77,7 +92,6 @@ router.post('/signin', async (req, res) => {
     );
 
     if (userResult.rows.length === 0) {
-      // Generic message to prevent user enumeration
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -103,8 +117,16 @@ router.post('/signin', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Set JWT as httpOnly cookie instead of sending it in the body
+    res.cookie('token', token, cookieOptions());
+
     const { password_hash, ...userWithoutPassword } = user;
-    res.json({ message: 'Login successful', user: userWithoutPassword, token });
+
+    res.json({
+      message: 'Login successful',
+      user: userWithoutPassword
+      // token intentionally NOT included in body anymore
+    });
 
   } catch (error) {
     console.error('Signin error:', error);
@@ -112,9 +134,30 @@ router.post('/signin', async (req, res) => {
   }
 });
 
-// ── Forgot password (sends reset link concept) ────────────────────────────────
-// NOTE: To send real emails, add nodemailer + an email service (SendGrid, Resend, etc.)
-// For now this logs a token and always returns success to prevent email enumeration.
+// ── Logout — clears the httpOnly cookie ──────────────────────────────────────
+// NEW endpoint: frontend calls this to properly sign out
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', cookieOptions());
+  res.json({ message: 'Logged out successfully' });
+});
+
+// ── Me — lets frontend fetch the current user from the cookie ────────────────
+// NEW endpoint: frontend calls this on page load instead of reading localStorage
+router.get('/me', auth, async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT id, name, email, username, phone_number, created_at FROM users WHERE id = $1',
+      [req.user.userId]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── Forgot password ───────────────────────────────────────────────────────────
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -124,25 +167,20 @@ router.post('/forgot-password', async (req, res) => {
 
     const result = await query('SELECT id FROM users WHERE email = $1', [email]);
     if (result.rows.length > 0) {
-      // Generate a short-lived reset token
       const resetToken = jwt.sign(
         { userId: result.rows[0].id, type: 'password_reset' },
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
       );
-      // TODO: Send email via nodemailer
-      // For now, log it for development purposes only
       if (process.env.NODE_ENV !== 'production') {
         console.log('Password reset token for', email, ':', resetToken);
       }
-      // Activity log
       await query(
         `INSERT INTO user_activities (user_id, activity_type, description) VALUES ($1, $2, $3)`,
         [result.rows[0].id, 'password_reset_requested', 'Password reset requested']
       ).catch(() => {});
     }
 
-    // Always return success to prevent email enumeration
     res.json({ message: 'If that email exists, a reset link has been sent.' });
 
   } catch (error) {
@@ -151,7 +189,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// ── Get user activities (for dashboard + caregiver) ──────────────────────────
+// ── Get user activities ───────────────────────────────────────────────────────
 router.get('/activities', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -172,7 +210,7 @@ router.get('/activities', auth, async (req, res) => {
   }
 });
 
-// ── Change password (authenticated) ──────────────────────────────────────────
+// ── Change password ───────────────────────────────────────────────────────────
 router.post('/change-password', auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
