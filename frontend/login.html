@@ -7,20 +7,77 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <script>
-        function checkAuthLogin() {
-            if (localStorage.getItem('token')) {
-                window.location.replace('dashboard.html');
-            }
-        }
-        checkAuthLogin();
+        if (localStorage.getItem('token')) window.location.replace('dashboard.html');
         window.addEventListener('pageshow', function(e) {
-            if (e.persisted) checkAuthLogin();
+            if (e.persisted && localStorage.getItem('token')) window.location.replace('dashboard.html');
         });
     </script>
     <link rel="stylesheet" href="login.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
     <style>
-        .animation-container { background: linear-gradient(135deg, #e8f4fd 0%, #f0e6ff 100%); display:flex; align-items:center; justify-content:center; }
+        /* ── Inline fixes layered on top of login.css ── */
+        .form-group { position: relative; }
+
+        .input-wrapper { position: relative; }
+        .input-wrapper input { padding-right: 2.8rem; width: 100%; }
+        .toggle-password {
+            position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 1.1rem;
+            color: #888; padding: 0.25rem; line-height: 1;
+        }
+        .toggle-password:focus { outline: 2px solid #4a86e8; border-radius: 3px; }
+
+        /* Inline field error */
+        .field-error {
+            color: #d32f2f; font-size: 0.78rem; margin-top: 0.25rem;
+            display: none; align-items: center; gap: 0.25rem;
+        }
+        .field-error.visible { display: flex; }
+
+        /* Alert banner */
+        .alert-banner {
+            border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;
+            font-size: 0.88rem; display: none; align-items: flex-start; gap: 0.5rem;
+        }
+        .alert-banner.visible { display: flex; }
+        .alert-banner.error   { background: #fdecea; color: #c62828; border: 1px solid #f5c6cb; }
+        .alert-banner.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+        /* Loading spinner in button */
+        .login-button { position: relative; }
+        .login-button .btn-spinner {
+            display: none; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+            position: absolute; right: 1.2rem; top: 50%; transform: translateY(-50%);
+        }
+        .login-button.loading .btn-spinner { display: block; }
+        .login-button.loading { pointer-events: none; opacity: 0.85; }
+        @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+        /* Input invalid state */
+        input.invalid { border-color: #d32f2f !important; background: #fff8f8; }
+        input:focus { outline: 2px solid #4a86e8; outline-offset: 1px; }
+
+        /* Forgot password flow */
+        .forgot-form { display: none; }
+        .forgot-form.visible { display: block; }
+        .login-form.hidden { display: none; }
+        .back-to-login { background: none; border: none; color: #4a86e8; cursor: pointer; font-size: 0.85rem; text-decoration: underline; margin-bottom: 0.5rem; }
+
+        /* Accessibility toolbar */
+        .accessibility-options { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+        .accessibility-btn {
+            font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 20px;
+            border: 1px solid #ccc; background: white; cursor: pointer; color: #555;
+            transition: all 0.2s;
+        }
+        .accessibility-btn:hover { background: #f0f7ff; border-color: #4a86e8; color: #4a86e8; }
+        .accessibility-btn.active { background: #4a86e8; color: white; border-color: #4a86e8; }
+        body.large-text { font-size: 120%; }
+        body.high-contrast { filter: contrast(1.5); }
+
+        .animation-container { background: linear-gradient(135deg,#e8f4fd 0%,#f0e6ff 100%); display:flex; align-items:center; justify-content:center; }
     </style>
 </head>
 <body>
@@ -35,11 +92,11 @@
     </header>
 
     <main class="login-container">
+        <!-- Illustration side (unchanged visual) -->
         <div class="illustration-section">
             <div class="animation-container">
-                <svg width="320" height="260" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg">
+                <svg width="320" height="260" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <circle cx="160" cy="130" r="105" fill="rgba(168,208,230,0.12)"/>
-                    <!-- Elderly person (left) -->
                     <ellipse cx="105" cy="204" rx="26" ry="9" fill="rgba(0,0,0,0.08)"/>
                     <rect x="97" y="174" width="11" height="30" rx="5" fill="#78909c"/>
                     <rect x="112" y="174" width="11" height="30" rx="5" fill="#78909c"/>
@@ -51,7 +108,6 @@
                     <circle cx="103" cy="91" r="3" fill="#5d4037"/>
                     <circle cx="117" cy="91" r="3" fill="#5d4037"/>
                     <path d="M104 101 Q110 107 116 101" stroke="#5d4037" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <!-- Caregiver (right) -->
                     <ellipse cx="210" cy="201" rx="24" ry="9" fill="rgba(0,0,0,0.08)"/>
                     <rect x="202" y="173" width="10" height="28" rx="5" fill="#66bb6a"/>
                     <rect x="216" y="173" width="10" height="28" rx="5" fill="#66bb6a"/>
@@ -78,44 +134,218 @@
             </div>
         </div>
 
+        <!-- Login card -->
         <div class="login-card">
             <div class="login-header">
                 <h1>Welcome Back</h1>
                 <p>Sign in to access your support resources</p>
             </div>
-            <form id="loginForm" class="login-form">
+
+            <!-- Global alert banner -->
+            <div class="alert-banner" id="alertBanner" role="alert" aria-live="assertive"></div>
+
+            <!-- ── Main login form ── -->
+            <form id="loginForm" class="login-form" novalidate>
                 <div class="form-group">
                     <label for="username">Username or Email</label>
-                    <input type="text" id="username" required autocomplete="username" placeholder="Enter username or email">
+                    <div class="input-wrapper">
+                        <input type="text" id="username" autocomplete="username"
+                               placeholder="Enter username or email"
+                               aria-required="true" aria-describedby="usernameError">
+                    </div>
+                    <div class="field-error" id="usernameError" role="alert">⚠ Please enter your username or email</div>
                 </div>
+
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" required autocomplete="current-password" placeholder="Enter your password">
+                    <div class="input-wrapper">
+                        <input type="password" id="password" autocomplete="current-password"
+                               placeholder="Enter your password"
+                               aria-required="true" aria-describedby="passwordError">
+                        <button type="button" class="toggle-password" id="togglePassword"
+                                aria-label="Show password" title="Show/hide password">👁</button>
+                    </div>
+                    <div class="field-error" id="passwordError" role="alert">⚠ Please enter your password</div>
                 </div>
+
                 <div class="form-options">
                     <label class="remember-me">
-                        <input type="checkbox" name="remember">
+                        <input type="checkbox" name="remember" id="rememberMe">
                         <span>Remember me</span>
                     </label>
-                    <a href="#" class="forgot-password">Forgot password?</a>
+                    <button type="button" class="forgot-password" id="forgotPasswordBtn"
+                            style="background:none;border:none;color:#4a86e8;cursor:pointer;font-size:0.9rem;text-decoration:underline;">
+                        Forgot password?
+                    </button>
                 </div>
-                <button type="submit" class="login-button" id="loginBtn">Sign In</button>
+
+                <button type="submit" class="login-button" id="loginBtn">
+                    Sign In
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                </button>
             </form>
+
+            <!-- ── Forgot password form ── -->
+            <div class="forgot-form" id="forgotForm">
+                <button type="button" class="back-to-login" id="backToLogin">← Back to Sign In</button>
+                <h3 style="margin-bottom:0.5rem;">Reset Password</h3>
+                <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Enter your email address and we'll send you a reset link.</p>
+                <div class="alert-banner" id="forgotAlert" role="alert" aria-live="assertive"></div>
+                <div class="form-group">
+                    <label for="resetEmail">Email Address</label>
+                    <input type="email" id="resetEmail" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <button type="button" class="login-button" id="sendResetBtn" style="width:100%;margin-top:0.5rem;">
+                    Send Reset Link
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                </button>
+            </div>
+
             <div class="login-footer">
                 <p>New to Alzheimer's Support? <a href="signup.html">Create an account</a></p>
-                <div class="accessibility-options">
-                    <button id="textSize" class="accessibility-btn">Increase Text Size</button>
-                    <button id="highContrast" class="accessibility-btn">High Contrast</button>
+                <div class="accessibility-options" role="toolbar" aria-label="Accessibility options">
+                    <button id="textSize" class="accessibility-btn" aria-pressed="false">🔤 Larger Text</button>
+                    <button id="highContrast" class="accessibility-btn" aria-pressed="false">🔆 High Contrast</button>
                 </div>
             </div>
         </div>
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
+
     <script src="api.js"></script>
     <script src="user-store.js"></script>
-    <script src="login.js"></script>
+    <script>
+    // ── Accessibility toggles ──────────────────────────────────────────────────
+    document.getElementById('textSize').addEventListener('click', function() {
+        document.body.classList.toggle('large-text');
+        this.classList.toggle('active');
+        this.setAttribute('aria-pressed', document.body.classList.contains('large-text'));
+    });
+    document.getElementById('highContrast').addEventListener('click', function() {
+        document.body.classList.toggle('high-contrast');
+        this.classList.toggle('active');
+        this.setAttribute('aria-pressed', document.body.classList.contains('high-contrast'));
+    });
+
+    // ── Password toggle ────────────────────────────────────────────────────────
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        var inp = document.getElementById('password');
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        this.textContent = show ? '🙈' : '👁';
+        this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+
+    // ── Alert helpers ──────────────────────────────────────────────────────────
+    function showAlert(id, msg, type) {
+        var el = document.getElementById(id);
+        el.textContent = (type === 'error' ? '❌ ' : '✅ ') + msg;
+        el.className = 'alert-banner visible ' + type;
+    }
+    function hideAlert(id) {
+        document.getElementById(id).className = 'alert-banner';
+    }
+    function fieldError(inputId, errorId, show) {
+        var inp = document.getElementById(inputId);
+        var err = document.getElementById(errorId);
+        if (show) {
+            inp.classList.add('invalid');
+            err.classList.add('visible');
+        } else {
+            inp.classList.remove('invalid');
+            err.classList.remove('visible');
+        }
+    }
+
+    // Clear errors on typing
+    ['username','password'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', function() {
+            fieldError(id, id + 'Error', false);
+            hideAlert('alertBanner');
+        });
+    });
+
+    // ── Login form submit ──────────────────────────────────────────────────────
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+        var btn = document.getElementById('loginBtn');
+        var valid = true;
+
+        // Client-side validation
+        if (!username) { fieldError('username', 'usernameError', true); valid = false; }
+        if (!password)  { fieldError('password',  'passwordError',  true); valid = false; }
+        if (!valid) return;
+
+        // Loading state
+        btn.classList.add('loading');
+        btn.querySelector('.btn-spinner').style.display = 'block';
+        hideAlert('alertBanner');
+
+        try {
+            var res  = await API.post('/auth/signin', { email: username, password });
+            var data = await res.json();
+
+            if (!res.ok) {
+                // Show specific error messages
+                var msg = data.error || 'Login failed. Please try again.';
+                if (res.status === 401) msg = 'Incorrect username or password. Please try again.';
+                if (res.status === 429) msg = 'Too many attempts. Please wait a moment and try again.';
+                showAlert('alertBanner', msg, 'error');
+                return;
+            }
+
+            // Success — store token & user
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            if (document.getElementById('rememberMe').checked) {
+                localStorage.setItem('rememberMe', 'true');
+            }
+            showAlert('alertBanner', 'Signed in successfully! Redirecting…', 'success');
+            setTimeout(function() { window.location.replace('dashboard.html'); }, 600);
+
+        } catch (err) {
+            showAlert('alertBanner', 'Could not connect to the server. Please check your connection and try again.', 'error');
+        } finally {
+            btn.classList.remove('loading');
+        }
+    });
+
+    // ── Forgot password flow ───────────────────────────────────────────────────
+    document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('forgotForm').classList.add('visible');
+        document.getElementById('resetEmail').focus();
+    });
+    document.getElementById('backToLogin').addEventListener('click', function() {
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('forgotForm').classList.remove('visible');
+        hideAlert('forgotAlert');
+    });
+
+    document.getElementById('sendResetBtn').addEventListener('click', async function() {
+        var email = document.getElementById('resetEmail').value.trim();
+        if (!email) {
+            showAlert('forgotAlert', 'Please enter your email address.', 'error');
+            return;
+        }
+        this.classList.add('loading');
+        hideAlert('forgotAlert');
+        try {
+            var res  = await API.post('/auth/forgot-password', { email });
+            // Always show success to prevent email enumeration
+            showAlert('forgotAlert', 'If that email exists, a reset link has been sent. Check your inbox.', 'success');
+            document.getElementById('resetEmail').value = '';
+        } catch (err) {
+            showAlert('forgotAlert', 'Could not send reset email. Please try again later.', 'error');
+        } finally {
+            this.classList.remove('loading');
+        }
+    });
+    </script>
 </body>
 </html>

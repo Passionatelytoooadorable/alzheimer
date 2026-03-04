@@ -8,19 +8,109 @@
     <meta http-equiv="Pragma" content="no-cache">
     <script>
         function checkAuthDash() {
-            if (!localStorage.getItem('token')) {
-                window.location.replace('signup.html');
-            }
+            if (!localStorage.getItem('token')) window.location.replace('signup.html');
         }
         checkAuthDash();
-        window.addEventListener('pageshow', function(e) {
-            if (e.persisted) checkAuthDash();
-        });
+        window.addEventListener('pageshow', function(e) { if (e.persisted) checkAuthDash(); });
     </script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="profile.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
+    <style>
+        /* ── Dashboard live-data enhancements ── */
+
+        /* Connection status pill */
+        .connection-status {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 20px;
+            margin-left: 1rem; font-weight: 600; transition: all 0.3s;
+        }
+        .connection-status.online  { background: #e8f5e9; color: #2e7d32; }
+        .connection-status.offline { background: #fdecea; color: #c62828; }
+        .connection-status.checking{ background: #fff8e1; color: #f57f17; }
+        .status-dot-small { width: 8px; height: 8px; border-radius: 50%; }
+        .online  .status-dot-small { background: #4caf50; animation: pulse-green 2s infinite; }
+        .offline .status-dot-small { background: #f44336; }
+        .checking .status-dot-small { background: #ff9800; animation: pulse-orange 1s infinite; }
+        @keyframes pulse-green  { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes pulse-orange { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* Today at a glance banner */
+        .today-banner {
+            background: linear-gradient(135deg, #4a86e8 0%, #7c4dff 100%);
+            color: white; border-radius: 16px; padding: 1.5rem 2rem;
+            margin: 1.5rem 2rem; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            box-shadow: 0 4px 20px rgba(74,134,232,0.3);
+        }
+        .today-date-big { font-size: 1.6rem; font-weight: 700; }
+        .today-day      { font-size: 1rem; opacity: 0.85; margin-top: 0.1rem; }
+        .today-divider  { width: 1px; height: 50px; background: rgba(255,255,255,0.3); }
+        .today-reminders-pill h4 { font-size: 0.8rem; opacity: 0.8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .next-reminder  { font-size: 1rem; font-weight: 600; }
+        .no-reminders   { font-size: 0.9rem; opacity: 0.75; }
+
+        /* Mood check-in strip */
+        .mood-checkin {
+            background: white; border-radius: 12px; padding: 1rem 2rem;
+            margin: 0 2rem 1.5rem; display: flex; align-items: center;
+            gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); flex-wrap: wrap;
+        }
+        .mood-checkin p { font-weight: 600; color: #444; margin-right: 0.5rem; white-space: nowrap; }
+        .mood-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .mood-btn-q {
+            font-size: 1.4rem; padding: 0.3rem 0.6rem; border-radius: 8px;
+            border: 2px solid transparent; background: #f5f5f5; cursor: pointer;
+            transition: all 0.2s; line-height: 1;
+        }
+        .mood-btn-q:hover  { background: #e3f2fd; transform: scale(1.15); }
+        .mood-btn-q.active { border-color: #4a86e8; background: #e3f2fd; transform: scale(1.15); }
+        .mood-saved { color: #2e7d32; font-size: 0.85rem; display: none; }
+        .mood-saved.show { display: inline; }
+
+        /* Skeleton loader for stats */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%; animation: shimmer 1.2s infinite;
+            border-radius: 4px; display: inline-block;
+        }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        /* Activity feed */
+        .activity-feed {
+            background: white; border-radius: 12px; padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .activity-feed h3 { font-size: 1rem; color: #444; margin-bottom: 0.75rem; }
+        .activity-item {
+            display: flex; align-items: flex-start; gap: 0.75rem;
+            padding: 0.5rem 0; border-bottom: 1px solid #f5f5f5; font-size: 0.85rem;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+        .activity-text { color: #555; }
+        .activity-time { color: #aaa; font-size: 0.75rem; margin-top: 0.15rem; }
+        .activity-empty { color: #aaa; font-size: 0.85rem; padding: 0.5rem 0; }
+
+        /* Emergency button pulse */
+        #emergencyBtn {
+            animation: emergency-pulse 2.5s ease-in-out infinite;
+        }
+        @keyframes emergency-pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(211,47,47,0.4); }
+            50%      { box-shadow: 0 0 0 8px rgba(211,47,47,0); }
+        }
+
+        /* Tile badges — live counts */
+        .tile-badge.loading { color: transparent; background: #eee; border-radius: 4px; min-width: 60px; }
+
+        /* Compliance badge on reminders */
+        .compliance-bar-wrap { margin-top: 0.5rem; }
+        .compliance-label { font-size: 0.75rem; color: #888; margin-bottom: 0.25rem; }
+        .compliance-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+        .compliance-fill { height: 100%; background: #4caf50; border-radius: 3px; transition: width 0.8s ease; }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -28,39 +118,76 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <!-- Profile nav injected by nav-shared.js -->
-        <nav class="nav-links" id="sharedNav"></nav>
+        <div style="display:flex;align-items:center;">
+            <span class="connection-status checking" id="connStatus" aria-live="polite">
+                <span class="status-dot-small"></span>
+                <span id="connText">Connecting…</span>
+            </span>
+            <nav class="nav-links" id="sharedNav"></nav>
+        </div>
     </header>
+
+    <!-- Today at a glance banner -->
+    <div class="today-banner" role="banner" aria-label="Today's summary">
+        <div>
+            <div class="today-date-big" id="todayDate">—</div>
+            <div class="today-day"    id="todayDay">—</div>
+        </div>
+        <div class="today-divider" aria-hidden="true"></div>
+        <div class="today-reminders-pill">
+            <h4>Next Reminder</h4>
+            <div class="next-reminder" id="nextReminderText">Loading…</div>
+        </div>
+        <div class="today-divider" aria-hidden="true"></div>
+        <div>
+            <h4 style="font-size:0.8rem;opacity:0.8;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.05em;">Pending Today</h4>
+            <div style="font-size:1.5rem;font-weight:700;" id="pendingCount">—</div>
+        </div>
+    </div>
+
+    <!-- Mood check-in -->
+    <div class="mood-checkin" id="moodCheckin" role="region" aria-label="Daily mood check-in">
+        <p>How are you feeling today?</p>
+        <div class="mood-btns" role="group" aria-label="Mood options">
+            <button class="mood-btn-q" data-mood="😊" aria-label="Happy">😊</button>
+            <button class="mood-btn-q" data-mood="😌" aria-label="Calm">😌</button>
+            <button class="mood-btn-q" data-mood="😐" aria-label="Neutral">😐</button>
+            <button class="mood-btn-q" data-mood="😢" aria-label="Sad">😢</button>
+            <button class="mood-btn-q" data-mood="😠" aria-label="Frustrated">😠</button>
+            <button class="mood-btn-q" data-mood="😴" aria-label="Tired">😴</button>
+        </div>
+        <span class="mood-saved" id="moodSaved">✅ Mood saved to journal!</span>
+    </div>
 
     <section class="welcome-header">
         <div class="welcome-content">
-            <h1>Welcome, <span id="userName"></span></h1>
+            <h1>Welcome, <span id="userName"><span class="skeleton" style="width:80px;height:1em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></h1>
             <p class="date-display" id="currentDate"></p>
             <div class="quick-stats">
                 <div class="stat-item">
-                    <span class="stat-number" id="memoryCount">0</span>
+                    <span class="stat-number" id="memoryCount">—</span>
                     <span class="stat-label">Memories</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number" id="journalCount">0</span>
+                    <span class="stat-number" id="journalCount">—</span>
                     <span class="stat-label">Journal Entries</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number" id="reminderCount">0</span>
+                    <span class="stat-number" id="reminderCount">—</span>
                     <span class="stat-label">Today's Tasks</span>
                 </div>
             </div>
             <div class="floating-icons">
-                <div class="floating-icon" onclick="window.location.href='memory-vault.html'">
+                <div class="floating-icon" onclick="window.location.href='memory-vault.html'" role="button" tabindex="0" aria-label="Go to Memory Vault">
                     <div>📚</div><div class="icon-label">Memory</div>
                 </div>
-                <div class="floating-icon" onclick="window.location.href='journal.html'">
+                <div class="floating-icon" onclick="window.location.href='journal.html'" role="button" tabindex="0" aria-label="Go to Journal">
                     <div>📝</div><div class="icon-label">Journal</div>
                 </div>
-                <div class="floating-icon" onclick="window.location.href='location-tracker.html'">
+                <div class="floating-icon" onclick="window.location.href='location-tracker.html'" role="button" tabindex="0" aria-label="Go to Location Tracker">
                     <div>📍</div><div class="icon-label">Location</div>
                 </div>
-                <div class="floating-icon" onclick="window.location.href='ai-companion.html'">
+                <div class="floating-icon" onclick="window.location.href='ai-companion.html'" role="button" tabindex="0" aria-label="Go to AI Companion">
                     <div>🤖</div><div class="icon-label">AI</div>
                 </div>
             </div>
@@ -69,43 +196,52 @@
 
     <main class="dashboard-container">
         <div class="feature-row">
+            <!-- Today's Reminders — live data -->
             <div class="feature-tile reminders-tile">
                 <div class="tile-header">
                     <div class="tile-icon">⏰</div>
                     <h3>Today's Reminders</h3>
                 </div>
                 <div class="tile-content">
-                    <ul class="reminders-list" id="remindersList"></ul>
-                    <button class="add-reminder-btn">+ Add Reminder</button>
+                    <ul class="reminders-list" id="remindersList" aria-label="Today's reminders">
+                        <li style="color:#aaa;font-size:0.85rem;">Loading…</li>
+                    </ul>
+                    <div class="compliance-bar-wrap" id="complianceWrap" style="display:none;">
+                        <div class="compliance-label" id="complianceLabel">0 / 0 completed</div>
+                        <div class="compliance-bar"><div class="compliance-fill" id="complianceFill" style="width:0%"></div></div>
+                    </div>
+                    <button class="add-reminder-btn" onclick="window.location.href='reminders.html'">+ Add Reminder</button>
                 </div>
             </div>
+
+            <!-- Emergency contacts — with real data from profile -->
             <div class="feature-tile emergency-tile">
                 <div class="tile-header">
                     <div class="tile-icon">🆘</div>
                     <h3>Emergency Contact</h3>
                 </div>
                 <div class="tile-content">
-                    <div class="emergency-contacts">
+                    <div class="emergency-contacts" id="emergencyContacts">
+                        <!-- Populated from profile API -->
                         <div class="contact-card">
                             <div class="contact-avatar">👨‍⚕️</div>
                             <div class="contact-info">
-                                <div class="contact-name">Dr. David</div>
-                                <div class="contact-role">Primary Care Physician</div>
-                                <div class="contact-number">(555) 123-4567</div>
+                                <div class="contact-name" id="emergencyName">Loading…</div>
+                                <div class="contact-role">Emergency Contact</div>
+                                <div class="contact-number" id="emergencyPhone">—</div>
                             </div>
-                            <button class="call-btn" onclick="callNumber('5551234567')">Call</button>
+                            <button class="call-btn" id="emergencyCallBtn" onclick="">Call</button>
                         </div>
                         <div class="contact-card">
-                            <div class="contact-avatar">👨‍👩‍👧</div>
+                            <div class="contact-avatar">🏥</div>
                             <div class="contact-info">
-                                <div class="contact-name">Family Member</div>
-                                <div class="contact-role">Emergency Contact</div>
-                                <div class="contact-number">(555) 987-6543</div>
+                                <div class="contact-name" id="doctorName">Loading…</div>
+                                <div class="contact-role">Doctor / Hospital</div>
+                                <div class="contact-number" id="doctorHospital">—</div>
                             </div>
-                            <button class="call-btn" onclick="callNumber('5559876543')">Call</button>
                         </div>
                     </div>
-                    <button class="emergency-btn" id="emergencyBtn">🆘 Emergency Help</button>
+                    <button class="emergency-btn" id="emergencyBtn" aria-label="Call emergency services">🆘 Emergency Help</button>
                 </div>
             </div>
         </div>
@@ -115,13 +251,12 @@
                 <div class="tile-header">
                     <div class="tile-icon">📚</div>
                     <h3>Memory Vault</h3>
-                    <div class="tile-badge" id="memoryBadge">0 memories</div>
+                    <div class="tile-badge" id="memoryBadge">Loading…</div>
                 </div>
                 <div class="tile-content">
                     <p>Store and cherish your precious memories with photos and voice notes</p>
                     <div class="feature-stats">
-                        <span class="stat"><strong id="memoryCount2">0</strong> memories</span>
-                        <span class="stat"><strong>4</strong> family members</span>
+                        <span class="stat"><strong id="memoryCount2">—</strong> memories saved</span>
                     </div>
                 </div>
             </a>
@@ -129,13 +264,13 @@
                 <div class="tile-header">
                     <div class="tile-icon">📝</div>
                     <h3>Daily Journal</h3>
-                    <div class="tile-badge" id="journalBadge">0 entries</div>
+                    <div class="tile-badge" id="journalBadge">Loading…</div>
                 </div>
                 <div class="tile-content">
                     <p>Record your thoughts, feelings, and daily experiences</p>
                     <div class="feature-stats">
-                        <span class="stat"><strong id="journalCount2">0</strong> entries</span>
-                        <span class="stat"><strong id="weeklyCount">0</strong> this week</span>
+                        <span class="stat"><strong id="journalCount2">—</strong> entries</span>
+                        <span class="stat"><strong id="weeklyCount">—</strong> this week</span>
                     </div>
                 </div>
             </a>
@@ -146,13 +281,12 @@
                 <div class="tile-header">
                     <div class="tile-icon">📍</div>
                     <h3>Location Safety</h3>
-                    <div class="tile-status location-on">Location on</div>
+                    <div class="tile-status location-on" id="locationStatus">Checking…</div>
                 </div>
                 <div class="tile-content">
                     <p>Share your location with trusted contacts for safety</p>
                     <div class="location-info">
-                        <div class="location-status">Last updated: 2 hours ago</div>
-                        <div class="safe-zone">Safe zone: Home</div>
+                        <div class="location-status" id="lastLocationUpdate">—</div>
                     </div>
                 </div>
             </a>
@@ -160,7 +294,7 @@
                 <div class="tile-header">
                     <div class="tile-icon">🤖</div>
                     <h3>AI Care Companion</h3>
-                    <div class="tile-badge">Online</div>
+                    <div class="tile-badge" id="aiStatus">Online</div>
                 </div>
                 <div class="tile-content">
                     <p>Get help with reminders, questions, and daily assistance</p>
@@ -172,31 +306,39 @@
                 </div>
             </a>
         </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="feature-row">
+            <div class="feature-tile" style="flex:1;">
+                <div class="activity-feed">
+                    <h3>📋 Recent Activity</h3>
+                    <div id="activityFeed">
+                        <div class="activity-empty">Loading activity…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
-    <div id="emergencyModal" class="modal">
+    <!-- Emergency modal -->
+    <div id="emergencyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="emergencyModalTitle">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Emergency Contacts</h2>
-            <div class="contact-list">
+            <span class="close" aria-label="Close emergency contacts">&times;</span>
+            <h2 id="emergencyModalTitle">Emergency Contacts</h2>
+            <div class="contact-list" id="emergencyModalList">
                 <div class="contact-item">
-                    <div class="contact-name">Dr. David</div>
-                    <div class="contact-number">(555) 123-4567</div>
-                    <button class="call-btn" onclick="callNumber('5551234567')">Call</button>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-name">Family Member</div>
-                    <div class="contact-number">(555) 987-6543</div>
-                    <button class="call-btn" onclick="callNumber('5559876543')">Call</button>
+                    <div class="contact-name" id="modalEmergencyName">Emergency Contact</div>
+                    <div class="contact-number" id="modalEmergencyPhone">—</div>
+                    <button class="call-btn" id="modalEmergencyCallBtn">Call</button>
                 </div>
                 <div class="contact-item">
                     <div class="contact-name">Emergency Services</div>
-                    <div class="contact-number">911</div>
-                    <button class="call-btn emergency-call" onclick="callNumber('911')">Call 911</button>
+                    <div class="contact-number">112 / 911</div>
+                    <button class="call-btn emergency-call" onclick="window.location.href='tel:112'">Call 112</button>
                 </div>
             </div>
         </div>
@@ -206,5 +348,252 @@
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
     <script src="dashboard.js"></script>
+    <script>
+    // ── Dashboard live-data loader ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async function () {
+        if (typeof initSharedNav === 'function') initSharedNav('dashboard.html');
+
+        // Date / time
+        var now = new Date();
+        document.getElementById('todayDate').textContent = now.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+        document.getElementById('todayDay').textContent  = now.toLocaleDateString('en-US', { weekday:'long' });
+        if (document.getElementById('currentDate'))
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+        // ── Connection health check ────────────────────────────────────────────
+        async function checkHealth() {
+            var el   = document.getElementById('connStatus');
+            var text = document.getElementById('connText');
+            try {
+                var r = await fetch('https://alzheimer-backend-new.onrender.com/api/health');
+                if (r.ok) {
+                    el.className   = 'connection-status online';
+                    text.textContent = 'Connected';
+                    document.getElementById('aiStatus').textContent = 'Online';
+                } else { throw new Error(); }
+            } catch {
+                el.className   = 'connection-status offline';
+                text.textContent = 'Offline';
+                document.getElementById('aiStatus').textContent = 'Offline';
+            }
+        }
+        checkHealth();
+        setInterval(checkHealth, 60000);
+
+        // ── User name ─────────────────────────────────────────────────────────
+        var stored = localStorage.getItem('user');
+        if (stored) {
+            var u = JSON.parse(stored);
+            var nameEl = document.getElementById('userName');
+            if (nameEl) nameEl.textContent = u.name || u.username || 'Friend';
+        }
+
+        // ── Load all data in parallel ─────────────────────────────────────────
+        await Promise.allSettled([
+            loadReminders(),
+            loadJournalStats(),
+            loadMemoryStats(),
+            loadProfile(),
+            loadActivity(),
+            loadLocation()
+        ]);
+    });
+
+    // ── Reminders ─────────────────────────────────────────────────────────────
+    async function loadReminders() {
+        try {
+            var res  = await API.get('/reminders?filter=today');
+            var data = await res.json();
+            var list = data.reminders || [];
+            var pending = data.today_pending || 0;
+
+            document.getElementById('reminderCount').textContent = pending;
+            document.getElementById('pendingCount').textContent  = pending;
+
+            var ul = document.getElementById('remindersList');
+            ul.innerHTML = '';
+            if (!list.length) {
+                ul.innerHTML = '<li style="color:#aaa;font-size:0.85rem;">No reminders for today 🎉</li>';
+                document.getElementById('nextReminderText').textContent = 'None today';
+                return;
+            }
+
+            var completed = 0;
+            list.forEach(function(r) {
+                if (r.completed) completed++;
+                var li = document.createElement('li');
+                li.innerHTML = '<span>' + (r.completed ? '✅' : '⏰') + ' ' + escapeHtml(r.title) +
+                    (r.reminder_time ? ' <small style="color:#aaa;">at ' + r.reminder_time.substring(0,5) + '</small>' : '') + '</span>';
+                li.style.cssText = 'padding:0.3rem 0;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid #f5f5f5;' +
+                    (r.completed ? 'opacity:0.5;text-decoration:line-through;' : '');
+                ul.appendChild(li);
+            });
+
+            // Compliance bar
+            var pct = Math.round((completed / list.length) * 100);
+            document.getElementById('complianceWrap').style.display = 'block';
+            document.getElementById('complianceLabel').textContent  = completed + ' / ' + list.length + ' completed';
+            document.getElementById('complianceFill').style.width   = pct + '%';
+
+            // Next reminder
+            var upcoming = list.filter(function(r) { return !r.completed && r.reminder_time; });
+            if (upcoming.length) {
+                document.getElementById('nextReminderText').textContent =
+                    upcoming[0].title + ' at ' + upcoming[0].reminder_time.substring(0,5);
+            } else {
+                document.getElementById('nextReminderText').textContent = 'All done for today!';
+            }
+        } catch (e) {
+            document.getElementById('remindersList').innerHTML = '<li style="color:#aaa;font-size:0.85rem;">Could not load reminders</li>';
+            document.getElementById('nextReminderText').textContent = 'Unavailable';
+        }
+    }
+
+    // ── Journals ──────────────────────────────────────────────────────────────
+    async function loadJournalStats() {
+        try {
+            var res  = await API.get('/journals');
+            var data = await res.json();
+            var stats = data.stats || {};
+            var total = parseInt(stats.total || 0);
+            var week  = parseInt(stats.this_week || 0);
+
+            document.getElementById('journalCount').textContent  = total;
+            document.getElementById('journalCount2').textContent = total;
+            document.getElementById('weeklyCount').textContent   = week;
+            document.getElementById('journalBadge').textContent  = total + ' entries';
+        } catch (e) {
+            ['journalCount','journalCount2','weeklyCount'].forEach(function(id) {
+                document.getElementById(id).textContent = '—';
+            });
+        }
+    }
+
+    // ── Memories ──────────────────────────────────────────────────────────────
+    async function loadMemoryStats() {
+        try {
+            var res  = await API.get('/memories');
+            var data = await res.json();
+            var count = (data.memories || []).length;
+            document.getElementById('memoryCount').textContent  = count;
+            document.getElementById('memoryCount2').textContent = count;
+            document.getElementById('memoryBadge').textContent  = count + ' memories';
+        } catch (e) {
+            ['memoryCount','memoryCount2'].forEach(function(id) {
+                document.getElementById(id).textContent = '—';
+            });
+        }
+    }
+
+    // ── Profile → emergency contact ───────────────────────────────────────────
+    async function loadProfile() {
+        try {
+            var res  = await API.get('/profile');
+            var data = await res.json();
+            var p    = data.profile  || {};
+            var m    = data.medical  || {};
+
+            if (p.emergency) {
+                document.getElementById('emergencyName').textContent  = p.emergency;
+                document.getElementById('modalEmergencyName').textContent = p.emergency;
+                var callBtn  = document.getElementById('emergencyCallBtn');
+                var callBtn2 = document.getElementById('modalEmergencyCallBtn');
+                callBtn.onclick  = function() { window.location.href = 'tel:' + p.emergency; };
+                callBtn2.onclick = function() { window.location.href = 'tel:' + p.emergency; };
+            } else {
+                document.getElementById('emergencyName').textContent = 'Not set — update in Profile';
+            }
+            if (m.doctor)   document.getElementById('doctorName').textContent    = m.doctor;
+            if (m.hospital) document.getElementById('doctorHospital').textContent = m.hospital;
+
+        } catch (e) { /* silently ignore */ }
+    }
+
+    // ── Activity feed ─────────────────────────────────────────────────────────
+    async function loadActivity() {
+        try {
+            var res  = await API.get('/auth/activities');
+            var data = await res.json();
+            var acts = (data.activities || []).slice(0, 6);
+            var feed = document.getElementById('activityFeed');
+            if (!acts.length) {
+                feed.innerHTML = '<div class="activity-empty">No recent activity yet.</div>';
+                return;
+            }
+            var icons = { login:'🔐', signup:'🎉', journal_added:'📝', journal_deleted:'🗑️',
+                          memory_added:'📸', memory_deleted:'🗑️', reminder_added:'⏰',
+                          reminder_deleted:'🗑️', location_updated:'📍', report_added:'🔬' };
+            feed.innerHTML = acts.map(function(a) {
+                var ago = timeAgo(new Date(a.timestamp));
+                return '<div class="activity-item"><span class="activity-icon">' +
+                    (icons[a.activity_type] || '📌') + '</span>' +
+                    '<div><div class="activity-text">' + escapeHtml(a.description) + '</div>' +
+                    '<div class="activity-time">' + ago + '</div></div></div>';
+            }).join('');
+        } catch (e) {
+            document.getElementById('activityFeed').innerHTML = '<div class="activity-empty">Activity unavailable.</div>';
+        }
+    }
+
+    // ── Location last update ──────────────────────────────────────────────────
+    async function loadLocation() {
+        try {
+            var res  = await API.get('/locations/last');
+            var data = await res.json();
+            var loc  = data.location;
+            if (loc) {
+                var when = timeAgo(new Date(loc.timestamp));
+                document.getElementById('lastLocationUpdate').textContent = 'Last updated: ' + when;
+                document.getElementById('locationStatus').textContent = 'Location on';
+                document.getElementById('locationStatus').className = 'tile-status location-on';
+            } else {
+                document.getElementById('locationStatus').textContent = 'Not sharing';
+                document.getElementById('locationStatus').className = 'tile-status';
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    // ── Mood check-in ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.mood-btn-q').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            document.querySelectorAll('.mood-btn-q').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            var mood = this.dataset.mood;
+            // Quick journal entry with just mood
+            try {
+                await API.post('/journals', {
+                    title: 'Daily Mood Check-in',
+                    content: 'Feeling ' + mood + ' today.',
+                    mood: mood,
+                    entry_date: new Date().toISOString().split('T')[0]
+                });
+                var savedEl = document.getElementById('moodSaved');
+                savedEl.classList.add('show');
+                setTimeout(function() { savedEl.classList.remove('show'); }, 3000);
+                loadJournalStats(); // refresh count
+            } catch (e) { /* ignore */ }
+        });
+    });
+
+    // ── Emergency modal ───────────────────────────────────────────────────────
+    document.getElementById('emergencyBtn').addEventListener('click', function() {
+        document.getElementById('emergencyModal').style.display = 'flex';
+    });
+    document.querySelector('#emergencyModal .close').addEventListener('click', function() {
+        document.getElementById('emergencyModal').style.display = 'none';
+    });
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+    function escapeHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function timeAgo(date) {
+        var secs = Math.floor((Date.now() - date) / 1000);
+        if (secs < 60)   return 'Just now';
+        if (secs < 3600) return Math.floor(secs/60) + 'm ago';
+        if (secs < 86400)return Math.floor(secs/3600) + 'h ago';
+        return Math.floor(secs/86400) + 'd ago';
+    }
+    </script>
 </body>
 </html>

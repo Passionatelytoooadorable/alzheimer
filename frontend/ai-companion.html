@@ -6,8 +6,115 @@
     <title>AI Care Companion - Alzheimer's Support</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ai-companion.css">
-    <link rel="icon" href="#" id="dynamic-favicon">
-    <script src="favicon-config.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <style>
+        /* ── Enhancement styles layered on top of ai-companion.css ── */
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 1rem; font-size: 0.82rem; color: #888;
+        }
+        .typing-indicator.visible { display: flex; }
+        .typing-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: #bbb;
+            animation: bounce 1.2s ease-in-out infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+        /* Voice input button */
+        .voice-input-btn {
+            background: none; border: none; cursor: pointer; font-size: 1.3rem;
+            padding: 0.4rem; border-radius: 8px; transition: all 0.2s; color: #888;
+            flex-shrink: 0;
+        }
+        .voice-input-btn:hover   { background: #f0f7ff; color: #4a86e8; }
+        .voice-input-btn.active  { color: #f44336; animation: pulse-red 1s infinite; }
+        @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        /* TTS toggle */
+        .tts-toggle {
+            display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem;
+            color: #888; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 6px;
+            background: none; border: none; transition: background 0.2s;
+        }
+        .tts-toggle:hover   { background: #f0f7ff; }
+        .tts-toggle.enabled { color: #4a86e8; font-weight: 600; }
+
+        /* Status dot — live connection */
+        .status-dot { transition: background 0.3s; }
+        .status-dot.connected    { background: #4caf50; }
+        .status-dot.disconnected { background: #f44336; }
+
+        /* Game modal */
+        .game-modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            z-index: 2000; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .game-modal-overlay.open { display: flex; }
+        .game-modal {
+            background: white; border-radius: 16px; padding: 2rem; width: 100%;
+            max-width: 520px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        .game-modal h2  { margin-bottom: 0.5rem; }
+        .game-modal p   { color: #666; font-size: 0.88rem; margin-bottom: 1.5rem; }
+        .game-close { float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #aaa; }
+        .game-close:hover { color: #333; }
+
+        /* Memory Match */
+        .memory-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.5rem; }
+        .mem-card {
+            aspect-ratio: 1; font-size: 1.8rem; border-radius: 8px; border: 2px solid #ddd;
+            background: #f5f5f5; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s; user-select: none;
+        }
+        .mem-card.flipped   { background: #e8f0fe; border-color: #4a86e8; }
+        .mem-card.matched   { background: #e8f5e9; border-color: #4caf50; cursor: default; }
+        .mem-card:not(.flipped):not(.matched):hover { background: #e8f0fe; transform: scale(1.05); }
+
+        /* Trivia */
+        .trivia-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.25rem; color: #333; }
+        .trivia-options  { display: flex; flex-direction: column; gap: 0.6rem; }
+        .trivia-opt {
+            padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid #ddd;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.2s; background: white;
+            text-align: left;
+        }
+        .trivia-opt:hover  { background: #f0f7ff; border-color: #4a86e8; }
+        .trivia-opt.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; font-weight:600; }
+        .trivia-opt.wrong   { background: #fdecea; border-color: #f44336; color: #c62828; }
+        .trivia-feedback    { margin-top: 1rem; font-size: 0.9rem; min-height: 1.2em; }
+        .trivia-score  { font-size: 1rem; color: #666; margin-bottom: 1rem; }
+
+        /* Word Association */
+        .word-display  { font-size: 2rem; font-weight: 700; text-align: center; margin: 1rem 0; color: #4a86e8; }
+        .word-input-row { display: flex; gap: 0.5rem; }
+        .word-input-row input {
+            flex: 1; padding: 0.6rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;
+        }
+        .word-input-row button {
+            padding: 0.6rem 1rem; background: #4a86e8; color: white; border: none;
+            border-radius: 8px; cursor: pointer; font-weight: 600;
+        }
+        .word-chain { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+        .word-chip  { background: #e8f0fe; color: #4a86e8; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.82rem; }
+
+        /* Game score banner */
+        .game-score-banner {
+            background: #e8f0fe; border-radius: 8px; padding: 0.6rem 1rem;
+            font-size: 0.88rem; color: #4a86e8; margin-bottom: 1rem; text-align: center;
+        }
+
+        /* Chat message TTS button */
+        .msg-tts-btn {
+            background: none; border: none; cursor: pointer; font-size: 0.85rem;
+            opacity: 0.5; padding: 0.1rem 0.3rem; border-radius: 4px; transition: opacity 0.2s;
+        }
+        .msg-tts-btn:hover { opacity: 1; }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -20,7 +127,6 @@
 
     <main class="ai-companion-container">
 
-        <!-- Compact Header Banner -->
         <section class="companion-header">
             <div class="header-content">
                 <div class="header-left">
@@ -30,11 +136,11 @@
                 <div class="header-center">
                     <div class="header-stats">
                         <div class="stat">
-                            <span class="stat-number" id="daysActiveStat">0</span>
+                            <span class="stat-number" id="daysActiveStat">—</span>
                             <span class="stat-label">Days Active</span>
                         </div>
                         <div class="stat">
-                            <span class="stat-number" id="chatSessions">0</span>
+                            <span class="stat-number" id="chatSessions">—</span>
                             <span class="stat-label">Chats Today</span>
                         </div>
                     </div>
@@ -50,13 +156,10 @@
             </div>
         </section>
 
-        <!-- 3-Column Layout -->
         <div class="main-content">
 
-            <!-- LEFT SIDEBAR: Live Clock + Quick Prompts -->
+            <!-- LEFT SIDEBAR -->
             <aside class="left-sidebar">
-
-                <!-- Breathing Exercise -->
                 <div class="breathing-widget">
                     <h3>🌬️ Breathing Exercise</h3>
                     <div class="breathing-circle-container">
@@ -65,16 +168,15 @@
                             <span class="breathing-emoji">😮‍💨</span>
                         </div>
                     </div>
-                    <div class="breathing-text" id="breathingText">Breathe In</div>
+                    <div class="breathing-text"    id="breathingText">Breathe In</div>
                     <div class="breathing-subtext" id="breathingSubtext">Get ready...</div>
                     <div class="breathing-controls">
-                        <button class="breathing-btn" id="breathingStartBtn">▶ Start</button>
+                        <button class="breathing-btn"           id="breathingStartBtn">▶ Start</button>
                         <button class="breathing-btn secondary" id="breathingStopBtn" style="display:none">⏹ Stop</button>
                     </div>
                     <div class="breathing-counter" id="breathingCounter"></div>
                 </div>
 
-                <!-- Quick Prompts -->
                 <div class="quick-prompts-widget">
                     <h3>💬 Quick Topics</h3>
                     <button class="prompt-btn" data-prompt="What are some good brain exercises I can do today?">🧠 Brain Exercises</button>
@@ -84,7 +186,6 @@
                     <button class="prompt-btn" data-prompt="What healthy foods are good for brain health?">🥗 Brain Foods</button>
                     <button class="prompt-btn" data-prompt="Can you teach me a simple breathing exercise to feel calm?">🌬️ Calm Me Down</button>
                 </div>
-
             </aside>
 
             <!-- CENTER: Chat -->
@@ -97,137 +198,131 @@
                         <div class="companion-info">
                             <h3>Care Companion</h3>
                             <div class="status-indicator">
-                                <span class="status-dot"></span>
-                                <span class="status-text">Online</span>
+                                <span class="status-dot" id="connDot"></span>
+                                <span class="status-text" id="connText">Connecting…</span>
                             </div>
                         </div>
-                        <div class="chat-controls">
-                            <button class="control-btn" id="cameraToggle" title="Take Photo">
+                        <div class="chat-controls" style="display:flex;align-items:center;gap:0.5rem;">
+                            <!-- TTS toggle -->
+                            <button class="tts-toggle" id="ttsToggle" aria-pressed="false" title="Read responses aloud">
+                                🔇 TTS Off
+                            </button>
+                            <button class="control-btn" id="cameraToggle" title="Take Photo" aria-label="Take photo">
                                 <span class="btn-icon">📷</span>
                             </button>
-                            <button class="control-btn" id="settingsToggle" title="Chat Settings">
+                            <button class="control-btn" id="settingsToggle" title="Chat Settings" aria-label="Chat settings">
                                 <span class="btn-icon">⚙️</span>
                             </button>
                         </div>
                     </div>
 
-                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+
+                    <!-- Typing indicator -->
+                    <div class="typing-indicator" id="typingIndicator" aria-live="polite" aria-label="AI is typing">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <span style="margin-left:0.25rem;">Care Companion is thinking…</span>
+                    </div>
 
                     <div class="quick-actions">
                         <button class="quick-action-btn medication" data-prompt="Can you remind me about my medication and give tips for remembering to take it?">
-                            <span class="action-icon">💊</span>
-                            <span class="action-text">Medication</span>
+                            <span class="action-icon">💊</span><span class="action-text">Medication</span>
                         </button>
                         <button class="quick-action-btn games" data-prompt="Let's play a memory game">
-                            <span class="action-icon">🧠</span>
-                            <span class="action-text">Memory Game</span>
+                            <span class="action-icon">🧠</span><span class="action-text">Memory Game</span>
                         </button>
                         <button class="quick-action-btn stories" data-prompt="Please tell me a short comforting story.">
-                            <span class="action-icon">📖</span>
-                            <span class="action-text">Story</span>
+                            <span class="action-icon">📖</span><span class="action-text">Story</span>
                         </button>
                     </div>
 
                     <div class="chat-input-container">
-                        <div class="input-wrapper">
-                            <input type="text" id="chatInput" placeholder="Type your message here..." maxlength="500">
-                            <button id="sendMessage" class="send-btn">
+                        <div class="input-wrapper" style="display:flex;align-items:center;gap:0.4rem;">
+                            <button class="voice-input-btn" id="voiceInputBtn" title="Voice input" aria-label="Start voice input">🎤</button>
+                            <input type="text" id="chatInput" placeholder="Type your message here… or use 🎤" maxlength="500"
+                                   aria-label="Chat message input">
+                            <button id="sendMessage" class="send-btn" aria-label="Send message">
                                 <span class="send-icon">➤</span>
                             </button>
                         </div>
-                        <div class="input-hint">Press Enter to send • Maximum 500 characters</div>
+                        <div class="input-hint" id="inputHint">Press Enter to send • Maximum 500 characters</div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT SIDEBAR: Daily Tip + Games -->
+            <!-- RIGHT SIDEBAR -->
             <aside class="right-sidebar">
-
-                <!-- Sticky Note Tip -->
                 <div class="sticky-tip-card">
                     <div class="sticky-tip-header">💡 Tip of the Day</div>
                     <div id="tipsContainer"></div>
                 </div>
 
-                <!-- Games vertical -->
                 <div class="games-sidebar">
                     <h3>🎮 Quick Games</h3>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">🧠</div>
-                        <div class="game-info-v">
-                            <h4>Memory Match</h4>
-                            <p>Test your memory</p>
-                        </div>
-                        <button class="game-btn-v" data-game="Memory Match">Play</button>
+                        <div class="game-info-v"><h4>Memory Match</h4><p>Test your memory</p></div>
+                        <button class="game-btn-v" id="playMemoryMatch">Play</button>
                     </div>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">❓</div>
-                        <div class="game-info-v">
-                            <h4>Simple Trivia</h4>
-                            <p>Challenge your mind</p>
-                        </div>
-                        <button class="game-btn-v" data-game="Simple Trivia">Play</button>
+                        <div class="game-info-v"><h4>Simple Trivia</h4><p>Challenge your mind</p></div>
+                        <button class="game-btn-v" id="playTrivia">Play</button>
                     </div>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">🔗</div>
-                        <div class="game-info-v">
-                            <h4>Word Association</h4>
-                            <p>Connect words</p>
-                        </div>
-                        <button class="game-btn-v" data-game="Word Association">Play</button>
+                        <div class="game-info-v"><h4>Word Association</h4><p>Connect words</p></div>
+                        <button class="game-btn-v" id="playWordAssoc">Play</button>
                     </div>
                 </div>
-
             </aside>
         </div>
     </main>
 
-    <!-- Camera Modal -->
-    <div id="cameraModal" class="modal">
+    <!-- ── Camera Modal ── -->
+    <div id="cameraModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle">
         <div class="modal-content camera-modal">
-            <span class="close">&times;</span>
-            <h3>Take a Photo</h3>
+            <span class="close" aria-label="Close">&times;</span>
+            <h3 id="cameraModalTitle">Take a Photo</h3>
             <div class="camera-container">
-                <video id="cameraVideo" autoplay playsinline></video>
-                <canvas id="cameraCanvas" style="display: none;"></canvas>
+                <video id="cameraVideo" autoplay playsinline aria-label="Camera preview"></video>
+                <canvas id="cameraCanvas" style="display:none;"></canvas>
                 <div class="camera-controls">
                     <button id="capturePhoto" class="btn-primary">Capture Photo</button>
-                    <button id="retakePhoto" class="btn-secondary" style="display: none;">Retake</button>
-                    <button id="uploadPhoto" class="btn-primary" style="display: none;">Upload to Chat</button>
+                    <button id="retakePhoto"  class="btn-secondary" style="display:none;">Retake</button>
+                    <button id="uploadPhoto"  class="btn-primary"   style="display:none;">Upload to Chat</button>
                 </div>
-                <div class="photo-preview" id="photoPreview" style="display: none;">
+                <div class="photo-preview" id="photoPreview" style="display:none;">
                     <img id="previewImage" src="" alt="Captured photo">
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
+    <!-- ── Settings Modal ── -->
+    <div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
         <div class="modal-content settings-modal">
-            <span class="close">&times;</span>
-            <h3>Chat Settings</h3>
+            <span class="close" aria-label="Close">&times;</span>
+            <h3 id="settingsModalTitle">Chat Settings</h3>
             <div class="settings-options">
                 <div class="settings-group">
                     <h4>Chat Management</h4>
                     <button class="settings-btn" id="restoreChats">
-                        <span class="settings-icon">📥</span>
-                        <span class="settings-text">Restore Previous Chats</span>
+                        <span class="settings-icon">📥</span><span class="settings-text">Restore Previous Chats</span>
                     </button>
                     <button class="settings-btn" id="clearChat">
-                        <span class="settings-icon">🗑️</span>
-                        <span class="settings-text">Clear Current Chat</span>
+                        <span class="settings-icon">🗑️</span><span class="settings-text">Clear Current Chat</span>
                     </button>
                 </div>
                 <div class="settings-group">
-                    <h4>Backup & Export</h4>
+                    <h4>Backup &amp; Export</h4>
                     <button class="settings-btn" id="exportChats">
-                        <span class="settings-icon">📤</span>
-                        <span class="settings-text">Export Chat History</span>
+                        <span class="settings-icon">📤</span><span class="settings-text">Export Chat History</span>
                     </button>
                     <button class="settings-btn" id="importChats">
-                        <span class="settings-icon">📁</span>
-                        <span class="settings-text">Import Chat History</span>
+                        <span class="settings-icon">📁</span><span class="settings-text">Import Chat History</span>
                     </button>
                 </div>
             </div>
@@ -238,10 +333,52 @@
         </div>
     </div>
 
-    <input type="file" id="chatImportFile" accept=".json" style="display: none;">
+    <!-- ── Memory Match game modal ── -->
+    <div class="game-modal-overlay" id="memMatchModal" role="dialog" aria-modal="true" aria-labelledby="mmTitle">
+        <div class="game-modal">
+            <button class="game-close" id="closeMemMatch" aria-label="Close game">×</button>
+            <h2 id="mmTitle">🧠 Memory Match</h2>
+            <p>Find all the matching pairs! Tap two cards to flip them.</p>
+            <div class="game-score-banner" id="mmScore">Score: 0 · Moves: 0</div>
+            <div class="memory-grid" id="memMatchGrid" aria-label="Memory match game grid"></div>
+            <button class="add-btn" id="mmRestart" style="margin-top:1rem;width:100%;justify-content:center;background:#4a86e8;color:white;border:none;border-radius:8px;padding:0.6rem;cursor:pointer;font-weight:600;">🔄 New Game</button>
+        </div>
+    </div>
+
+    <!-- ── Trivia game modal ── -->
+    <div class="game-modal-overlay" id="triviaModal" role="dialog" aria-modal="true" aria-labelledby="triviaTitle">
+        <div class="game-modal">
+            <button class="game-close" id="closeTrivia" aria-label="Close game">×</button>
+            <h2 id="triviaTitle">❓ Simple Trivia</h2>
+            <div class="game-score-banner" id="triviaScore">Question 1 of 5 · Score: 0</div>
+            <div class="trivia-question" id="triviaQ"></div>
+            <div class="trivia-options"  id="triviaOpts" role="group" aria-label="Answer options"></div>
+            <div class="trivia-feedback" id="triviaFeedback"></div>
+            <button id="triviaNext" style="display:none;margin-top:1rem;width:100%;background:#4a86e8;color:white;border:none;border-radius:8px;padding:0.65rem;cursor:pointer;font-weight:600;">Next Question →</button>
+        </div>
+    </div>
+
+    <!-- ── Word Association game modal ── -->
+    <div class="game-modal-overlay" id="wordModal" role="dialog" aria-modal="true" aria-labelledby="wordTitle">
+        <div class="game-modal">
+            <button class="game-close" id="closeWord" aria-label="Close game">×</button>
+            <h2 id="wordTitle">🔗 Word Association</h2>
+            <p>Type a word that connects to the previous one! Build the longest chain you can.</p>
+            <div class="game-score-banner" id="wordScore">Chain length: 0</div>
+            <div class="word-display" id="wordDisplay" aria-live="polite"></div>
+            <div class="word-input-row">
+                <input type="text" id="wordInput" placeholder="Type a related word…" maxlength="30" aria-label="Your word">
+                <button id="wordSubmit">Submit</button>
+            </div>
+            <div class="word-chain" id="wordChain" aria-live="polite"></div>
+            <div id="wordFeedback" style="margin-top:0.75rem;font-size:0.88rem;color:#888;"></div>
+        </div>
+    </div>
+
+    <input type="file" id="chatImportFile" accept=".json" style="display:none;">
 
     <footer class="footer">
-        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
     <script src="daily-tips.js"></script>
@@ -249,16 +386,387 @@
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
     <script>
-        (function() {
-            if (!localStorage.getItem('token')) {
-                window.location.replace('login.html');
-                return;
-            }
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof initSharedNav === 'function') initSharedNav('ai-companion.html');
-            });
-        })();
+    (function() {
+        if (!localStorage.getItem('token')) { window.location.replace('login.html'); return; }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initSharedNav === 'function') initSharedNav('ai-companion.html');
+        });
+    })();
     </script>
     <script src="ai-companion.js"></script>
+    <script>
+    // ─────────────────────────────────────────────────────────────────────────
+    // ENHANCEMENTS — run after ai-companion.js
+    // ─────────────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async function () {
+
+        // ── Live stat counters ─────────────────────────────────────────────────
+        try {
+            var user = JSON.parse(localStorage.getItem('user') || '{}');
+            // Days active: days since account created_at
+            if (user.created_at || user.createdAt) {
+                var created = new Date(user.created_at || user.createdAt);
+                var days = Math.max(1, Math.floor((Date.now() - created) / 86400000));
+                document.getElementById('daysActiveStat').textContent = days;
+            } else {
+                // Fallback: fetch from profile
+                var pr = await API.get('/profile'); var pd = await pr.json();
+                if (pd.profile && pd.profile.createdAt) {
+                    var days = Math.max(1, Math.floor((Date.now() - pd.profile.createdAt) / 86400000));
+                    document.getElementById('daysActiveStat').textContent = days;
+                }
+            }
+            // Chats today: from localStorage chat session count
+            var todayKey = new Date().toISOString().split('T')[0];
+            var chatCount = parseInt(localStorage.getItem('chatCount_' + todayKey) || '0');
+            document.getElementById('chatSessions').textContent = chatCount;
+        } catch(e) { /* ignore */ }
+
+        // ── Connection status ──────────────────────────────────────────────────
+        async function checkConn() {
+            var dot = document.getElementById('connDot'), txt = document.getElementById('connText');
+            try {
+                var r = await fetch('https://alzheimer-backend-new.onrender.com/api/health');
+                if (r.ok) {
+                    dot.className = 'status-dot connected';
+                    txt.textContent = 'Online';
+                } else throw new Error();
+            } catch {
+                dot.className = 'status-dot disconnected';
+                txt.textContent = 'Offline';
+            }
+        }
+        checkConn(); setInterval(checkConn, 60000);
+
+        // ── Typing indicator hook ───────────────────────────────────────────────
+        // Patch the existing sendMessage function to show/hide indicator
+        var origSend = document.getElementById('sendMessage').onclick;
+        function showTyping()  { document.getElementById('typingIndicator').classList.add('visible'); }
+        function hideTyping()  { document.getElementById('typingIndicator').classList.remove('visible'); }
+        window._showTyping = showTyping; window._hideTyping = hideTyping;
+
+        // Intercept fetch to show typing indicator
+        var origFetch = window.fetch;
+        window.fetch = function() {
+            var url = arguments[0];
+            if (typeof url === 'string' && url.includes('/api/chat')) {
+                showTyping();
+                var p = origFetch.apply(this, arguments);
+                p.then(hideTyping).catch(hideTyping);
+                return p;
+            }
+            return origFetch.apply(this, arguments);
+        };
+
+        // ── Chat counter increment ─────────────────────────────────────────────
+        document.getElementById('sendMessage').addEventListener('click', function() {
+            var todayKey = new Date().toISOString().split('T')[0];
+            var cnt = parseInt(localStorage.getItem('chatCount_' + todayKey) || '0') + 1;
+            localStorage.setItem('chatCount_' + todayKey, cnt);
+            document.getElementById('chatSessions').textContent = cnt;
+        });
+
+        // ── TTS toggle ─────────────────────────────────────────────────────────
+        var ttsEnabled = false;
+        document.getElementById('ttsToggle').addEventListener('click', function() {
+            ttsEnabled = !ttsEnabled;
+            this.textContent = ttsEnabled ? '🔊 TTS On' : '🔇 TTS Off';
+            this.classList.toggle('enabled', ttsEnabled);
+            this.setAttribute('aria-pressed', ttsEnabled);
+            if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+        });
+
+        function speakText(text) {
+            if (!ttsEnabled || !window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            var clean = text.replace(/[^\w\s,.!?'-]/g, ' ').substring(0, 300);
+            var utt = new SpeechSynthesisUtterance(clean);
+            utt.rate = 0.9; utt.pitch = 1;
+            var voices = window.speechSynthesis.getVoices();
+            var pref = voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'));
+            if (pref) utt.voice = pref;
+            window.speechSynthesis.speak(utt);
+        }
+
+        // Hook into chat messages — observe new messages
+        var chatEl = document.getElementById('chatMessages');
+        var obs = new MutationObserver(function(muts) {
+            muts.forEach(function(m) {
+                m.addedNodes.forEach(function(node) {
+                    if (node.nodeType !== 1) return;
+                    var isBotMsg = node.classList && (node.classList.contains('bot-message') || node.classList.contains('ai-message') || node.querySelector('.bot-bubble'));
+                    if (isBotMsg) {
+                        var textEl = node.querySelector('.message-text, .bubble, p') || node;
+                        var text = textEl.innerText || '';
+                        if (ttsEnabled) speakText(text);
+                    }
+                });
+            });
+        });
+        if (chatEl) obs.observe(chatEl, { childList: true });
+
+        // ── Voice input (Web Speech API) ───────────────────────────────────────
+        var voiceBtn = document.getElementById('voiceInputBtn');
+        var recognition = null;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SR();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = function(event) {
+                var transcript = Array.from(event.results)
+                    .map(r => r[0].transcript).join('');
+                document.getElementById('chatInput').value = transcript;
+                document.getElementById('inputHint').textContent = '🎤 Listening… ' + transcript.substring(0, 50);
+            };
+            recognition.onend = function() {
+                voiceBtn.classList.remove('active');
+                voiceBtn.title = 'Voice input';
+                document.getElementById('inputHint').textContent = 'Press Enter to send • Maximum 500 characters';
+            };
+            recognition.onerror = function(e) {
+                voiceBtn.classList.remove('active');
+                document.getElementById('inputHint').textContent = '⚠️ Voice not recognised. Please try again.';
+                setTimeout(function() {
+                    document.getElementById('inputHint').textContent = 'Press Enter to send • Maximum 500 characters';
+                }, 2000);
+            };
+
+            voiceBtn.addEventListener('click', function() {
+                if (this.classList.contains('active')) {
+                    recognition.stop();
+                } else {
+                    this.classList.add('active');
+                    this.title = 'Click to stop recording';
+                    document.getElementById('inputHint').textContent = '🎤 Listening… speak now';
+                    recognition.start();
+                }
+            });
+        } else {
+            voiceBtn.title = 'Voice input not supported in this browser';
+            voiceBtn.style.opacity = '0.3';
+            voiceBtn.disabled = true;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // MEMORY MATCH GAME
+        // ─────────────────────────────────────────────────────────────────────
+        var MM = {
+            emojis: ['🌸','🐶','🏠','⭐','🍎','🎵','🌈','🦋'],
+            cards: [], flipped: [], matched: 0, moves: 0, lock: false,
+
+            init: function() {
+                var pairs = [...this.emojis, ...this.emojis];
+                // Shuffle
+                for (var i = pairs.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i+1));
+                    [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+                }
+                this.cards = pairs;
+                this.flipped = []; this.matched = 0; this.moves = 0; this.lock = false;
+                var grid = document.getElementById('memMatchGrid');
+                grid.innerHTML = '';
+                var self = this;
+                pairs.forEach(function(emoji, i) {
+                    var card = document.createElement('button');
+                    card.className = 'mem-card';
+                    card.dataset.emoji = emoji;
+                    card.dataset.idx   = i;
+                    card.setAttribute('aria-label', 'Card ' + (i+1));
+                    card.textContent = '❔';
+                    card.addEventListener('click', function() { self.flip(this); });
+                    grid.appendChild(card);
+                });
+                this.updateScore();
+            },
+
+            flip: function(card) {
+                if (this.lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+                card.textContent = card.dataset.emoji;
+                card.classList.add('flipped');
+                this.flipped.push(card);
+                if (this.flipped.length === 2) {
+                    this.moves++;
+                    this.lock = true;
+                    this.updateScore();
+                    var [a, b] = this.flipped;
+                    if (a.dataset.emoji === b.dataset.emoji) {
+                        a.classList.add('matched'); b.classList.add('matched');
+                        this.matched++;
+                        this.flipped = []; this.lock = false;
+                        if (this.matched === this.emojis.length) {
+                            setTimeout(function() { alert('🎉 Excellent! You matched all pairs in ' + MM.moves + ' moves!'); }, 300);
+                        }
+                    } else {
+                        var self = this;
+                        setTimeout(function() {
+                            a.textContent = '❔'; b.textContent = '❔';
+                            a.classList.remove('flipped'); b.classList.remove('flipped');
+                            self.flipped = []; self.lock = false;
+                        }, 900);
+                    }
+                }
+            },
+
+            updateScore: function() {
+                document.getElementById('mmScore').textContent =
+                    'Matched: ' + this.matched + ' / ' + this.emojis.length + ' · Moves: ' + this.moves;
+            }
+        };
+
+        document.getElementById('playMemoryMatch').addEventListener('click', function() {
+            document.getElementById('memMatchModal').classList.add('open');
+            MM.init();
+        });
+        document.getElementById('closeMemMatch').addEventListener('click', function() {
+            document.getElementById('memMatchModal').classList.remove('open');
+        });
+        document.getElementById('mmRestart').addEventListener('click', function() { MM.init(); });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // TRIVIA GAME
+        // ─────────────────────────────────────────────────────────────────────
+        var TRIVIA_QUESTIONS = [
+            { q: 'What is the capital city of France?',        opts: ['Berlin','Madrid','Paris','Rome'],         ans: 2 },
+            { q: 'How many days are in a week?',               opts: ['5','6','7','8'],                          ans: 2 },
+            { q: 'What colour is the sky on a clear day?',     opts: ['Green','Blue','Red','Yellow'],            ans: 1 },
+            { q: 'Which fruit is known as the "king of fruits"?', opts: ['Apple','Banana','Mango','Orange'],     ans: 2 },
+            { q: 'How many hours are in a day?',               opts: ['12','20','24','48'],                      ans: 2 },
+            { q: 'What is 2 + 2?',                             opts: ['3','4','5','6'],                          ans: 1 },
+            { q: 'Which animal says "meow"?',                  opts: ['Dog','Cat','Cow','Bird'],                 ans: 1 },
+            { q: 'What season comes after winter?',            opts: ['Autumn','Summer','Spring','Monsoon'],     ans: 2 },
+            { q: 'How many months are in a year?',             opts: ['10','11','12','13'],                      ans: 2 },
+            { q: 'What do bees produce?',                      opts: ['Milk','Silk','Honey','Oil'],              ans: 2 },
+        ];
+
+        var TQ = { idx: 0, score: 0, answered: false, shuffled: [] };
+
+        function triviaStart() {
+            TQ.idx = 0; TQ.score = 0; TQ.answered = false;
+            TQ.shuffled = [...TRIVIA_QUESTIONS].sort(function() { return Math.random()-0.5; }).slice(0,5);
+            triviaRender();
+        }
+
+        function triviaRender() {
+            if (TQ.idx >= TQ.shuffled.length) {
+                document.getElementById('triviaQ').textContent = '🎉 Quiz complete!';
+                document.getElementById('triviaOpts').innerHTML = '';
+                document.getElementById('triviaFeedback').innerHTML =
+                    'Your final score: <strong>' + TQ.score + ' / ' + TQ.shuffled.length + '</strong> — ' +
+                    (TQ.score >= 4 ? 'Excellent! 🏆' : TQ.score >= 2 ? 'Good job! 👍' : 'Keep practising! 💪');
+                document.getElementById('triviaNext').style.display = 'none';
+                document.getElementById('triviaScore').textContent = 'Done · Score: ' + TQ.score + ' / ' + TQ.shuffled.length;
+                return;
+            }
+            TQ.answered = false;
+            var q = TQ.shuffled[TQ.idx];
+            document.getElementById('triviaQ').textContent = q.q;
+            document.getElementById('triviaFeedback').innerHTML = '';
+            document.getElementById('triviaNext').style.display = 'none';
+            document.getElementById('triviaScore').textContent =
+                'Question ' + (TQ.idx+1) + ' of ' + TQ.shuffled.length + ' · Score: ' + TQ.score;
+            var optsEl = document.getElementById('triviaOpts');
+            optsEl.innerHTML = q.opts.map(function(o, i) {
+                return '<button class="trivia-opt" data-idx="' + i + '" aria-label="Option: ' + o + '">' + o + '</button>';
+            }).join('');
+            optsEl.querySelectorAll('.trivia-opt').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    if (TQ.answered) return;
+                    TQ.answered = true;
+                    var chosen = parseInt(this.dataset.idx);
+                    var correct = TQ.shuffled[TQ.idx].ans;
+                    if (chosen === correct) {
+                        this.classList.add('correct');
+                        document.getElementById('triviaFeedback').innerHTML = '✅ Correct! Well done!';
+                        TQ.score++;
+                    } else {
+                        this.classList.add('wrong');
+                        optsEl.querySelectorAll('.trivia-opt')[correct].classList.add('correct');
+                        document.getElementById('triviaFeedback').innerHTML = '❌ Not quite — the answer was <strong>' + q.opts[correct] + '</strong>.';
+                    }
+                    document.getElementById('triviaNext').style.display = 'block';
+                });
+            });
+        }
+
+        document.getElementById('playTrivia').addEventListener('click', function() {
+            document.getElementById('triviaModal').classList.add('open');
+            triviaStart();
+        });
+        document.getElementById('closeTrivia').addEventListener('click', function() {
+            document.getElementById('triviaModal').classList.remove('open');
+        });
+        document.getElementById('triviaNext').addEventListener('click', function() {
+            TQ.idx++;
+            triviaRender();
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // WORD ASSOCIATION GAME
+        // ─────────────────────────────────────────────────────────────────────
+        var WA = {
+            chain: [],
+            starters: ['Sun','Ocean','Garden','Music','Family','Home','Spring','Love','Book','River'],
+
+            start: function() {
+                this.chain = [];
+                var starter = this.starters[Math.floor(Math.random() * this.starters.length)];
+                this.chain.push(starter);
+                this.render();
+                document.getElementById('wordInput').value = '';
+                document.getElementById('wordFeedback').textContent = '';
+            },
+
+            submit: function() {
+                var word = document.getElementById('wordInput').value.trim();
+                if (!word) return;
+                if (word.length < 2) {
+                    document.getElementById('wordFeedback').textContent = '⚠️ Word must be at least 2 characters.';
+                    return;
+                }
+                if (this.chain.includes(word)) {
+                    document.getElementById('wordFeedback').textContent = '⚠️ You already used "' + word + '"! Try a different word.';
+                    return;
+                }
+                this.chain.push(word);
+                document.getElementById('wordInput').value = '';
+                document.getElementById('wordFeedback').textContent = '✅ Great connection!';
+                this.render();
+            },
+
+            render: function() {
+                var last = this.chain[this.chain.length - 1];
+                document.getElementById('wordDisplay').textContent = last;
+                document.getElementById('wordScore').textContent = 'Chain length: ' + (this.chain.length - 1);
+                document.getElementById('wordChain').innerHTML = this.chain.map(function(w, i) {
+                    return '<span class="word-chip">' + (i > 0 ? '→ ' : '') + w + '</span>';
+                }).join('');
+            }
+        };
+
+        document.getElementById('playWordAssoc').addEventListener('click', function() {
+            document.getElementById('wordModal').classList.add('open');
+            WA.start();
+            document.getElementById('wordInput').focus();
+        });
+        document.getElementById('closeWord').addEventListener('click', function() {
+            document.getElementById('wordModal').classList.remove('open');
+        });
+        document.getElementById('wordSubmit').addEventListener('click', function() { WA.submit(); });
+        document.getElementById('wordInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') WA.submit();
+        });
+
+        // Close game modals on overlay click
+        ['memMatchModal','triviaModal','wordModal'].forEach(function(id) {
+            document.getElementById(id).addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('open');
+            });
+        });
+
+    }); // end DOMContentLoaded
+    </script>
 </body>
 </html>
