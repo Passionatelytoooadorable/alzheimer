@@ -8,18 +8,22 @@
  */
 document.addEventListener('DOMContentLoaded', async function () {
 
-    // ── Already logged in? Check via cookie (server validates it) ────────────
-    // We can no longer check localStorage.getItem('token') since the token
-    // is in an httpOnly cookie that JS cannot read.
-    // Instead, ask the server — if /auth/me succeeds, user is logged in.
+    // ── Already logged in? Check via cookie with a short timeout ─────────────
+    // We give the server max 3 seconds to respond. If Render is still waking up
+    // (cold start), we skip the check and just show the login form immediately.
+    // This prevents the page appearing blank/frozen for 30 seconds.
     try {
-        var user = await API.getCurrentUser();
+        var checkPromise = API.getCurrentUser();
+        var timeoutPromise = new Promise(function (resolve) {
+            setTimeout(function () { resolve(null); }, 3000); // 3 second max wait
+        });
+        var user = await Promise.race([checkPromise, timeoutPromise]);
         if (user) {
             window.location.replace('dashboard.html');
             return;
         }
     } catch (e) {
-        // Not logged in — continue to show login form
+        // Not logged in or server unavailable — continue to show login form
     }
 
     var loginForm       = document.getElementById('loginForm');
