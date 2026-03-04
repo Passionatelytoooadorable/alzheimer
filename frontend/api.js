@@ -1,21 +1,17 @@
 /**
  * api.js  —  Frontend API helper
  *
- * Security update: JWT is now stored in an httpOnly cookie set by the server.
- * The browser sends the cookie automatically — we no longer read or send tokens
- * from localStorage. All fetch calls include  credentials: 'include'  so the
- * browser attaches the cookie to every cross-origin request.
+ * Solves the Render cold-start "network error":
+ *   Render's free tier sleeps after 15 min inactivity.
+ *   First request after sleep can take 30-60 seconds and times out.
+ *   This wrapper retries automatically with a friendly status message.
  *
- * Render cold-start handling is unchanged: automatic retry with status bar.
- *
- * Usage:
+ * Usage (after including this script):
  *   const res  = await API.post('/auth/signin', { email, password });
  *   const data = await res.json();
  *
  *   const res  = await API.get('/profile');
  *   const data = await res.json();
- *
- *   await API.logout();   // clears cookie server-side and redirects to login
  */
 (function (global) {
     'use strict';
@@ -54,25 +50,22 @@
 
     async function request(method, path, body, attempt) {
         attempt = attempt || 1;
+        var token   = localStorage.getItem('token');
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
 
-        var opts = {
-            method:      method,
-            credentials: 'include', // Send the httpOnly cookie with every request
-            headers:     { 'Content-Type': 'application/json' }
-            // No Authorization header — the cookie handles auth automatically
-        };
+        var opts = { method: method, headers: headers };
         if (body && method !== 'GET') opts.body = JSON.stringify(body);
 
         try {
             var res = await fetchTimeout(BASE + path, opts, TIMEOUT_MS);
-            showBar('');
+            showBar('');  // clear on success
             return res;
         } catch (err) {
             if (attempt <= MAX_RETRIES) {
                 showBar('⏳ Server is waking up, please wait a moment…', 'warn');
-                try {
-                    await fetchTimeout(BASE + '/health', { method: 'GET', credentials: 'include' }, TIMEOUT_MS);
-                } catch (e) { /* ignore */ }
+                try { await fetchTimeout(BASE + '/health', { method:'GET' }, TIMEOUT_MS); }
+                catch (e) { /* ignore */ }
                 return request(method, path, body, attempt + 1);
             }
             showBar('');
@@ -82,51 +75,18 @@
 
     global.API = {
         BASE,
-        get:  function (path)       { return request('GET',    path, null, 1); },
-        post: function (path, body) { return request('POST',   path, body, 1); },
-        put:  function (path, body) { return request('PUT',    path, body, 1); },
-        del:  function (path)       { return request('DELETE', path, null, 1); },
+        get:  function (path)       { return request('GET',    path, null,  1); },
+        post: function (path, body) { return request('POST',   path, body,  1); },
+        put:  function (path, body) { return request('PUT',    path, body,  1); },
+        del:  function (path)       { return request('DELETE', path, null,  1); },
 
-        /**
-         * logout()
-         * Calls the backend /auth/logout endpoint which clears the httpOnly cookie,
-         * then removes any user info from localStorage and redirects to login.
-         */
-        logout: async function () {
-            try {
-                await request('POST', '/auth/logout', null, 1);
-            } catch (e) {
-                // Even if the request fails, clear local state and redirect
-            }
-            // Remove non-sensitive user info stored in localStorage
-            ['user', 'isLoggedIn', 'userName', 'userEmail', 'isNewUser', 'scanCompleted']
-                .forEach(function (k) { localStorage.removeItem(k); });
-            window.location.replace('login.html');
-        },
-
-        /**
-         * getCurrentUser()
-         * Fetches the logged-in user from the server using the cookie.
-         * Returns the user object or null if not authenticated.
-         * Use this on page load instead of reading from localStorage.
-         */
-        getCurrentUser: async function () {
-            try {
-                var res = await request('GET', '/auth/me', null, 1);
-                if (!res.ok) return null;
-                var data = await res.json();
-                return data.user || null;
-            } catch (e) {
-                return null;
-            }
-        },
-
-        /** Pre-warm the Render server silently on page load */
+        /** Call on page load to pre-warm the Render server silently */
         warmUp: function () {
-            fetch(BASE + '/health', { credentials: 'include' }).catch(function () {});
+            fetch(BASE + '/health').catch(function () {});
         }
     };
 
+    // Warm up as soon as this script is parsed
     API.warmUp();
 
 })(window);

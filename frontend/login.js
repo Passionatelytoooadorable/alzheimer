@@ -1,18 +1,12 @@
 /**
  * login.js
  * Uses API helper (api.js) which handles Render cold-start retries automatically.
- *
- * Security update: JWT is now stored in an httpOnly cookie set by the server.
- * We no longer store the token in localStorage — the browser manages the cookie.
- * On successful login, only non-sensitive user info (name, email) goes to localStorage.
+ * Does NOT depend on user-store.js so no crash if it hasn't loaded.
  */
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Already logged in? Fast check via localStorage ───────────────────────
-    // isLoggedIn is set on successful login and cleared on logout.
-    // This is instant — no server call needed on the login page.
-    // The httpOnly cookie still protects all actual API calls.
-    if (localStorage.getItem('isLoggedIn') === 'true') {
+    // Already logged in → go to dashboard
+    if (localStorage.getItem('token')) {
         window.location.replace('dashboard.html');
         return;
     }
@@ -29,8 +23,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
-
-        // Client-side validation
         var valid = true;
         if (!username) { fieldError('username', 'usernameError', true); valid = false; }
         if (!password)  { fieldError('password',  'passwordError',  true); valid = false; }
@@ -54,10 +46,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
-            // ── Success ───────────────────────────────────────────────────────
-            // The server has already set the httpOnly cookie — we don't handle the token.
-            // Only store non-sensitive user info in localStorage for display purposes.
+            // Success — store token & user
             var u = result.user || {};
+            localStorage.setItem('token',      result.token);
             localStorage.setItem('user',       JSON.stringify(u));
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('userName',   u.name     || username);
