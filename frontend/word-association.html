@@ -396,7 +396,7 @@
         <div class="controls">
             <button class="btn" onclick="checkMatches()">✓ Check Matches</button>
             <button class="btn" onclick="startGame()">🔄 New Game</button>
-            <button class="btn btn-secondary" onclick="window.close()">← Back to Companion</button>
+            <button class="btn btn-secondary" onclick="if(window.opener){window.close();}else{window.location.href='ai-companion.html';}">← Back to Companion</button>
         </div>
     </div>
 

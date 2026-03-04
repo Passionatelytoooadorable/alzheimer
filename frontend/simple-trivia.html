@@ -296,7 +296,7 @@
         <div class="controls">
             <button class="btn" onclick="nextQuestion()" id="nextBtn" style="display: none;">Next Question →</button>
             <button class="btn" onclick="startGame()" id="startBtn">Start Game</button>
-            <button class="btn btn-secondary" onclick="window.close()">← Back to Companion</button>
+            <button class="btn btn-secondary" onclick="if(window.opener){window.close();}else{window.location.href='ai-companion.html';}">← Back to Companion</button>
         </div>
     </div>
 

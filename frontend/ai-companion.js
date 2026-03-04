@@ -561,31 +561,38 @@ async function handleQuickAction(event) {
 
 // ─── Games ───────────────────────────────────────────────────────────────────
 function startGame(event) {
-    const gameName = event.currentTarget.dataset.game || event.currentTarget.closest('.game-card-vertical')?.querySelector('h4')?.textContent || '';
-
-    showNotification(`Opening ${gameName}...`, 'info');
+    // Support both data-game attribute and reading the h4 text from the card
+    const gameName = event.currentTarget.dataset.game
+        || event.currentTarget.closest('.game-card-vertical')?.querySelector('h4')?.textContent?.trim()
+        || '';
 
     const gameResponses = {
-        'Memory Match': '🧠 Opening Memory Match! This game is wonderful for strengthening your memory. Have fun and take your time!',
-        'Simple Trivia': '❓ Let\'s do some trivia! Fun questions are a great way to keep your mind sharp. Good luck!',
-        'Word Association': '🔗 Time for Word Association! Connecting words and ideas is excellent brain exercise. Enjoy!'
+        'Memory Match':    '🧠 Memory Match is open! Find all the matching pairs. Take your time — your memory is sharper than you think!',
+        'Simple Trivia':   '❓ Trivia time! Fun questions across Easy, Medium and Hard. How many can you get right? Good luck!',
+        'Word Association':'🔗 Word Association is ready! Drag the words to find their perfect partners. Enjoy!'
     };
 
-    switch(gameName) {
-        case 'Memory Match':
-            window.open('memory-match.html', 'MemoryMatch', 'width=900,height=800');
-            break;
-        case 'Simple Trivia':
-            window.open('simple-trivia.html', 'SimpleTrivia', 'width=700,height=900');
-            break;
-        case 'Word Association':
-            window.open('word-association.html', 'WordAssociation', 'width=900,height=800');
-            break;
+    // Open the corresponding inline modal (no popup windows)
+    const modalMap = {
+        'Memory Match':    'memMatchModal',
+        'Simple Trivia':   'triviaModal',
+        'Word Association':'wordModal'
+    };
+
+    const modalId = modalMap[gameName];
+    if (modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('open');
+            // Trigger game init via custom event so the inline game JS can listen
+            modal.dispatchEvent(new CustomEvent('gameOpen'));
+        }
+        showNotification(`${gameName} opened!`, 'info');
     }
 
     const gameMessage = {
         type: 'companion',
-        text: gameResponses[gameName] || '🎮 Opening your game now! Every game you play helps keep your mind active!',
+        text: gameResponses[gameName] || '🎮 Game on! Every game you play helps keep your mind active and sharp!',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     addMessageToChat(gameMessage);

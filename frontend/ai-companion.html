@@ -48,72 +48,205 @@
         .status-dot.connected    { background: #4caf50; }
         .status-dot.disconnected { background: #f44336; }
 
-        /* Game modal */
+        /* ── Game Modal shared styles ─────────────────────────────────────────── */
         .game-modal-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
             z-index: 2000; align-items: center; justify-content: center; padding: 1rem;
         }
         .game-modal-overlay.open { display: flex; }
+
         .game-modal {
-            background: white; border-radius: 16px; padding: 2rem; width: 100%;
-            max-width: 520px; max-height: 90vh; overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            background: white; border-radius: 18px; padding: 1.6rem; width: 100%;
+            max-width: 560px; max-height: 92vh; overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.28);
+            position: relative;
+            animation: gmSlideIn 0.25s ease-out;
         }
-        .game-modal h2  { margin-bottom: 0.5rem; }
-        .game-modal p   { color: #666; font-size: 0.88rem; margin-bottom: 1.5rem; }
-        .game-close { float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #aaa; }
-        .game-close:hover { color: #333; }
+        .game-modal--word { max-width: 700px; }
+        .game-modal--memory { max-width: 620px; }
 
-        /* Memory Match */
-        .memory-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.5rem; }
-        .mem-card {
-            aspect-ratio: 1; font-size: 1.8rem; border-radius: 8px; border: 2px solid #ddd;
-            background: #f5f5f5; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; transition: all 0.2s; user-select: none;
-        }
-        .mem-card.flipped   { background: #e8f0fe; border-color: #4a86e8; }
-        .mem-card.matched   { background: #e8f5e9; border-color: #4caf50; cursor: default; }
-        .mem-card:not(.flipped):not(.matched):hover { background: #e8f0fe; transform: scale(1.05); }
-
-        /* Trivia */
-        .trivia-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.25rem; color: #333; }
-        .trivia-options  { display: flex; flex-direction: column; gap: 0.6rem; }
-        .trivia-opt {
-            padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid #ddd;
-            cursor: pointer; font-size: 0.9rem; transition: all 0.2s; background: white;
-            text-align: left;
-        }
-        .trivia-opt:hover  { background: #f0f7ff; border-color: #4a86e8; }
-        .trivia-opt.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; font-weight:600; }
-        .trivia-opt.wrong   { background: #fdecea; border-color: #f44336; color: #c62828; }
-        .trivia-feedback    { margin-top: 1rem; font-size: 0.9rem; min-height: 1.2em; }
-        .trivia-score  { font-size: 1rem; color: #666; margin-bottom: 1rem; }
-
-        /* Word Association */
-        .word-display  { font-size: 2rem; font-weight: 700; text-align: center; margin: 1rem 0; color: #4a86e8; }
-        .word-input-row { display: flex; gap: 0.5rem; }
-        .word-input-row input {
-            flex: 1; padding: 0.6rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;
-        }
-        .word-input-row button {
-            padding: 0.6rem 1rem; background: #4a86e8; color: white; border: none;
-            border-radius: 8px; cursor: pointer; font-weight: 600;
-        }
-        .word-chain { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
-        .word-chip  { background: #e8f0fe; color: #4a86e8; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.82rem; }
-
-        /* Game score banner */
-        .game-score-banner {
-            background: #e8f0fe; border-radius: 8px; padding: 0.6rem 1rem;
-            font-size: 0.88rem; color: #4a86e8; margin-bottom: 1rem; text-align: center;
+        @keyframes gmSlideIn {
+            from { transform: translateY(24px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
         }
 
-        /* Chat message TTS button */
-        .msg-tts-btn {
-            background: none; border: none; cursor: pointer; font-size: 0.85rem;
-            opacity: 0.5; padding: 0.1rem 0.3rem; border-radius: 4px; transition: opacity 0.2s;
+        .game-modal h2 { margin: 0 0 0.2rem 0; color: #374785; font-size: 1.5rem; }
+        .game-subtitle { color: #888; font-size: 0.83rem; margin: 0 0 1rem 0; }
+        .game-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: #f0f0f0; border: none; border-radius: 50%;
+            width: 30px; height: 30px; font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #666; transition: all 0.2s;
         }
-        .msg-tts-btn:hover { opacity: 1; }
+        .game-close:hover { background: #e0e0e0; color: #333; }
+
+        /* Difficulty buttons */
+        .gm-difficulty { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .gm-diff-btn {
+            padding: 0.4rem 0.9rem; border-radius: 16px; border: 2px solid #e0e0e0;
+            background: #f8f8f8; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; color: #555;
+        }
+        .gm-diff-btn--easy  { border-color: #4ecdc4; }
+        .gm-diff-btn--med   { border-color: #ffd166; }
+        .gm-diff-btn--hard  { border-color: #ff6b6b; }
+        .gm-diff-btn.active { color: white; }
+        .gm-diff-btn--easy.active  { background: #4ecdc4; border-color: #4ecdc4; }
+        .gm-diff-btn--med.active   { background: #ffd166; border-color: #ffd166; color: #374785; }
+        .gm-diff-btn--hard.active  { background: #ff6b6b; border-color: #ff6b6b; }
+
+        /* Stats row */
+        .gm-stats {
+            display: flex; justify-content: space-around; background: #f8f9fa;
+            border-radius: 10px; padding: 0.75rem 0.5rem; margin-bottom: 0.75rem;
+        }
+        .gm-stat { text-align: center; }
+        .gm-stat span { display: block; font-size: 1.6rem; font-weight: 700; color: #374785; }
+        .gm-stat small { font-size: 0.72rem; color: #888; }
+
+        /* Progress bar */
+        .gm-progress-track {
+            width: 100%; height: 8px; background: #e9ecef; border-radius: 4px;
+            margin-bottom: 0.75rem; overflow: hidden;
+        }
+        .gm-progress-fill {
+            height: 100%; background: linear-gradient(90deg, #4ecdc4, #44b3ab);
+            border-radius: 4px; transition: width 0.4s ease;
+        }
+
+        /* AI message */
+        .gm-ai-msg {
+            background: #f0f4ff; border-left: 3px solid #c4b5fd;
+            padding: 0.65rem 0.9rem; border-radius: 8px; font-style: italic;
+            font-size: 0.85rem; color: #555; margin-bottom: 0.9rem;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Category badge */
+        .gm-cat-badge {
+            background: #c4b5fd; color: white; padding: 2px 10px;
+            border-radius: 10px; font-size: 0.7rem; font-weight: 600;
+            margin-left: 0.5rem; white-space: nowrap;
+        }
+
+        /* Buttons */
+        .gm-controls { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+        .gm-btn {
+            padding: 0.6rem 1.4rem; border: none; border-radius: 20px;
+            font-size: 0.88rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .gm-btn--primary  { background: #4ecdc4; color: white; }
+        .gm-btn--primary:hover  { background: #3dbab0; transform: translateY(-1px); }
+        .gm-btn--secondary { background: #e9ecef; color: #555; }
+        .gm-btn--secondary:hover { background: #dde2e6; transform: translateY(-1px); }
+
+        /* Win overlay */
+        .gm-win-overlay {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.95);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 18px; z-index: 10;
+            animation: gmSlideIn 0.3s ease-out;
+        }
+        .gm-win-box { text-align: center; padding: 2rem; }
+        .gm-win-emoji { font-size: 3.5rem; margin-bottom: 0.75rem; animation: bounce 1s infinite; }
+        .gm-win-box h3 { font-size: 1.5rem; color: #374785; margin: 0 0 0.5rem 0; }
+        .gm-win-box p  { color: #666; font-size: 0.9rem; margin-bottom: 1.25rem; }
+        @keyframes bounce { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+
+        /* Confetti */
+        .gm-confetti {
+            position: absolute; border-radius: 2px;
+            animation: confettiFall 2.5s linear forwards;
+            pointer-events: none; z-index: 20;
+        }
+        @keyframes confettiFall {
+            0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(500px) rotate(360deg); opacity: 0; }
+        }
+
+        /* ── MEMORY MATCH specific ────────────────────────────────────────────── */
+        .gm-board {
+            display: grid; gap: 8px; margin: 0.75rem 0; justify-content: center;
+        }
+        .mm-card {
+            aspect-ratio: 1; font-size: 1.5rem; border-radius: 10px;
+            border: 2px solid #e0e0e0; background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; user-select: none; min-width: 56px;
+        }
+        .mm-card.flipped  { background: white; border-color: #4a86e8; transform: rotateY(8deg) scale(1.05); }
+        .mm-card.matched  { background: #e8f5e9; border-color: #4caf50; cursor: default; transform: scale(0.95); }
+        .mm-card:not(.flipped):not(.matched):hover { transform: scale(1.08); border-color: #c4b5fd; }
+
+        /* ── TRIVIA specific ──────────────────────────────────────────────────── */
+        .gm-question-box {
+            background: #f8f9fa; padding: 1.1rem; border-radius: 12px;
+            border-left: 4px solid #4ecdc4; margin-bottom: 0.75rem;
+        }
+        .gm-question-text { font-size: 1.05rem; color: #374785; font-weight: 600; margin-bottom: 1rem; line-height: 1.4; }
+        .gm-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .gm-option {
+            padding: 0.7rem 1rem; border-radius: 8px; border: 2px solid #e9ecef;
+            background: white; font-size: 0.88rem; cursor: pointer;
+            transition: all 0.2s; text-align: left;
+        }
+        .gm-option:hover  { border-color: #4ecdc4; background: #f0fffe; }
+        .gm-option.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; font-weight: 600; }
+        .gm-option.wrong   { background: #fdecea; border-color: #f44336; color: #c62828; }
+        .gm-feedback { font-size: 0.88rem; min-height: 1.3em; margin: 0.4rem 0; font-weight: 600; }
+        .gm-feedback--correct { color: #4caf50; }
+        .gm-feedback--wrong   { color: #f44336; }
+
+        /* ── WORD ASSOCIATION specific ────────────────────────────────────────── */
+        .wa-game-area {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+            margin: 0.75rem 0; max-height: 300px;
+        }
+        .wa-pool-col, .wa-pairs-col { display: flex; flex-direction: column; }
+        .wa-pool-col h4, .wa-pairs-col h4 {
+            font-size: 0.82rem; font-weight: 700; color: #374785;
+            margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .wa-pool, .wa-pairs {
+            background: #f8f9fa; border-radius: 10px; padding: 0.6rem;
+            overflow-y: auto; flex: 1; max-height: 260px;
+        }
+        .wa-word {
+            background: white; border: 2px solid #e9ecef; border-radius: 8px;
+            padding: 0.55rem 0.75rem; margin-bottom: 0.4rem; cursor: grab;
+            font-size: 0.88rem; font-weight: 600; color: #374785;
+            transition: all 0.2s; user-select: none;
+        }
+        .wa-word:hover { border-color: #4ecdc4; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(78,205,196,0.2); }
+        .wa-word.wa-dragging { opacity: 0.5; transform: scale(0.95) rotate(2deg); }
+
+        .wa-pair {
+            display: flex; align-items: center; gap: 0.4rem; flex-wrap: nowrap;
+            background: white; border: 2px dashed #4ecdc4; border-radius: 8px;
+            padding: 0.5rem 0.6rem; margin-bottom: 0.4rem; min-height: 44px;
+            transition: all 0.2s; font-size: 0.82rem; overflow: hidden;
+        }
+        .wa-pair--matched { border-style: solid; background: #f0fff4; }
+        .wa-pair.wa-hover  { border-color: #ff6b6b; background: #fff5f5; border-style: solid; transform: scale(1.02); }
+
+        .wa-anchor { background: #4ecdc4; color: white; padding: 3px 10px; border-radius: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .wa-matched-word { background: #4ecdc4; color: white; padding: 3px 10px; border-radius: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .wa-connector { color: #aaa; font-weight: 700; flex-shrink: 0; }
+        .wa-drop {
+            flex: 1; min-width: 80px; padding: 4px 8px; border: 1px dashed #ccc;
+            border-radius: 10px; color: #999; font-size: 0.78rem; text-align: center;
+            background: #fafafa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        @media (max-width: 600px) {
+            .game-modal { padding: 1.1rem; }
+            .wa-game-area { grid-template-columns: 1fr; max-height: none; }
+            .wa-pool, .wa-pairs { max-height: 180px; }
+            .gm-board { gap: 5px; }
+            .mm-card { min-width: 44px; font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>
@@ -264,17 +397,17 @@
                     <div class="game-card-vertical">
                         <div class="game-icon-v">🧠</div>
                         <div class="game-info-v"><h4>Memory Match</h4><p>Test your memory</p></div>
-                        <button class="game-btn-v" id="playMemoryMatch">Play</button>
+                        <button class="game-btn-v" id="playMemoryMatch" data-game="Memory Match">Play</button>
                     </div>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">❓</div>
                         <div class="game-info-v"><h4>Simple Trivia</h4><p>Challenge your mind</p></div>
-                        <button class="game-btn-v" id="playTrivia">Play</button>
+                        <button class="game-btn-v" id="playTrivia" data-game="Simple Trivia">Play</button>
                     </div>
                     <div class="game-card-vertical">
                         <div class="game-icon-v">🔗</div>
                         <div class="game-info-v"><h4>Word Association</h4><p>Connect words</p></div>
-                        <button class="game-btn-v" id="playWordAssoc">Play</button>
+                        <button class="game-btn-v" id="playWordAssoc" data-game="Word Association">Play</button>
                     </div>
                 </div>
             </aside>
@@ -333,45 +466,164 @@
         </div>
     </div>
 
-    <!-- ── Memory Match game modal ── -->
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MEMORY MATCH — Full modal (difficulty + timer + confetti + win screen)
+         ═══════════════════════════════════════════════════════════════════════ -->
     <div class="game-modal-overlay" id="memMatchModal" role="dialog" aria-modal="true" aria-labelledby="mmTitle">
-        <div class="game-modal">
+        <div class="game-modal game-modal--memory">
             <button class="game-close" id="closeMemMatch" aria-label="Close game">×</button>
             <h2 id="mmTitle">🧠 Memory Match</h2>
-            <p>Find all the matching pairs! Tap two cards to flip them.</p>
-            <div class="game-score-banner" id="mmScore">Score: 0 · Moves: 0</div>
-            <div class="memory-grid" id="memMatchGrid" aria-label="Memory match game grid"></div>
-            <button class="add-btn" id="mmRestart" style="margin-top:1rem;width:100%;justify-content:center;background:#4a86e8;color:white;border:none;border-radius:8px;padding:0.6rem;cursor:pointer;font-weight:600;">🔄 New Game</button>
+            <p class="game-subtitle">Find all matching pairs — great for keeping your memory sharp!</p>
+
+            <!-- Difficulty -->
+            <div class="gm-difficulty">
+                <button class="gm-diff-btn gm-diff-btn--easy active" data-level="easy">Easy · 6 pairs</button>
+                <button class="gm-diff-btn gm-diff-btn--med"  data-level="medium">Medium · 9 pairs</button>
+                <button class="gm-diff-btn gm-diff-btn--hard" data-level="hard">Hard · 12 pairs</button>
+            </div>
+
+            <!-- Stats bar -->
+            <div class="gm-stats">
+                <div class="gm-stat"><span id="mmMoves">0</span><small>Moves</small></div>
+                <div class="gm-stat"><span id="mmMatches">0/6</span><small>Matches</small></div>
+                <div class="gm-stat"><span id="mmTimer">00:00</span><small>Time</small></div>
+            </div>
+
+            <!-- AI message -->
+            <div class="gm-ai-msg" id="mmAiMsg">Choose a difficulty and start flipping cards! 🌟</div>
+
+            <!-- Board -->
+            <div class="gm-board" id="mmBoard" aria-label="Memory match game board"></div>
+
+            <!-- Controls -->
+            <div class="gm-controls">
+                <button class="gm-btn gm-btn--primary" id="mmNewGame">🔄 New Game</button>
+            </div>
+
+            <!-- Win overlay (inside modal) -->
+            <div class="gm-win-overlay" id="mmWin" style="display:none;">
+                <div class="gm-win-box">
+                    <div class="gm-win-emoji">🏆</div>
+                    <h3>Amazing Memory!</h3>
+                    <p id="mmWinStats"></p>
+                    <button class="gm-btn gm-btn--primary" id="mmPlayAgain">Play Again</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ── Trivia game modal ── -->
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SIMPLE TRIVIA — Full modal (3 difficulties, 45 questions, progress bar)
+         ═══════════════════════════════════════════════════════════════════════ -->
     <div class="game-modal-overlay" id="triviaModal" role="dialog" aria-modal="true" aria-labelledby="triviaTitle">
-        <div class="game-modal">
+        <div class="game-modal game-modal--trivia">
             <button class="game-close" id="closeTrivia" aria-label="Close game">×</button>
             <h2 id="triviaTitle">❓ Simple Trivia</h2>
-            <div class="game-score-banner" id="triviaScore">Question 1 of 5 · Score: 0</div>
-            <div class="trivia-question" id="triviaQ"></div>
-            <div class="trivia-options"  id="triviaOpts" role="group" aria-label="Answer options"></div>
-            <div class="trivia-feedback" id="triviaFeedback"></div>
-            <button id="triviaNext" style="display:none;margin-top:1rem;width:100%;background:#4a86e8;color:white;border:none;border-radius:8px;padding:0.65rem;cursor:pointer;font-weight:600;">Next Question →</button>
+            <p class="game-subtitle">Test your knowledge — 6 questions per round!</p>
+
+            <!-- Difficulty -->
+            <div class="gm-difficulty">
+                <button class="gm-diff-btn gm-diff-btn--easy active" data-level="easy">Easy</button>
+                <button class="gm-diff-btn gm-diff-btn--med"  data-level="medium">Medium</button>
+                <button class="gm-diff-btn gm-diff-btn--hard" data-level="hard">Hard</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="gm-stats">
+                <div class="gm-stat"><span id="tScore">0</span><small>Score</small></div>
+                <div class="gm-stat"><span id="tProgress">0/6</span><small>Progress</small></div>
+                <div class="gm-stat"><span id="tCorrect">0</span><small>Correct</small></div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="gm-progress-track"><div class="gm-progress-fill" id="tProgressBar" style="width:0%"></div></div>
+
+            <!-- AI message -->
+            <div class="gm-ai-msg" id="tAiMsg">Choose a difficulty and let's test your knowledge! 🧠</div>
+
+            <!-- Question area -->
+            <div class="gm-question-box" id="tQuestionBox" style="display:none;">
+                <div class="gm-question-text" id="tQuestionText"></div>
+                <div class="gm-options" id="tOptions" role="group" aria-label="Answer options"></div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="gm-feedback" id="tFeedback"></div>
+
+            <!-- Controls -->
+            <div class="gm-controls">
+                <button class="gm-btn gm-btn--primary" id="tNextBtn" style="display:none;">Next Question →</button>
+                <button class="gm-btn gm-btn--primary" id="tStartBtn">▶ Start Game</button>
+            </div>
+
+            <!-- Win overlay -->
+            <div class="gm-win-overlay" id="tWin" style="display:none;">
+                <div class="gm-win-box">
+                    <div class="gm-win-emoji">🎓</div>
+                    <h3>Trivia Complete!</h3>
+                    <p id="tWinStats"></p>
+                    <button class="gm-btn gm-btn--primary" id="tPlayAgain">Play Again</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ── Word Association game modal ── -->
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WORD ASSOCIATION — Full modal (drag-and-drop, 3 difficulties, pairs)
+         ═══════════════════════════════════════════════════════════════════════ -->
     <div class="game-modal-overlay" id="wordModal" role="dialog" aria-modal="true" aria-labelledby="wordTitle">
-        <div class="game-modal">
+        <div class="game-modal game-modal--word">
             <button class="game-close" id="closeWord" aria-label="Close game">×</button>
             <h2 id="wordTitle">🔗 Word Association</h2>
-            <p>Type a word that connects to the previous one! Build the longest chain you can.</p>
-            <div class="game-score-banner" id="wordScore">Chain length: 0</div>
-            <div class="word-display" id="wordDisplay" aria-live="polite"></div>
-            <div class="word-input-row">
-                <input type="text" id="wordInput" placeholder="Type a related word…" maxlength="30" aria-label="Your word">
-                <button id="wordSubmit">Submit</button>
+            <p class="game-subtitle">Drag words from the left pool onto their matching partner on the right!</p>
+
+            <!-- Difficulty -->
+            <div class="gm-difficulty">
+                <button class="gm-diff-btn gm-diff-btn--easy active" data-level="easy">Easy</button>
+                <button class="gm-diff-btn gm-diff-btn--med"  data-level="medium">Medium</button>
+                <button class="gm-diff-btn gm-diff-btn--hard" data-level="hard">Hard</button>
             </div>
-            <div class="word-chain" id="wordChain" aria-live="polite"></div>
-            <div id="wordFeedback" style="margin-top:0.75rem;font-size:0.88rem;color:#888;"></div>
+
+            <!-- Stats -->
+            <div class="gm-stats">
+                <div class="gm-stat"><span id="wMatched">0</span><small>Matched</small></div>
+                <div class="gm-stat"><span id="wTotal">6</span><small>Total Pairs</small></div>
+                <div class="gm-stat"><span id="wScore">0</span><small>Score</small></div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="gm-progress-track"><div class="gm-progress-fill" id="wProgressBar" style="width:0%"></div></div>
+
+            <!-- AI message -->
+            <div class="gm-ai-msg" id="wAiMsg">Drag words to their matching partners! 🧠</div>
+
+            <!-- Game area: two-column -->
+            <div class="wa-game-area">
+                <div class="wa-pool-col">
+                    <h4>Words to Match</h4>
+                    <div class="wa-pool" id="waPool"></div>
+                </div>
+                <div class="wa-pairs-col">
+                    <h4>Association Pairs</h4>
+                    <div class="wa-pairs" id="waPairs"></div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="gm-controls">
+                <button class="gm-btn gm-btn--primary" id="wCheckBtn">✓ Check Matches</button>
+                <button class="gm-btn gm-btn--secondary" id="wNewGame">🔄 New Game</button>
+            </div>
+
+            <!-- Win overlay -->
+            <div class="gm-win-overlay" id="wWin" style="display:none;">
+                <div class="gm-win-box">
+                    <div class="gm-win-emoji">🔗</div>
+                    <h3>Word Wizard!</h3>
+                    <p id="wWinStats"></p>
+                    <button class="gm-btn gm-btn--primary" id="wPlayAgain">Play Again</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -551,218 +803,496 @@
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // MEMORY MATCH GAME
+        // MEMORY MATCH — Full engine (difficulty levels, timer, confetti)
         // ─────────────────────────────────────────────────────────────────────
         var MM = {
-            emojis: ['🌸','🐶','🏠','⭐','🍎','🎵','🌈','🦋'],
-            cards: [], flipped: [], matched: 0, moves: 0, lock: false,
+            allSymbols: ['🍎','🍌','🍒','🍕','🏀','🎸','🚗','🌟','⭐','🎵',
+                         '🏠','🌸','📚','🎨','🐾','🌞','🌙','⚽','🎮','📱',
+                         '☕','🎂','🐶','🐱','🌊','🏖️','🎁','💡','🔑','📅'],
+            cards:[], flipped:[], moves:0, matches:0, pairCount:6, gridCols:4,
+            gameStarted:false, startTime:null, timerInterval:null, difficulty:'easy',
+            aiMessages:{
+                correct:['Great memory! 🌟','Perfect match! 💫','Excellent! 🎯','Wonderful! ⭐','Brilliant! 🔥'],
+                encouragement:['You\'re doing fantastic! 🌟','Your memory is shining! 💫','Keep going! 🎯']
+            },
 
-            init: function() {
-                var pairs = [...this.emojis, ...this.emojis];
-                // Shuffle
-                for (var i = pairs.length - 1; i > 0; i--) {
-                    var j = Math.floor(Math.random() * (i+1));
-                    [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
-                }
-                this.cards = pairs;
-                this.flipped = []; this.matched = 0; this.moves = 0; this.lock = false;
-                var grid = document.getElementById('memMatchGrid');
-                grid.innerHTML = '';
-                var self = this;
-                pairs.forEach(function(emoji, i) {
-                    var card = document.createElement('button');
-                    card.className = 'mem-card';
-                    card.dataset.emoji = emoji;
-                    card.dataset.idx   = i;
-                    card.setAttribute('aria-label', 'Card ' + (i+1));
-                    card.textContent = '❔';
-                    card.addEventListener('click', function() { self.flip(this); });
-                    grid.appendChild(card);
+            setDifficulty: function(level) {
+                this.difficulty = level;
+                document.querySelectorAll('#memMatchModal .gm-diff-btn').forEach(function(b){b.classList.remove('active');});
+                var activeBtn = document.querySelector('#memMatchModal .gm-diff-btn[data-level="'+level+'"]');
+                if(activeBtn) activeBtn.classList.add('active');
+                if(level==='easy'){this.pairCount=6;this.gridCols=4;}
+                else if(level==='medium'){this.pairCount=9;this.gridCols=4;}
+                else{this.pairCount=12;this.gridCols=6;}
+                document.getElementById('mmMatches').textContent='0/'+this.pairCount;
+                this.startGame();
+            },
+
+            startGame: function() {
+                this.createCards(); this.renderBoard(); this.resetStats();
+                this.showAI('Starting '+this.difficulty+' mode with '+this.pairCount+' pairs! Good luck! 🍀');
+                document.getElementById('mmWin').style.display='none';
+            },
+
+            createCards: function() {
+                var sel = [...this.allSymbols].sort(function(){return Math.random()-0.5;}).slice(0,this.pairCount);
+                this.cards = [...sel,...sel].map(function(s,i){return{id:i,symbol:s,flipped:false,matched:false};})
+                    .sort(function(){return Math.random()-0.5;});
+            },
+
+            renderBoard: function() {
+                var board = document.getElementById('mmBoard');
+                board.style.gridTemplateColumns='repeat('+this.gridCols+',1fr)';
+                board.innerHTML='';
+                var self=this;
+                this.cards.forEach(function(card){
+                    var el=document.createElement('div');
+                    el.className='mm-card'+(card.flipped?' flipped':'')+(card.matched?' matched':'');
+                    el.textContent=(card.flipped||card.matched)?card.symbol:'❔';
+                    el.setAttribute('aria-label', card.matched?'Matched: '+card.symbol:'Hidden card');
+                    el.addEventListener('click',function(){self.flipCard(card);});
+                    board.appendChild(el);
                 });
-                this.updateScore();
             },
 
-            flip: function(card) {
-                if (this.lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
-                card.textContent = card.dataset.emoji;
-                card.classList.add('flipped');
-                this.flipped.push(card);
-                if (this.flipped.length === 2) {
-                    this.moves++;
-                    this.lock = true;
-                    this.updateScore();
-                    var [a, b] = this.flipped;
-                    if (a.dataset.emoji === b.dataset.emoji) {
-                        a.classList.add('matched'); b.classList.add('matched');
-                        this.matched++;
-                        this.flipped = []; this.lock = false;
-                        if (this.matched === this.emojis.length) {
-                            setTimeout(function() { alert('🎉 Excellent! You matched all pairs in ' + MM.moves + ' moves!'); }, 300);
-                        }
-                    } else {
-                        var self = this;
-                        setTimeout(function() {
-                            a.textContent = '❔'; b.textContent = '❔';
-                            a.classList.remove('flipped'); b.classList.remove('flipped');
-                            self.flipped = []; self.lock = false;
-                        }, 900);
-                    }
+            flipCard: function(card) {
+                if(card.flipped||card.matched||this.flipped.length===2) return;
+                if(!this.gameStarted){this.gameStarted=true;this.startTime=Date.now();this.startTimer();}
+                card.flipped=true; this.flipped.push(card); this.renderBoard();
+                if(this.flipped.length===2){this.moves++;this.updateStats();this.checkMatch();}
+            },
+
+            checkMatch: function() {
+                var self=this, a=this.flipped[0], b=this.flipped[1];
+                if(a.symbol===b.symbol){
+                    a.matched=true; b.matched=true; this.matches++;
+                    var msgs=this.matches%3===0?this.aiMessages.encouragement:this.aiMessages.correct;
+                    this.showAI(msgs[Math.floor(Math.random()*msgs.length)]);
+                    this.updateStats(); this.flipped=[];
+                    if(this.matches===this.pairCount) setTimeout(function(){self.gameComplete();},400);
+                } else {
+                    setTimeout(function(){a.flipped=false;b.flipped=false;self.flipped=[];self.renderBoard();},900);
                 }
             },
 
-            updateScore: function() {
-                document.getElementById('mmScore').textContent =
-                    'Matched: ' + this.matched + ' / ' + this.emojis.length + ' · Moves: ' + this.moves;
+            updateStats: function() {
+                document.getElementById('mmMoves').textContent=this.moves;
+                document.getElementById('mmMatches').textContent=this.matches+'/'+this.pairCount;
+            },
+
+            startTimer: function() {
+                var self=this;
+                this.timerInterval=setInterval(function(){
+                    if(!self.gameStarted) return;
+                    var e=Math.floor((Date.now()-self.startTime)/1000);
+                    var m=String(Math.floor(e/60)).padStart(2,'0');
+                    var s=String(e%60).padStart(2,'0');
+                    document.getElementById('mmTimer').textContent=m+':'+s;
+                },1000);
+            },
+
+            resetStats: function() {
+                this.moves=0;this.matches=0;this.gameStarted=false;this.flipped=[];
+                clearInterval(this.timerInterval);
+                document.getElementById('mmMoves').textContent='0';
+                document.getElementById('mmMatches').textContent='0/'+this.pairCount;
+                document.getElementById('mmTimer').textContent='00:00';
+            },
+
+            showAI: function(msg) {
+                var el=document.getElementById('mmAiMsg');
+                el.style.opacity='0'; var self=this;
+                setTimeout(function(){el.textContent=msg;el.style.opacity='1';},200);
+            },
+
+            gameComplete: function() {
+                clearInterval(this.timerInterval);
+                var finalTime=document.getElementById('mmTimer').textContent;
+                var perf=this.moves<=this.pairCount*1.5?'Outstanding! 🏆':this.moves<=this.pairCount*2?'Excellent! ⭐':'Great job! 🌟';
+                document.getElementById('mmWinStats').innerHTML=
+                    'Completed in <strong>'+finalTime+'</strong> with <strong>'+this.moves+'</strong> moves!<br>'+perf;
+                document.getElementById('mmWin').style.display='flex';
+                this.showAI('🎉 CONGRATULATIONS! '+perf);
+                MM.spawnConfetti('memMatchModal');
+            },
+
+            spawnConfetti: function(containerId) {
+                var container=document.getElementById(containerId);
+                var colors=['#ff6b6b','#4ecdc4','#c4b5fd','#ffd166','#06d6a0'];
+                for(var i=0;i<60;i++){
+                    (function(delay){
+                        setTimeout(function(){
+                            var c=document.createElement('div');
+                            c.className='gm-confetti';
+                            c.style.cssText='left:'+Math.random()*100+'%;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-delay:'+Math.random()*2+'s;width:'+(Math.random()*8+4)+'px;height:'+(Math.random()*8+4)+'px;';
+                            container.appendChild(c);
+                            setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},3000);
+                        },delay);
+                    })(i*30);
+                }
             }
         };
 
-        document.getElementById('playMemoryMatch').addEventListener('click', function() {
-            document.getElementById('memMatchModal').classList.add('open');
-            MM.init();
-        });
-        document.getElementById('closeMemMatch').addEventListener('click', function() {
+        document.getElementById('memMatchModal').addEventListener('gameOpen', function(){ MM.startGame(); });
+        document.getElementById('playMemoryMatch').addEventListener('click', function(){ MM.startGame(); });
+        document.getElementById('closeMemMatch').addEventListener('click', function(){
             document.getElementById('memMatchModal').classList.remove('open');
+            clearInterval(MM.timerInterval); MM.gameStarted=false;
         });
-        document.getElementById('mmRestart').addEventListener('click', function() { MM.init(); });
+        document.getElementById('mmNewGame').addEventListener('click', function(){ MM.startGame(); });
+        document.getElementById('mmPlayAgain').addEventListener('click', function(){
+            document.getElementById('mmWin').style.display='none'; MM.startGame();
+        });
+        document.querySelectorAll('#memMatchModal .gm-diff-btn').forEach(function(btn){
+            btn.addEventListener('click', function(){ MM.setDifficulty(this.dataset.level); });
+        });
 
         // ─────────────────────────────────────────────────────────────────────
-        // TRIVIA GAME
+        // SIMPLE TRIVIA — Full engine (45 questions, 3 difficulties, progress)
         // ─────────────────────────────────────────────────────────────────────
-        var TRIVIA_QUESTIONS = [
-            { q: 'What is the capital city of France?',        opts: ['Berlin','Madrid','Paris','Rome'],         ans: 2 },
-            { q: 'How many days are in a week?',               opts: ['5','6','7','8'],                          ans: 2 },
-            { q: 'What colour is the sky on a clear day?',     opts: ['Green','Blue','Red','Yellow'],            ans: 1 },
-            { q: 'Which fruit is known as the "king of fruits"?', opts: ['Apple','Banana','Mango','Orange'],     ans: 2 },
-            { q: 'How many hours are in a day?',               opts: ['12','20','24','48'],                      ans: 2 },
-            { q: 'What is 2 + 2?',                             opts: ['3','4','5','6'],                          ans: 1 },
-            { q: 'Which animal says "meow"?',                  opts: ['Dog','Cat','Cow','Bird'],                 ans: 1 },
-            { q: 'What season comes after winter?',            opts: ['Autumn','Summer','Spring','Monsoon'],     ans: 2 },
-            { q: 'How many months are in a year?',             opts: ['10','11','12','13'],                      ans: 2 },
-            { q: 'What do bees produce?',                      opts: ['Milk','Silk','Honey','Oil'],              ans: 2 },
-        ];
+        var TRIVIA_BANK = {
+            easy: [
+                {q:'What color is the sky on a clear day?',opts:['Red','Blue','Green','Yellow'],ans:1,cat:'Nature'},
+                {q:'How many legs does a cat have?',opts:['Two','Four','Six','Eight'],ans:1,cat:'Animals'},
+                {q:'What do we use to see?',opts:['Ears','Eyes','Nose','Mouth'],ans:1,cat:'Body'},
+                {q:'What falls from the sky when it rains?',opts:['Snow','Leaves','Raindrops','Stars'],ans:2,cat:'Weather'},
+                {q:'What animal says "meow"?',opts:['Dog','Cow','Cat','Bird'],ans:2,cat:'Animals'},
+                {q:'What do we use to write on paper?',opts:['Spoon','Pen','Hammer','Brush'],ans:1,cat:'Objects'},
+                {q:'What is the color of grass?',opts:['Blue','Red','Green','Purple'],ans:2,cat:'Nature'},
+                {q:'What do we wear on our feet?',opts:['Hat','Gloves','Shoes','Scarf'],ans:2,cat:'Clothing'},
+                {q:'What tells us the time?',opts:['Book','Clock','Chair','Lamp'],ans:1,cat:'Objects'},
+                {q:'What do birds use to fly?',opts:['Fins','Wheels','Wings','Legs'],ans:2,cat:'Animals'},
+                {q:'What do we drink when thirsty?',opts:['Food','Water','Air','Sleep'],ans:1,cat:'Health'},
+                {q:'What shines in the night sky?',opts:['Moon','Cloud','Mountain','Tree'],ans:0,cat:'Space'},
+                {q:'What do plants need to grow?',opts:['Water','Stones','Metal','Plastic'],ans:0,cat:'Nature'},
+                {q:'What do we call the morning meal?',opts:['Lunch','Dinner','Breakfast','Snack'],ans:2,cat:'Food'},
+                {q:'What do we use to cut paper?',opts:['Spoon','Scissors','Cup','Plate'],ans:1,cat:'Objects'}
+            ],
+            medium: [
+                {q:'Which season comes after winter?',opts:['Summer','Spring','Autumn','Monsoon'],ans:1,cat:'Seasons'},
+                {q:'What is the opposite of "day"?',opts:['Morning','Evening','Night','Noon'],ans:2,cat:'Time'},
+                {q:'Which fruit is yellow and curved?',opts:['Apple','Banana','Grape','Orange'],ans:1,cat:'Food'},
+                {q:'What do we call a baby dog?',opts:['Kitten','Puppy','Cub','Chick'],ans:1,cat:'Animals'},
+                {q:'Which month comes after April?',opts:['March','May','June','July'],ans:1,cat:'Time'},
+                {q:'What do we use to tell direction?',opts:['Thermometer','Compass','Watch','Ruler'],ans:1,cat:'Geography'},
+                {q:'Which shape has three sides?',opts:['Circle','Square','Triangle','Rectangle'],ans:2,cat:'Math'},
+                {q:'What do bees make?',opts:['Butter','Cheese','Honey','Jam'],ans:2,cat:'Animals'},
+                {q:'Which is the largest ocean?',opts:['Atlantic','Indian','Pacific','Arctic'],ans:2,cat:'Geography'},
+                {q:'What do we call frozen water?',opts:['Steam','Ice','Rain','Dew'],ans:1,cat:'Science'},
+                {q:'Which planet is the Red Planet?',opts:['Venus','Mars','Jupiter','Saturn'],ans:1,cat:'Space'},
+                {q:'What measures temperature?',opts:['Scale','Thermometer','Clock','Compass'],ans:1,cat:'Science'},
+                {q:'Which bird can\'t fly but can swim?',opts:['Eagle','Sparrow','Penguin','Owl'],ans:2,cat:'Animals'},
+                {q:'What is the capital of France?',opts:['London','Berlin','Paris','Rome'],ans:2,cat:'Geography'},
+                {q:'Which is the smallest continent?',opts:['Asia','Australia','Europe','Africa'],ans:1,cat:'Geography'}
+            ],
+            hard: [
+                {q:'Which gas do plants absorb?',opts:['Oxygen','Nitrogen','Carbon Dioxide','Hydrogen'],ans:2,cat:'Science'},
+                {q:'What is the largest mammal?',opts:['Elephant','Blue Whale','Giraffe','Polar Bear'],ans:1,cat:'Animals'},
+                {q:'Which planet has the most moons?',opts:['Earth','Mars','Jupiter','Saturn'],ans:3,cat:'Space'},
+                {q:'Main language spoken in Brazil?',opts:['Spanish','Portuguese','English','French'],ans:1,cat:'Geography'},
+                {q:'Chemical symbol "O" stands for?',opts:['Gold','Oxygen','Osmium','Oganesson'],ans:1,cat:'Science'},
+                {q:'Longest river in the world?',opts:['Amazon','Nile','Yangtze','Mississippi'],ans:1,cat:'Geography'},
+                {q:'Who painted the Mona Lisa?',opts:['Van Gogh','Picasso','Da Vinci','Monet'],ans:2,cat:'Art'},
+                {q:'Hardest natural substance?',opts:['Gold','Iron','Diamond','Platinum'],ans:2,cat:'Science'},
+                {q:'Land of the Rising Sun?',opts:['China','Japan','Thailand','India'],ans:1,cat:'Geography'},
+                {q:'Study of fossils is called?',opts:['Biology','Geology','Paleontology','Archaeology'],ans:2,cat:'Science'},
+                {q:'Which instrument has 88 keys?',opts:['Violin','Guitar','Piano','Harp'],ans:2,cat:'Music'},
+                {q:'Largest desert in the world?',opts:['Sahara','Arabian','Gobi','Antarctic'],ans:3,cat:'Geography'},
+                {q:'Universal blood donor type?',opts:['A','B','AB','O'],ans:3,cat:'Science'},
+                {q:'Capital of Canada?',opts:['Toronto','Vancouver','Ottawa','Montreal'],ans:2,cat:'Geography'},
+                {q:'Planet known for its rings?',opts:['Mars','Jupiter','Saturn','Uranus'],ans:2,cat:'Space'}
+            ]
+        };
 
-        var TQ = { idx: 0, score: 0, answered: false, shuffled: [] };
+        var TQ = {
+            questions:[], idx:0, score:0, correct:0, difficulty:'easy', gameActive:false,
+            aiMessages:{
+                correct:['Brilliant! 🌟','Perfect answer! 💫','Correct! You\'re amazing! 🎯','Right on! ⭐','Excellent! 🔥'],
+                incorrect:['Good try! 💪','Almost there! 🌟','Tricky one! Keep going! 🎯','Nice attempt! 🚀']
+            },
 
-        function triviaStart() {
-            TQ.idx = 0; TQ.score = 0; TQ.answered = false;
-            TQ.shuffled = [...TRIVIA_QUESTIONS].sort(function() { return Math.random()-0.5; }).slice(0,5);
-            triviaRender();
-        }
+            setDifficulty: function(level) {
+                this.difficulty=level;
+                document.querySelectorAll('#triviaModal .gm-diff-btn').forEach(function(b){b.classList.remove('active');});
+                var btn=document.querySelector('#triviaModal .gm-diff-btn[data-level="'+level+'"]');
+                if(btn) btn.classList.add('active');
+                this.showAI('Selected '+level+' difficulty! Press Start to begin 🎯');
+            },
 
-        function triviaRender() {
-            if (TQ.idx >= TQ.shuffled.length) {
-                document.getElementById('triviaQ').textContent = '🎉 Quiz complete!';
-                document.getElementById('triviaOpts').innerHTML = '';
-                document.getElementById('triviaFeedback').innerHTML =
-                    'Your final score: <strong>' + TQ.score + ' / ' + TQ.shuffled.length + '</strong> — ' +
-                    (TQ.score >= 4 ? 'Excellent! 🏆' : TQ.score >= 2 ? 'Good job! 👍' : 'Keep practising! 💪');
-                document.getElementById('triviaNext').style.display = 'none';
-                document.getElementById('triviaScore').textContent = 'Done · Score: ' + TQ.score + ' / ' + TQ.shuffled.length;
-                return;
-            }
-            TQ.answered = false;
-            var q = TQ.shuffled[TQ.idx];
-            document.getElementById('triviaQ').textContent = q.q;
-            document.getElementById('triviaFeedback').innerHTML = '';
-            document.getElementById('triviaNext').style.display = 'none';
-            document.getElementById('triviaScore').textContent =
-                'Question ' + (TQ.idx+1) + ' of ' + TQ.shuffled.length + ' · Score: ' + TQ.score;
-            var optsEl = document.getElementById('triviaOpts');
-            optsEl.innerHTML = q.opts.map(function(o, i) {
-                return '<button class="trivia-opt" data-idx="' + i + '" aria-label="Option: ' + o + '">' + o + '</button>';
-            }).join('');
-            optsEl.querySelectorAll('.trivia-opt').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    if (TQ.answered) return;
-                    TQ.answered = true;
-                    var chosen = parseInt(this.dataset.idx);
-                    var correct = TQ.shuffled[TQ.idx].ans;
-                    if (chosen === correct) {
-                        this.classList.add('correct');
-                        document.getElementById('triviaFeedback').innerHTML = '✅ Correct! Well done!';
-                        TQ.score++;
-                    } else {
-                        this.classList.add('wrong');
-                        optsEl.querySelectorAll('.trivia-opt')[correct].classList.add('correct');
-                        document.getElementById('triviaFeedback').innerHTML = '❌ Not quite — the answer was <strong>' + q.opts[correct] + '</strong>.';
-                    }
-                    document.getElementById('triviaNext').style.display = 'block';
+            startGame: function() {
+                this.questions=[...TRIVIA_BANK[this.difficulty]].sort(function(){return Math.random()-0.5;}).slice(0,6);
+                this.idx=0; this.score=0; this.correct=0; this.gameActive=true;
+                document.getElementById('tStartBtn').style.display='none';
+                document.getElementById('tQuestionBox').style.display='block';
+                document.getElementById('tWin').style.display='none';
+                this.updateStats(); this.displayQuestion();
+                this.showAI('Welcome to Trivia! Let\'s see how much you know! 🧠');
+            },
+
+            displayQuestion: function() {
+                if(this.idx>=this.questions.length){this.gameComplete();return;}
+                var q=this.questions[this.idx];
+                document.getElementById('tQuestionText').innerHTML=
+                    q.q+' <span class="gm-cat-badge">'+q.cat+'</span>';
+                var opts=document.getElementById('tOptions');
+                opts.innerHTML='';
+                var self=this;
+                q.opts.forEach(function(opt,i){
+                    var btn=document.createElement('button');
+                    btn.className='gm-option';
+                    btn.textContent=opt;
+                    btn.addEventListener('click',function(){self.selectAnswer(i);});
+                    opts.appendChild(btn);
                 });
-            });
-        }
+                document.getElementById('tNextBtn').style.display='none';
+                document.getElementById('tFeedback').textContent='';
+                document.getElementById('tFeedback').className='gm-feedback';
+                this.updateProgress();
+            },
 
-        document.getElementById('playTrivia').addEventListener('click', function() {
-            document.getElementById('triviaModal').classList.add('open');
-            triviaStart();
-        });
-        document.getElementById('closeTrivia').addEventListener('click', function() {
+            selectAnswer: function(idx) {
+                if(!this.gameActive) return;
+                var q=this.questions[this.idx];
+                var opts=document.querySelectorAll('#tOptions .gm-option');
+                opts.forEach(function(o){o.style.pointerEvents='none';});
+                var feedback=document.getElementById('tFeedback');
+                if(idx===q.ans){
+                    opts[idx].classList.add('correct');
+                    feedback.textContent='Correct! 🎉'; feedback.className='gm-feedback gm-feedback--correct';
+                    this.score+=10; this.correct++;
+                    this.showAI(this.aiMessages.correct[Math.floor(Math.random()*this.aiMessages.correct.length)]);
+                } else {
+                    opts[idx].classList.add('wrong');
+                    opts[q.ans].classList.add('correct');
+                    feedback.textContent='Good try! The answer was: '+q.opts[q.ans];
+                    feedback.className='gm-feedback gm-feedback--wrong';
+                    this.showAI(this.aiMessages.incorrect[Math.floor(Math.random()*this.aiMessages.incorrect.length)]);
+                }
+                this.updateStats();
+                document.getElementById('tNextBtn').style.display='block';
+                this.gameActive=false;
+            },
+
+            updateStats: function() {
+                document.getElementById('tScore').textContent=this.score;
+                document.getElementById('tProgress').textContent=(this.idx+1)+'/'+this.questions.length;
+                document.getElementById('tCorrect').textContent=this.correct;
+            },
+
+            updateProgress: function() {
+                var pct=(this.idx/this.questions.length)*100;
+                document.getElementById('tProgressBar').style.width=pct+'%';
+            },
+
+            showAI: function(msg) {
+                var el=document.getElementById('tAiMsg');
+                el.style.opacity='0';
+                setTimeout(function(){el.textContent=msg;el.style.opacity='1';},200);
+            },
+
+            gameComplete: function() {
+                var pct=Math.round((this.correct/this.questions.length)*100);
+                var perf=pct===100?'PERFECT SCORE! 🏆':pct>=80?'Outstanding! ⭐':pct>=60?'Great job! 🎯':'Good effort! 🌟';
+                document.getElementById('tWinStats').innerHTML=
+                    'You scored <strong>'+this.score+'</strong> points — '+this.correct+'/'+this.questions.length+' correct ('+pct+'%)<br>'+perf;
+                document.getElementById('tWin').style.display='flex';
+                document.getElementById('tQuestionBox').style.display='none';
+                this.showAI('🎉 '+perf);
+                MM.spawnConfetti('triviaModal');
+            }
+        };
+
+        document.getElementById('triviaModal').addEventListener('gameOpen', function(){ TQ.startGame(); });
+        document.getElementById('playTrivia').addEventListener('click', function(){ TQ.startGame(); });
+        document.getElementById('closeTrivia').addEventListener('click', function(){
             document.getElementById('triviaModal').classList.remove('open');
         });
-        document.getElementById('triviaNext').addEventListener('click', function() {
-            TQ.idx++;
-            triviaRender();
+        document.getElementById('tStartBtn').addEventListener('click', function(){ TQ.startGame(); });
+        document.getElementById('tNextBtn').addEventListener('click', function(){ TQ.idx++; TQ.gameActive=true; TQ.displayQuestion(); });
+        document.getElementById('tPlayAgain').addEventListener('click', function(){
+            document.getElementById('tWin').style.display='none';
+            document.getElementById('tStartBtn').style.display='inline-block';
+            document.getElementById('tQuestionBox').style.display='none';
+        });
+        document.querySelectorAll('#triviaModal .gm-diff-btn').forEach(function(btn){
+            btn.addEventListener('click',function(){ TQ.setDifficulty(this.dataset.level); });
         });
 
         // ─────────────────────────────────────────────────────────────────────
-        // WORD ASSOCIATION GAME
+        // WORD ASSOCIATION — Full drag-and-drop engine (3 difficulties, 15 pairs each)
         // ─────────────────────────────────────────────────────────────────────
-        var WA = {
-            chain: [],
-            starters: ['Sun','Ocean','Garden','Music','Family','Home','Spring','Love','Book','River'],
+        var WA_BANK = {
+            easy:[
+                {w1:'Sun',w2:'Moon',cat:'Celestial'},{w1:'Day',w2:'Night',cat:'Time'},
+                {w1:'Hot',w2:'Cold',cat:'Temperature'},{w1:'Big',w2:'Small',cat:'Size'},
+                {w1:'Fast',w2:'Slow',cat:'Speed'},{w1:'Happy',w2:'Sad',cat:'Emotion'},
+                {w1:'Land',w2:'Water',cat:'Geography'},{w1:'City',w2:'Country',cat:'Location'},
+                {w1:'Summer',w2:'Winter',cat:'Season'},{w1:'Morning',w2:'Evening',cat:'Time'},
+                {w1:'Light',w2:'Dark',cat:'Appearance'},{w1:'Sweet',w2:'Sour',cat:'Taste'},
+                {w1:'Young',w2:'Old',cat:'Age'},{w1:'Breakfast',w2:'Dinner',cat:'Meal'},
+                {w1:'Rich',w2:'Poor',cat:'Wealth'}
+            ],
+            medium:[
+                {w1:'Doctor',w2:'Patient',cat:'Profession'},{w1:'Teacher',w2:'Student',cat:'Education'},
+                {w1:'Writer',w2:'Book',cat:'Craft'},{w1:'Artist',w2:'Painting',cat:'Art'},
+                {w1:'Chef',w2:'Recipe',cat:'Food'},{w1:'Farmer',w2:'Crop',cat:'Agriculture'},
+                {w1:'Singer',w2:'Song',cat:'Music'},{w1:'Actor',w2:'Role',cat:'Entertainment'},
+                {w1:'Driver',w2:'License',cat:'Transport'},{w1:'Builder',w2:'Blueprint',cat:'Construction'},
+                {w1:'Sailor',w2:'Ship',cat:'Nautical'},{w1:'Pilot',w2:'Plane',cat:'Aviation'},
+                {w1:'Gardener',w2:'Plants',cat:'Nature'},{w1:'Baker',w2:'Bread',cat:'Food'},
+                {w1:'Fisherman',w2:'Net',cat:'Profession'}
+            ],
+            hard:[
+                {w1:'Microscope',w2:'Bacteria',cat:'Science'},{w1:'Telescope',w2:'Stars',cat:'Astronomy'},
+                {w1:'Thermometer',w2:'Temperature',cat:'Science'},{w1:'Barometer',w2:'Pressure',cat:'Weather'},
+                {w1:'Stethoscope',w2:'Heartbeat',cat:'Medical'},{w1:'Calculator',w2:'Numbers',cat:'Math'},
+                {w1:'Compass',w2:'Direction',cat:'Navigation'},{w1:'Microphone',w2:'Sound',cat:'Audio'},
+                {w1:'Camera',w2:'Photograph',cat:'Technology'},{w1:'Keyboard',w2:'Type',cat:'Computer'},
+                {w1:'Thermostat',w2:'Climate',cat:'Home'},{w1:'Pedometer',w2:'Steps',cat:'Fitness'},
+                {w1:'Speedometer',w2:'Velocity',cat:'Transport'},{w1:'Odometer',w2:'Distance',cat:'Vehicle'},
+                {w1:'Altimeter',w2:'Altitude',cat:'Aviation'}
+            ]
+        };
 
-            start: function() {
-                this.chain = [];
-                var starter = this.starters[Math.floor(Math.random() * this.starters.length)];
-                this.chain.push(starter);
-                this.render();
-                document.getElementById('wordInput').value = '';
-                document.getElementById('wordFeedback').textContent = '';
+        var WG = {
+            difficulty:'easy', availableWords:[], pairs:[], matched:0, score:0,
+            draggingIdx:null,
+            aiMessages:{
+                correct:['Perfect match! 🌟','Excellent connection! 💫','Brilliant! 🎯','Wonderful! ⭐','Amazing! 🔥'],
+                incorrect:['Good try! That\'s not quite right. 💪','Almost! Try a different word. 🌟','Keep exploring! 🎯'],
+                encouragement:['You\'re doing fantastic! 🌟','Your thinking is really shining! 💫']
             },
 
-            submit: function() {
-                var word = document.getElementById('wordInput').value.trim();
-                if (!word) return;
-                if (word.length < 2) {
-                    document.getElementById('wordFeedback').textContent = '⚠️ Word must be at least 2 characters.';
-                    return;
-                }
-                if (this.chain.includes(word)) {
-                    document.getElementById('wordFeedback').textContent = '⚠️ You already used "' + word + '"! Try a different word.';
-                    return;
-                }
-                this.chain.push(word);
-                document.getElementById('wordInput').value = '';
-                document.getElementById('wordFeedback').textContent = '✅ Great connection!';
-                this.render();
+            setDifficulty: function(level) {
+                this.difficulty=level;
+                document.querySelectorAll('#wordModal .gm-diff-btn').forEach(function(b){b.classList.remove('active');});
+                var btn=document.querySelector('#wordModal .gm-diff-btn[data-level="'+level+'"]');
+                if(btn) btn.classList.add('active');
+                document.getElementById('wTotal').textContent='6';
+                this.startGame();
             },
 
-            render: function() {
-                var last = this.chain[this.chain.length - 1];
-                document.getElementById('wordDisplay').textContent = last;
-                document.getElementById('wordScore').textContent = 'Chain length: ' + (this.chain.length - 1);
-                document.getElementById('wordChain').innerHTML = this.chain.map(function(w, i) {
-                    return '<span class="word-chip">' + (i > 0 ? '→ ' : '') + w + '</span>';
-                }).join('');
+            startGame: function() {
+                var sel=[...WA_BANK[this.difficulty]].sort(function(){return Math.random()-0.5;}).slice(0,6);
+                this.availableWords=[];
+                sel.forEach(function(p){
+                    WG.availableWords.push({word:p.w1,pair:p.w2,cat:p.cat});
+                    WG.availableWords.push({word:p.w2,pair:p.w1,cat:p.cat});
+                });
+                this.availableWords=this.availableWords.sort(function(){return Math.random()-0.5;});
+                this.pairs=sel.map(function(p){return{w1:p.w1,w2:null,cat:p.cat,matched:false};});
+                this.matched=0; this.score=0;
+                this.renderPool(); this.renderPairs(); this.updateStats();
+                document.getElementById('wWin').style.display='none';
+                this.showAI('Starting '+this.difficulty+' mode! Drag words to their partners! 🍀');
+            },
+
+            renderPool: function() {
+                var pool=document.getElementById('waPool'); pool.innerHTML='';
+                this.availableWords.forEach(function(wo,i){
+                    var el=document.createElement('div');
+                    el.className='wa-word'; el.textContent=wo.word;
+                    el.draggable=true; el.dataset.idx=i;
+                    el.addEventListener('dragstart',function(e){
+                        WG.draggingIdx=i;
+                        e.dataTransfer.setData('text/plain',String(i));
+                        el.classList.add('wa-dragging');
+                    });
+                    el.addEventListener('dragend',function(){el.classList.remove('wa-dragging');});
+                    pool.appendChild(el);
+                });
+            },
+
+            renderPairs: function() {
+                var pairsEl=document.getElementById('waPairs'); pairsEl.innerHTML='';
+                this.pairs.forEach(function(pair,i){
+                    var el=document.createElement('div');
+                    el.className='wa-pair'+(pair.matched?' wa-pair--matched':'');
+                    el.dataset.idx=i;
+                    if(pair.matched){
+                        el.innerHTML='<span class="wa-matched-word">'+pair.w1+'</span>'
+                            +'<span class="wa-connector">↔</span>'
+                            +'<span class="wa-matched-word">'+pair.w2+'</span>'
+                            +'<span class="gm-cat-badge">'+pair.cat+'</span>';
+                    } else {
+                        el.innerHTML='<span class="wa-anchor">'+pair.w1+'</span>'
+                            +'<span class="wa-connector">+</span>'
+                            +'<div class="wa-drop" data-pair="'+i+'">Drop match here</div>'
+                            +'<span class="gm-cat-badge">'+pair.cat+'</span>';
+                        el.querySelector('.wa-drop').addEventListener('dragover',function(e){e.preventDefault();el.classList.add('wa-hover');});
+                        el.querySelector('.wa-drop').addEventListener('dragleave',function(){el.classList.remove('wa-hover');});
+                        el.querySelector('.wa-drop').addEventListener('drop',function(e){
+                            e.preventDefault(); el.classList.remove('wa-hover');
+                            var wordIdx=parseInt(e.dataTransfer.getData('text/plain'));
+                            WG.handleDrop(wordIdx,i);
+                        });
+                    }
+                    pairsEl.appendChild(el);
+                });
+            },
+
+            handleDrop: function(wordIdx, pairIdx) {
+                var wo=this.availableWords[wordIdx];
+                var pair=this.pairs[pairIdx];
+                if(!wo || !pair || pair.matched) return;
+                if(wo.pair===pair.w1){
+                    pair.w2=wo.word; pair.matched=true; this.matched++; this.score+=10;
+                    this.availableWords.splice(wordIdx,1);
+                    this.showAI(this.aiMessages.correct[Math.floor(Math.random()*this.aiMessages.correct.length)]);
+                    this.renderPool(); this.renderPairs(); this.updateStats();
+                    if(this.matched===6) setTimeout(function(){WG.gameComplete();},600);
+                } else {
+                    this.showAI(this.aiMessages.incorrect[Math.floor(Math.random()*this.aiMessages.incorrect.length)]);
+                }
+            },
+
+            checkMatches: function() {
+                var c=this.pairs.filter(function(p){return p.matched;}).length;
+                if(c===6) this.showAI('🎉 All matches correct! You\'re a word association genius! 🌟');
+                else this.showAI('You have '+c+' correct matches out of 6. Keep going! 💪');
+            },
+
+            updateStats: function() {
+                document.getElementById('wMatched').textContent=this.matched;
+                document.getElementById('wScore').textContent=this.score;
+                var pct=(this.matched/6)*100;
+                document.getElementById('wProgressBar').style.width=pct+'%';
+            },
+
+            showAI: function(msg) {
+                var el=document.getElementById('wAiMsg');
+                el.style.opacity='0';
+                setTimeout(function(){el.textContent=msg;el.style.opacity='1';},200);
+            },
+
+            gameComplete: function() {
+                var perf=this.score===60?'PERFECT SCORE! Word master! 🏆':this.score>=40?'Excellent word skills! ⭐':'Great connections! 🌟';
+                document.getElementById('wWinStats').innerHTML=
+                    'You matched all <strong>6 pairs</strong> with <strong>'+this.score+'</strong> points!<br>'+perf;
+                document.getElementById('wWin').style.display='flex';
+                this.showAI('🎉 '+perf);
+                MM.spawnConfetti('wordModal');
             }
         };
 
-        document.getElementById('playWordAssoc').addEventListener('click', function() {
-            document.getElementById('wordModal').classList.add('open');
-            WA.start();
-            document.getElementById('wordInput').focus();
-        });
-        document.getElementById('closeWord').addEventListener('click', function() {
+        document.getElementById('wordModal').addEventListener('gameOpen', function(){ WG.startGame(); });
+        document.getElementById('playWordAssoc').addEventListener('click', function(){ WG.startGame(); });
+        document.getElementById('closeWord').addEventListener('click', function(){
             document.getElementById('wordModal').classList.remove('open');
         });
-        document.getElementById('wordSubmit').addEventListener('click', function() { WA.submit(); });
-        document.getElementById('wordInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') WA.submit();
+        document.getElementById('wNewGame').addEventListener('click', function(){ WG.startGame(); });
+        document.getElementById('wCheckBtn').addEventListener('click', function(){ WG.checkMatches(); });
+        document.getElementById('wPlayAgain').addEventListener('click', function(){
+            document.getElementById('wWin').style.display='none'; WG.startGame();
+        });
+        document.querySelectorAll('#wordModal .gm-diff-btn').forEach(function(btn){
+            btn.addEventListener('click',function(){ WG.setDifficulty(this.dataset.level); });
         });
 
-        // Close game modals on overlay click
-        ['memMatchModal','triviaModal','wordModal'].forEach(function(id) {
-            document.getElementById(id).addEventListener('click', function(e) {
-                if (e.target === this) this.classList.remove('open');
+        // Close all game modals on overlay click
+        ['memMatchModal','triviaModal','wordModal'].forEach(function(id){
+            document.getElementById(id).addEventListener('click',function(e){
+                if(e.target===this) this.classList.remove('open');
             });
         });
 
