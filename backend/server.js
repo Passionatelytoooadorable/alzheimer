@@ -2,6 +2,7 @@ const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const morgan  = require('morgan');
+const cookieParser = require('cookie-parser'); // NEW
 require('dotenv').config();
 
 const authRoutes     = require('./routes/auth');
@@ -20,7 +21,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
-// ── CORS — restrict to your Vercel domain (and localhost for dev) ─────────────
+// ── CORS — credentials:true required for cookies to work cross-origin ─────────
 const ALLOWED_ORIGINS = [
   'https://alzheimer-support.vercel.app',
   'http://localhost:3000',
@@ -29,21 +30,20 @@ const ALLOWED_ORIGINS = [
 ];
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (curl, mobile apps)
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    // In development, allow all origins
     if (process.env.NODE_ENV !== 'production') return callback(null, true);
     callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false
+  credentials: true // NEW — required so the browser sends/receives cookies
 }));
 
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // NEW — must be before routes
 
 // ── Simple in-memory rate limiter (no extra dependency) ───────────────────────
 const rateLimitStore = new Map();
@@ -88,7 +88,6 @@ app.use('/api/chat',                 rateLimit(30,  60 * 1000));       // 30/min
 
 // ── Input validation middleware ───────────────────────────────────────────────
 app.use(function (req, res, next) {
-  // Sanitise string fields — strip null bytes
   if (req.body && typeof req.body === 'object') {
     JSON.stringify(req.body, function (key, value) {
       if (typeof value === 'string') req.body[key] = value.replace(/\0/g, '');
@@ -138,7 +137,6 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Invalid request: messages array is required' });
     }
 
-    // Limit message history to last 20 to avoid huge payloads
     const trimmedMessages = messages.slice(-20);
 
     if (!process.env.GROQ_API_KEY) {
@@ -180,7 +178,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// ── Health endpoint — includes DB check ──────────────────────────────────────
+// ── Health endpoint ───────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {
   let dbStatus = 'unknown';
   try {
@@ -202,7 +200,7 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!', status: 'SUCCESS' });
 });
 
-// ── Error suppression in production ─────────────────────────────────────────
+// ── Error handler ─────────────────────────────────────────────────────────────
 app.use(function (err, req, res, next) {
   console.error('Unhandled error:', err);
   const isProd = process.env.NODE_ENV === 'production';
