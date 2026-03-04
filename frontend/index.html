@@ -6,7 +6,6 @@
     <title>Alzheimer's Support - Scan Report</title>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
-    <!-- Instant redirect — runs on load AND bfcache restore -->
     <script>
         function checkAuthScan() {
             if (!localStorage.getItem('token')) {
@@ -28,11 +27,12 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <nav class="nav-links" id="scanNav"></nav>
+        <!-- Nav injected by nav-shared.js — same as all other pages -->
+        <nav class="nav-links" id="sharedNav"></nav>
     </header>
 
     <main class="scan-main">
-        <!-- Hero — compact -->
+        <!-- Hero -->
         <section class="scan-hero">
             <div class="hero-content">
                 <div class="hero-text">
@@ -52,9 +52,7 @@
                         <div class="brain-ring ring-2"></div>
                         <div class="brain-ring ring-3"></div>
                         <div class="brain-icon">🧠</div>
-                        <!-- Horizontal scan line -->
                         <div class="scan-line"></div>
-                        <!-- Blip dots -->
                         <div class="pulse-dot dot-1"></div>
                         <div class="pulse-dot dot-2"></div>
                         <div class="pulse-dot dot-3"></div>
@@ -71,7 +69,6 @@
                     <h2>📄 Upload Medical Report</h2>
                     <p class="upload-subtitle">Upload a PDF of your brain scan, MRI report, or cognitive assessment</p>
 
-                    <!-- File input OUTSIDE upload-area so it doesn't block clicks -->
                     <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
 
                     <div class="upload-area" id="uploadArea">
@@ -175,10 +172,19 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
+
     <script src="api.js"></script>
     <script src="user-store.js"></script>
+    <script src="nav-shared.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initSharedNav === 'function') {
+                initSharedNav('index.html');
+            }
+        });
+    </script>
     <script src="scan.js"></script>
 </body>
 </html>
