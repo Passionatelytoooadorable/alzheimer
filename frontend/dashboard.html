@@ -16,7 +16,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
     <style>
         /* ── Override welcome header color ── */
-        .welcome-header{background:linear-gradient(135deg,#00897b 0%,#26a69a 55%,#00acc1 100%)!important;}
+        .welcome-header{background:linear-gradient(135deg,#4a0e24 0%,#7b1c3e 55%,#b5294a 100%)!important;}
 
         /* ── Connection pill ── */
         .conn-pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;padding:.2rem .65rem;border-radius:20px;font-weight:700;margin-left:.75rem;}
@@ -27,7 +27,7 @@
         @keyframes pw{0%,100%{opacity:1}50%{opacity:.4}}
 
         /* ── Today banner (warm teal) ── */
-        .today-banner{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;background:linear-gradient(135deg,#00695c 0%,#00897b 100%);color:#fff;padding:1.1rem 2rem;}
+        .today-banner{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;background:linear-gradient(135deg,#4a0e24 0%,#7b1c3e 100%);color:#fff;padding:1.1rem 2rem;}
         .tb-item{text-align:center;}
         .tb-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;opacity:.75;margin-bottom:.2rem;}
         .tb-value{font-size:1.3rem;font-weight:700;}
@@ -40,8 +40,8 @@
         .mood-btns{display:flex;gap:.4rem;}
         .mood-e{font-size:1.5rem;padding:.2rem .4rem;border-radius:8px;border:2px solid transparent;background:#f9f9f9;cursor:pointer;transition:all .15s;line-height:1;}
         .mood-e:hover{transform:scale(1.2);background:#e0f2f1;}
-        .mood-e.active{border-color:#00897b;background:#e0f2f1;transform:scale(1.2);}
-        .mood-ok{font-size:.8rem;color:#00897b;display:none;}
+        .mood-e.active{border-color:#b5294a;background:#fce4ec;transform:scale(1.2);}
+        .mood-ok{font-size:.8rem;color:#b5294a;display:none;}
         .mood-ok.show{display:inline;}
 
         /* ── Main grid ── */
@@ -58,7 +58,7 @@
         .t-badge{font-size:.7rem;font-weight:700;padding:.18rem .55rem;border-radius:10px;}
         .t-badge.g{background:#e8f5e9;color:#2e7d32;}
         .t-badge.b{background:#e8f0fe;color:#3c5a9a;}
-        .t-badge.t{background:#e0f2f1;color:#00695c;}
+        .t-badge.t{background:#fce4ec;color:#7b1c3e;}
         .t-badge.o{background:#fff3e0;color:#e65100;}
         .t-badge.r{background:#fdecea;color:#c62828;}
         .t-body{padding:0 1.25rem 1.25rem;flex:1;}
@@ -68,23 +68,23 @@
         .rem-row:last-child{border:none;}
         .rem-row.done{opacity:.4;text-decoration:line-through;}
         .comp-bar{height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:.6rem;}
-        .comp-fill{height:100%;background:#00897b;border-radius:3px;transition:width .8s;}
+        .comp-fill{height:100%;background:#b5294a;border-radius:3px;transition:width .8s;}
         .comp-lbl{font-size:.72rem;color:#aaa;margin-top:.2rem;}
-        .t-btn{width:100%;margin-top:.75rem;padding:.5rem;background:#e0f2f1;color:#00695c;border:none;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;transition:background .2s;}
-        .t-btn:hover{background:#b2dfdb;}
+        .t-btn{width:100%;margin-top:.75rem;padding:.5rem;background:#fce4ec;color:#4a0e24;border:none;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;transition:background .2s;}
+        .t-btn:hover{background:#f8bbd0;}
 
         /* Mini stats */
         .mini-stats{display:flex;gap:.6rem;margin-bottom:.5rem;}
         .mini-stat{flex:1;text-align:center;background:#f9fffe;border-radius:8px;padding:.5rem .3rem;}
-        .mini-num{font-size:1.4rem;font-weight:700;color:#00897b;}
+        .mini-num{font-size:1.4rem;font-weight:700;color:#b5294a;}
         .mini-lbl{font-size:.68rem;color:#888;margin-top:.05rem;}
 
         /* Quick nav box */
         .qnav{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem;}
-        .qnav-box{background:#f0fffe;border-radius:10px;padding:.7rem;text-align:center;cursor:pointer;transition:background .2s;text-decoration:none;display:block;}
-        .qnav-box:hover{background:#b2dfdb;}
+        .qnav-box{background:#fdf2f5;border-radius:10px;padding:.7rem;text-align:center;cursor:pointer;transition:background .2s;text-decoration:none;display:block;}
+        .qnav-box:hover{background:#fce4ec;}
         .qnav-box .qico{font-size:1.5rem;}
-        .qnav-box .qlbl{font-size:.75rem;font-weight:600;color:#00695c;margin-top:.15rem;}
+        .qnav-box .qlbl{font-size:.75rem;font-weight:600;color:#7b1c3e;margin-top:.15rem;}
 
         /* Activity */
         .act-row{display:flex;align-items:flex-start;gap:.6rem;padding:.45rem 0;border-bottom:1px solid #f9f9f9;font-size:.8rem;}
@@ -256,11 +256,10 @@
         <a href="resources.html" class="d-tile">
             <div class="t-top"><div class="t-title">📚 Support Resources</div><span class="t-badge o">50+ links</span></div>
             <div class="t-body">
-                <div style="font-size:.82rem;color:#888;margin-bottom:.75rem;">Guides, helplines, community, legal &amp; financial planning</div>
-                <div style="display:flex;flex-direction:column;gap:.35rem;">
-                    <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#555;background:#fff8f0;border-radius:7px;padding:.35rem .7rem;">🆘 24/7 Helpline: 800-272-3900</div>
-                    <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#555;background:#fff8f0;border-radius:7px;padding:.35rem .7rem;">🏥 Find neurologists &amp; memory clinics</div>
-                    <div style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#555;background:#fff8f0;border-radius:7px;padding:.35rem .7rem;">👥 Caregiver &amp; community support</div>
+                <div style="font-size:.82rem;color:#888;margin-bottom:.75rem;">Guides, helplines, community, legal &amp; financial planning for patients &amp; caregivers</div>
+                <div style="margin-top:.5rem;padding:.8rem 1rem;background:#fff8f0;border-radius:10px;text-align:center;">
+                    <div style="font-size:1.8rem;margin-bottom:.25rem;">📚</div>
+                    <div style="font-size:.8rem;font-weight:600;color:#e65100;">Browse 50+ curated resources →</div>
                 </div>
             </div>
         </a>
