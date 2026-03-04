@@ -218,7 +218,7 @@
             </div>
 
             <!-- Location Safety -->
-            <a href="location-tracker.html" class="feature-tile location-tile">
+            <div class="feature-tile location-tile">
                 <div class="tile-header">
                     <div class="tile-icon">📍</div>
                     <h3>Location Safety</h3>
@@ -230,7 +230,14 @@
                         <div class="location-status" id="locUpdate">Last updated: —</div>
                         <div class="safe-zone">Safe zone: Home</div>
                     </div>
-                    <div class="caregiver-link-box">
+                    <div class="loc-link-box" onclick="event.preventDefault();location.href='location-tracker.html'">
+                        <span>🗺️</span>
+                        <div>
+                            <div class="cl-title loc-title">Location Tracker</div>
+                            <div class="cl-sub">Share with caregivers</div>
+                        </div>
+                    </div>
+                    <div class="caregiver-link-box" onclick="event.preventDefault();location.href='caregiver.html'">
                         <span>👩‍⚕️</span>
                         <div>
                             <div class="cl-title">Caregiver Dashboard</div>
@@ -238,7 +245,7 @@
                         </div>
                     </div>
                 </div>
-            </a>
+            </div>
 
             <!-- Support Resources -->
             <a href="resources.html" class="feature-tile resources-tile">

@@ -14,9 +14,9 @@ function initResources() {
     console.log('Resources section initialized');
     
     // Check if user is logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
-        window.location.href = 'login.html';
+        // auth handled in HTML
         return;
     }
 }
