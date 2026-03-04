@@ -17,12 +17,15 @@ let chatBackups = [];
 let hasShownWelcome = false;
 let userKey = '';           // Unique key per user for localStorage namespacing
 
+// ─── Voice / TTS State ───────────────────────────────────────────────────────
+let ttsEnabled = false;
+let recognition = null;
+let isRecording = false;
+
 // ─── User Key ────────────────────────────────────────────────────────────────
-// We derive a stable key from the auth token so each user has isolated stats.
 function getUserKey() {
     if (userKey) return userKey;
     const token = localStorage.getItem('token') || 'guest';
-    // Simple hash - take last 16 chars so key isn't huge but is user-specific
     userKey = 'user_' + token.slice(-16);
     return userKey;
 }
@@ -41,6 +44,9 @@ async function initializeApp() {
     loadChatBackups();
     setupBreathingExercise();
     setupMoodAndPromptButtons();
+    setupVoiceInput();
+    setupTTS();
+    setupConnectionStatus();
 
     if (!hasShownWelcome) {
         showWelcomeGreeting();
@@ -55,14 +61,11 @@ async function initializeApp() {
 }
 
 // ─── Claude API Chat (via backend proxy) ─────────────────────────────────────
-// Calls your Render backend which securely forwards to Anthropic.
-// This avoids CORS issues and keeps your API key server-side.
 const BACKEND_URL = 'https://alzheimer-backend-new.onrender.com';
 
 function getISTDateTime() {
-    // Compute IST directly in the browser — always accurate
     const now = new Date();
-    const istOffset = 330; // IST = UTC + 330 minutes
+    const istOffset = 330;
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
     const ist = new Date(utc + istOffset * 60000);
 
@@ -85,11 +88,8 @@ function getISTDateTime() {
 }
 
 async function callClaudeAPI(userText) {
-    // Keep last 20 turns for context (10 back-and-forth exchanges)
     const recentMessages = apiMessages.slice(-20);
     const messagesPayload = [...recentMessages, { role: 'user', content: userText }];
-
-    // Send current IST date/time from browser — always correct
     const { date, time } = getISTDateTime();
 
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
@@ -109,11 +109,213 @@ async function callClaudeAPI(userText) {
     const data = await response.json();
     const assistantText = data.reply;
 
-    // Update conversation context for follow-up messages
     apiMessages.push({ role: 'user', content: userText });
     apiMessages.push({ role: 'assistant', content: assistantText });
 
     return assistantText;
+}
+
+// ─── Connection Status ────────────────────────────────────────────────────────
+function setupConnectionStatus() {
+    async function checkConn() {
+        const dot  = document.getElementById('connDot');
+        const txt  = document.getElementById('connText');
+        if (!dot || !txt) return;
+        try {
+            const r = await fetch(`${BACKEND_URL}/api/health`);
+            if (r.ok) {
+                dot.className = 'status-dot connected';
+                txt.textContent = 'Online';
+            } else throw new Error();
+        } catch {
+            dot.className = 'status-dot disconnected';
+            txt.textContent = 'Offline';
+        }
+    }
+    checkConn();
+    setInterval(checkConn, 60000);
+}
+
+// ─── TTS (Text-to-Speech) ─────────────────────────────────────────────────────
+function setupTTS() {
+    const ttsToggle = document.getElementById('ttsToggle');
+    if (!ttsToggle) return;
+
+    // Restore persisted preference
+    ttsEnabled = localStorage.getItem('ttsEnabled') === 'true';
+    updateTTSButton();
+
+    ttsToggle.addEventListener('click', function () {
+        ttsEnabled = !ttsEnabled;
+        localStorage.setItem('ttsEnabled', ttsEnabled);
+        updateTTSButton();
+        if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+        showNotification(ttsEnabled ? '🔊 Voice responses enabled' : '🔇 Voice responses disabled', 'info');
+    });
+
+    // Observe chat messages and speak new companion replies automatically
+    const chatEl = document.getElementById('chatMessages');
+    if (chatEl) {
+        const obs = new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                m.addedNodes.forEach(function (node) {
+                    if (node.nodeType !== 1) return;
+                    const isCompanion = node.classList &&
+                        (node.classList.contains('companion-message') || node.classList.contains('bot-message'));
+                    // Don't speak typing indicator
+                    const isTyping = node.classList && node.classList.contains('typing-indicator');
+                    if (isCompanion && !isTyping) {
+                        const textEl = node.querySelector('.message-content p, .message-text, p') || node;
+                        const text = textEl.innerText || textEl.textContent || '';
+                        speakText(text);
+                    }
+                });
+            });
+        });
+        obs.observe(chatEl, { childList: true });
+    }
+}
+
+function updateTTSButton() {
+    const btn = document.getElementById('ttsToggle');
+    if (!btn) return;
+    btn.textContent  = ttsEnabled ? '🔊 TTS On' : '🔇 TTS Off';
+    btn.classList.toggle('enabled', ttsEnabled);
+    btn.setAttribute('aria-pressed', String(ttsEnabled));
+}
+
+function speakText(text) {
+    if (!ttsEnabled || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    // Strip emoji and limit length for comfortable listening
+    const clean = text.replace(/[^\w\s,.!?'"\-\u00C0-\u024F]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 350);
+    if (!clean) return;
+
+    const utt = new SpeechSynthesisUtterance(clean);
+    utt.rate  = 0.9;
+    utt.pitch = 1.05;
+    utt.volume = 1;
+
+    // Prefer a natural English female voice if available
+    function assignVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        const pref = voices.find(v => v.lang.startsWith('en') && /female|woman|samantha|karen|victoria|zira/i.test(v.name))
+                  || voices.find(v => v.lang.startsWith('en'));
+        if (pref) utt.voice = pref;
+        window.speechSynthesis.speak(utt);
+    }
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+        assignVoice();
+    } else {
+        window.speechSynthesis.onvoiceschanged = assignVoice;
+    }
+}
+
+// ─── Voice Input (Web Speech API) ─────────────────────────────────────────────
+function setupVoiceInput() {
+    const voiceBtn  = document.getElementById('voiceInputBtn');
+    const inputEl   = document.getElementById('chatInput');
+    const hintEl    = document.getElementById('inputHint');
+    if (!voiceBtn) return;
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+        voiceBtn.title    = 'Voice input not supported in this browser';
+        voiceBtn.style.opacity = '0.35';
+        voiceBtn.disabled = true;
+        return;
+    }
+
+    recognition = new SR();
+    recognition.continuous    = false;
+    recognition.interimResults = true;
+    recognition.lang          = 'en-US';
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = function () {
+        isRecording = true;
+        voiceBtn.classList.add('active');
+        voiceBtn.setAttribute('aria-label', 'Stop voice recording');
+        voiceBtn.title = 'Click to stop recording';
+        if (hintEl) hintEl.textContent = '🎤 Listening… speak now';
+    };
+
+    recognition.onresult = function (event) {
+        let interimTranscript = '';
+        let finalTranscript   = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const t = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += t;
+            } else {
+                interimTranscript += t;
+            }
+        }
+
+        const display = finalTranscript || interimTranscript;
+        if (inputEl) inputEl.value = display;
+        if (hintEl)  hintEl.textContent = '🎤 ' + (finalTranscript ? 'Got it! Press Enter to send.' : 'Listening… ' + display.substring(0, 60));
+
+        // Auto-send when a final result is received and Enter isn't needed
+        if (finalTranscript) {
+            stopRecording();
+        }
+    };
+
+    recognition.onerror = function (e) {
+        stopRecording();
+        const msgs = {
+            'no-speech'      : '⚠️ No speech detected. Try again.',
+            'audio-capture'  : '⚠️ Microphone not found.',
+            'not-allowed'    : '⚠️ Microphone permission denied.',
+            'network'        : '⚠️ Network error during voice input.'
+        };
+        if (hintEl) hintEl.textContent = msgs[e.error] || '⚠️ Voice not recognised. Please try again.';
+        setTimeout(() => {
+            if (hintEl) hintEl.textContent = 'Press Enter to send • Maximum 500 characters';
+        }, 3000);
+    };
+
+    recognition.onend = function () {
+        stopRecording();
+    };
+
+    voiceBtn.addEventListener('click', function () {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (err) {
+                // Already started — ignore
+            }
+        }
+    });
+
+    // Also allow pressing Enter after voice fills the input
+    if (inputEl) {
+        inputEl.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && isRecording) {
+                recognition.stop();
+            }
+        });
+    }
+}
+
+function stopRecording() {
+    isRecording = false;
+    const voiceBtn = document.getElementById('voiceInputBtn');
+    if (voiceBtn) {
+        voiceBtn.classList.remove('active');
+        voiceBtn.setAttribute('aria-label', 'Start voice input');
+        voiceBtn.title = 'Voice input';
+    }
+    const hintEl = document.getElementById('inputHint');
+    if (hintEl && hintEl.textContent.startsWith('🎤')) {
+        hintEl.textContent = 'Press Enter to send • Maximum 500 characters';
+    }
 }
 
 // ─── Breathing Exercise ───────────────────────────────────────────────────────
@@ -141,23 +343,20 @@ function setupBreathingExercise() {
     ];
 
     let phaseIndex = 0;
-    let countdown = 0;
+    let countdown  = 0;
 
     function runPhase() {
         if (!isRunning) return;
         const phase = phases[phaseIndex];
 
-        // Update UI
-        textEl.textContent  = phase.name;
-        subEl.textContent   = phase.sub;
+        textEl.textContent = phase.name;
+        subEl.textContent  = phase.sub;
         if (emoji) emoji.textContent = phase.e;
 
-        // Circle animation
-        circle.classList.remove('inhale','hold','exhale');
-        void circle.offsetWidth; // reflow to restart animation
+        circle.classList.remove('inhale', 'hold', 'exhale');
+        void circle.offsetWidth;
         if (phase.cls) circle.classList.add(phase.cls);
 
-        // Countdown
         countdown = Math.floor(phase.dur / 1000);
         counterEl.textContent = countdown > 0 ? `${countdown}s` : '';
         clearInterval(countTimer);
@@ -166,7 +365,6 @@ function setupBreathingExercise() {
             counterEl.textContent = countdown > 0 ? `${countdown}s` : '';
         }, 1000);
 
-        // Next phase
         timer = setTimeout(() => {
             phaseIndex = (phaseIndex + 1) % phases.length;
             if (phaseIndex === 0) {
@@ -191,7 +389,7 @@ function setupBreathingExercise() {
         isRunning = false;
         clearTimeout(timer);
         clearInterval(countTimer);
-        circle.classList.remove('inhale','hold','exhale');
+        circle.classList.remove('inhale', 'hold', 'exhale');
         textEl.textContent  = 'Breathe In';
         subEl.textContent   = 'Press Start when ready';
         if (emoji) emoji.textContent = '😮‍💨';
@@ -205,7 +403,7 @@ function setupBreathingExercise() {
 // ─── Mood + Quick Prompt Buttons ─────────────────────────────────────────────
 function setupMoodAndPromptButtons() {
     document.querySelectorAll('.prompt-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
+        btn.addEventListener('click', async function () {
             const prompt = this.dataset.prompt;
             const userMessage = {
                 type: 'user',
@@ -220,11 +418,19 @@ function setupMoodAndPromptButtons() {
             saveChatToStorage();
             try {
                 const reply = await callClaudeAPI(prompt);
-                const aiMessage = { type: 'companion', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                const aiMessage = {
+                    type: 'companion',
+                    text: reply,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
                 addMessageToChat(aiMessage);
                 chatHistory.push(aiMessage);
             } catch {
-                addMessageToChat({ type: 'companion', text: "I'm having trouble right now. Please try again! 💙", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+                addMessageToChat({
+                    type: 'companion',
+                    text: "I'm having trouble right now. Please try again! 💙",
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
             }
             saveChatToStorage();
         });
@@ -233,12 +439,12 @@ function setupMoodAndPromptButtons() {
 
 // ─── Event Listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
-    const chatInput = document.getElementById('chatInput');
+    const chatInput  = document.getElementById('chatInput');
     const sendButton = document.querySelector('.send-btn');
 
     if (chatInput && sendButton) {
         sendButton.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', function(e) {
+        chatInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendMessage();
         });
     }
@@ -262,38 +468,37 @@ function setupEventListeners() {
 
     document.querySelectorAll('.close').forEach(btn => btn.addEventListener('click', closeModal));
 
-    const saveReminderBtn = document.getElementById('saveReminder');
-    if (saveReminderBtn) saveReminderBtn.addEventListener('click', saveReminder);
-
+    const saveReminderBtn   = document.getElementById('saveReminder');
     const cancelReminderBtn = document.getElementById('cancelReminder');
+    if (saveReminderBtn)   saveReminderBtn.addEventListener('click', saveReminder);
     if (cancelReminderBtn) cancelReminderBtn.addEventListener('click', closeModal);
 
     const capturePhotoBtn = document.getElementById('capturePhoto');
-    const retakePhotoBtn = document.getElementById('retakePhoto');
-    const uploadPhotoBtn = document.getElementById('uploadPhoto');
+    const retakePhotoBtn  = document.getElementById('retakePhoto');
+    const uploadPhotoBtn  = document.getElementById('uploadPhoto');
     if (capturePhotoBtn) capturePhotoBtn.addEventListener('click', capturePhoto);
-    if (retakePhotoBtn) retakePhotoBtn.addEventListener('click', retakePhoto);
-    if (uploadPhotoBtn) uploadPhotoBtn.addEventListener('click', uploadPhotoToChat);
+    if (retakePhotoBtn)  retakePhotoBtn.addEventListener('click', retakePhoto);
+    if (uploadPhotoBtn)  uploadPhotoBtn.addEventListener('click', uploadPhotoToChat);
 
     const restoreChatsBtn = document.getElementById('restoreChats');
-    const clearChatBtn = document.getElementById('clearChat');
-    const exportChatsBtn = document.getElementById('exportChats');
-    const importChatsBtn = document.getElementById('importChats');
-    const chatImportFile = document.getElementById('chatImportFile');
+    const clearChatBtn    = document.getElementById('clearChat');
+    const exportChatsBtn  = document.getElementById('exportChats');
+    const importChatsBtn  = document.getElementById('importChats');
+    const chatImportFile  = document.getElementById('chatImportFile');
 
     if (restoreChatsBtn) restoreChatsBtn.addEventListener('click', restorePreviousChats);
-    if (clearChatBtn) clearChatBtn.addEventListener('click', clearCurrentChat);
-    if (exportChatsBtn) exportChatsBtn.addEventListener('click', exportChatHistory);
-    if (importChatsBtn) importChatsBtn.addEventListener('click', () => chatImportFile.click());
-    if (chatImportFile) chatImportFile.addEventListener('change', importChatHistory);
+    if (clearChatBtn)    clearChatBtn.addEventListener('click', clearCurrentChat);
+    if (exportChatsBtn)  exportChatsBtn.addEventListener('click', exportChatHistory);
+    if (importChatsBtn)  importChatsBtn.addEventListener('click', () => chatImportFile.click());
+    if (chatImportFile)  chatImportFile.addEventListener('change', importChatHistory);
 
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
         document.querySelectorAll('.modal').forEach(modal => {
             if (event.target === modal) closeModal();
         });
     });
 
-    window.addEventListener('storage', function(e) {
+    window.addEventListener('storage', function (e) {
         if (e.key === 'reminders') {
             loadReminders();
             updateStats();
@@ -320,7 +525,7 @@ function checkForReminderUpdates() {
 function showWelcomeGreeting() {
     const hour = new Date().getHours();
     let timeGreet = 'Hello!';
-    if (hour >= 5 && hour < 12) timeGreet = 'Good morning!';
+    if (hour >= 5 && hour < 12)  timeGreet = 'Good morning!';
     else if (hour >= 12 && hour < 17) timeGreet = 'Good afternoon!';
     else if (hour >= 17 && hour < 22) timeGreet = 'Good evening!';
 
@@ -337,7 +542,6 @@ function showWelcomeGreeting() {
             isWelcomeGreeting: true,
             timestamp: Date.now()
         };
-
         chatHistory.push(greetingMessage);
         saveChatToStorage();
         renderChatHistory();
@@ -347,17 +551,9 @@ function showWelcomeGreeting() {
 }
 
 // ─── Per-User Stats ───────────────────────────────────────────────────────────
-/**
- * Days Active: count of distinct calendar days the user has visited this page.
- * Stored as a set of date strings under userStorage('activeDays').
- *
- * Chats Today: count of user messages sent today.
- * Stored under userStorage('chatsToday') as { date, count }.
- */
-
 function recordDayActive() {
     const today = new Date().toDateString();
-    const key = userStorage('activeDays');
+    const key   = userStorage('activeDays');
     const stored = localStorage.getItem(key);
     const activeDays = stored ? JSON.parse(stored) : [];
 
@@ -368,30 +564,27 @@ function recordDayActive() {
 }
 
 function getDaysActive() {
-    const key = userStorage('activeDays');
+    const key    = userStorage('activeDays');
     const stored = localStorage.getItem(key);
     if (!stored) return 0;
     return JSON.parse(stored).length;
 }
 
 function incrementChatCount() {
-    const today = new Date().toDateString();
-    const key = userStorage('chatsToday');
+    const today  = new Date().toDateString();
+    const key    = userStorage('chatsToday');
     const stored = localStorage.getItem(key);
-    let data = stored ? JSON.parse(stored) : { date: today, count: 0 };
+    let data     = stored ? JSON.parse(stored) : { date: today, count: 0 };
 
-    // Reset count if it's a new day
-    if (data.date !== today) {
-        data = { date: today, count: 0 };
-    }
+    if (data.date !== today) data = { date: today, count: 0 };
 
     data.count += 1;
     localStorage.setItem(key, JSON.stringify(data));
 }
 
 function getChatsToday() {
-    const today = new Date().toDateString();
-    const key = userStorage('chatsToday');
+    const today  = new Date().toDateString();
+    const key    = userStorage('chatsToday');
     const stored = localStorage.getItem(key);
     if (!stored) return 0;
     const data = JSON.parse(stored);
@@ -400,19 +593,21 @@ function getChatsToday() {
 
 // ─── Stats Display ────────────────────────────────────────────────────────────
 function updateStats() {
-    const daysEl = document.getElementById('daysActiveStat');
+    const daysEl  = document.getElementById('daysActiveStat');
     const chatsEl = document.getElementById('chatSessions');
-    if (daysEl) daysEl.textContent = getDaysActive();
+    if (daysEl)  daysEl.textContent  = getDaysActive();
     if (chatsEl) chatsEl.textContent = getChatsToday();
 }
 
 // ─── Send Message ─────────────────────────────────────────────────────────────
 async function sendMessage() {
-    const chatInput = document.getElementById('chatInput');
+    const chatInput   = document.getElementById('chatInput');
     const messageText = chatInput.value.trim();
     if (!messageText) return;
 
-    // Add user message to UI
+    // Stop any ongoing voice recording when user explicitly sends
+    if (isRecording && recognition) recognition.stop();
+
     const userMessage = {
         type: 'user',
         text: messageText,
@@ -422,16 +617,13 @@ async function sendMessage() {
     chatHistory.push(userMessage);
     chatInput.value = '';
 
-    // Track stat
     incrementChatCount();
     updateStats();
-
     showTypingIndicator();
     saveChatToStorage();
 
     try {
         const reply = await callClaudeAPI(messageText);
-
         const aiMessage = {
             type: 'companion',
             text: reply,
@@ -458,8 +650,9 @@ function addMessageToChat(message) {
     const chatMessages = document.querySelector('.chat-messages');
     if (!chatMessages) return;
 
-    const typingIndicator = document.querySelector('.typing-indicator');
-    if (typingIndicator) typingIndicator.remove();
+    // Remove inline typing indicator if present
+    const typingMsg = chatMessages.querySelector('.typing-indicator-msg');
+    if (typingMsg) typingMsg.remove();
 
     const el = document.createElement('div');
     el.className = `message ${message.type}-message`;
@@ -481,8 +674,12 @@ function showTypingIndicator() {
     const chatMessages = document.querySelector('.chat-messages');
     if (!chatMessages) return;
 
+    // Remove any previous inline typing indicator
+    const prev = chatMessages.querySelector('.typing-indicator-msg');
+    if (prev) prev.remove();
+
     const el = document.createElement('div');
-    el.className = 'message companion-message typing-indicator';
+    el.className = 'message companion-message typing-indicator-msg';
     el.innerHTML = `
         <div class="message-avatar">🤖</div>
         <div class="message-content">
@@ -519,14 +716,13 @@ async function handleQuickAction(event) {
         prompt = 'Can you remind me about my medication and give me some tips for remembering to take it?';
         setTimeout(() => openReminderModal(), 1000);
     } else if (actionType === 'games') {
-        prompt = 'Let\'s play a memory game!';
+        prompt = "Let's play a memory game!";
     } else if (actionType === 'stories') {
         prompt = 'Please tell me a short comforting story.';
     } else {
         prompt = 'How can you help me today?';
     }
 
-    // Show user message
     const userMessage = {
         type: 'user',
         text: prompt,
@@ -561,7 +757,6 @@ async function handleQuickAction(event) {
 
 // ─── Games ───────────────────────────────────────────────────────────────────
 function startGame(event) {
-    // Support both data-game attribute and reading the h4 text from the card
     const gameName = event.currentTarget.dataset.game
         || event.currentTarget.closest('.game-card-vertical')?.querySelector('h4')?.textContent?.trim()
         || '';
@@ -572,7 +767,6 @@ function startGame(event) {
         'Word Association':'🔗 Word Association is ready! Drag the words to find their perfect partners. Enjoy!'
     };
 
-    // Open the corresponding inline modal (no popup windows)
     const modalMap = {
         'Memory Match':    'memMatchModal',
         'Simple Trivia':   'triviaModal',
@@ -584,7 +778,6 @@ function startGame(event) {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.add('open');
-            // Trigger game init via custom event so the inline game JS can listen
             modal.dispatchEvent(new CustomEvent('gameOpen'));
         }
         showNotification(`${gameName} opened!`, 'info');
@@ -630,7 +823,7 @@ function openReminderModal() {
     const modal = document.getElementById('reminderModal');
     if (!modal) return;
     modal.style.display = 'block';
-    const now = new Date();
+    const now    = new Date();
     const timeEl = document.getElementById('reminderTime');
     const dateEl = document.getElementById('reminderDate');
     if (timeEl) timeEl.value = now.toTimeString().substring(0, 5);
@@ -648,7 +841,7 @@ function saveReminder() {
     }
 
     const newReminder = { id: Date.now(), title, date, time, completed: false };
-    const existing = JSON.parse(localStorage.getItem('reminders') || '[]');
+    const existing    = JSON.parse(localStorage.getItem('reminders') || '[]');
     existing.push(newReminder);
     localStorage.setItem('reminders', JSON.stringify(existing));
     currentReminders = existing;
@@ -665,9 +858,9 @@ function renderReminders() {
     if (!list) return;
     list.innerHTML = '';
     list.style.maxHeight = 'none';
-    list.style.overflow = 'visible';
+    list.style.overflow  = 'visible';
 
-    const today = new Date().toISOString().split('T')[0];
+    const today        = new Date().toISOString().split('T')[0];
     const todayReminders = currentReminders
         .filter(r => r.date === today)
         .sort((a, b) => a.time.localeCompare(b.time));
@@ -735,7 +928,7 @@ function restorePreviousChats() {
     const recent = chatBackups[chatBackups.length - 1];
     if (confirm('Restore most recent chat backup? This will replace your current chat.')) {
         chatHistory = JSON.parse(JSON.stringify(recent.chats));
-        apiMessages = []; // Reset API context
+        apiMessages = [];
         saveChatToStorage();
         renderChatHistory();
         showNotification('Chat restored successfully!', 'success');
@@ -761,10 +954,10 @@ function clearCurrentChat() {
 function exportChatHistory() {
     if (chatHistory.length === 0) { showNotification('No chat history to export.', 'info'); return; }
     const dataStr = JSON.stringify({ version: '1.0', exportDate: new Date().toISOString(), chats: chatHistory }, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
+    const blob    = new Blob([dataStr], { type: 'application/json' });
+    const url     = URL.createObjectURL(blob);
+    const link    = document.createElement('a');
+    link.href     = url;
     link.download = `ai-companion-chat-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
@@ -778,10 +971,10 @@ function importChatHistory(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         try {
             const imported = JSON.parse(e.target.result);
-            const chats = Array.isArray(imported) ? imported : (imported.chats || []);
+            const chats    = Array.isArray(imported) ? imported : (imported.chats || []);
             if (chats.length === 0) { showNotification('No valid chat data found.', 'error'); return; }
             if (confirm(`Import ${chats.length} chat messages? This will replace your current chat.`)) {
                 createChatBackup();
@@ -809,34 +1002,34 @@ async function openCameraModal() {
         const video = document.getElementById('cameraVideo');
         video.srcObject = stream;
         document.getElementById('capturePhoto').style.display = 'block';
-        document.getElementById('retakePhoto').style.display = 'none';
-        document.getElementById('uploadPhoto').style.display = 'none';
+        document.getElementById('retakePhoto').style.display  = 'none';
+        document.getElementById('uploadPhoto').style.display  = 'none';
         document.getElementById('photoPreview').style.display = 'none';
         video.style.display = 'block';
     } catch { showNotification('Unable to access camera. Please check permissions.', 'error'); }
 }
 
 function capturePhoto() {
-    const video = document.getElementById('cameraVideo');
+    const video  = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
-    canvas.width = video.videoWidth;
+    canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
     capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
-    document.getElementById('previewImage').src = capturedPhoto;
-    document.getElementById('photoPreview').style.display = 'block';
-    video.style.display = 'none';
-    document.getElementById('capturePhoto').style.display = 'none';
-    document.getElementById('retakePhoto').style.display = 'block';
-    document.getElementById('uploadPhoto').style.display = 'block';
+    document.getElementById('previewImage').src              = capturedPhoto;
+    document.getElementById('photoPreview').style.display   = 'block';
+    video.style.display                                      = 'none';
+    document.getElementById('capturePhoto').style.display   = 'none';
+    document.getElementById('retakePhoto').style.display    = 'block';
+    document.getElementById('uploadPhoto').style.display    = 'block';
 }
 
 function retakePhoto() {
-    document.getElementById('cameraVideo').style.display = 'block';
-    document.getElementById('photoPreview').style.display = 'none';
-    document.getElementById('capturePhoto').style.display = 'block';
-    document.getElementById('retakePhoto').style.display = 'none';
-    document.getElementById('uploadPhoto').style.display = 'none';
+    document.getElementById('cameraVideo').style.display    = 'block';
+    document.getElementById('photoPreview').style.display   = 'none';
+    document.getElementById('capturePhoto').style.display   = 'block';
+    document.getElementById('retakePhoto').style.display    = 'none';
+    document.getElementById('uploadPhoto').style.display    = 'none';
     capturedPhoto = null;
 }
 
@@ -857,9 +1050,8 @@ async function uploadPhotoToChat() {
 
     showTypingIndicator();
 
-    // Claude can't actually see the photo over the text API, so give a warm response
     try {
-        const reply = await callClaudeAPI('The user just shared a photo with you. Respond warmly, ask what the photo is about or if there\'s a story behind it.');
+        const reply = await callClaudeAPI("The user just shared a photo with you. Respond warmly, ask what the photo is about or if there's a story behind it.");
         const aiMessage = {
             type: 'companion', text: reply,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -867,7 +1059,11 @@ async function uploadPhotoToChat() {
         addMessageToChat(aiMessage);
         chatHistory.push(aiMessage);
     } catch {
-        addMessageToChat({ type: 'companion', text: 'What a wonderful photo! Would you like to tell me more about it? 📸', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+        addMessageToChat({
+            type: 'companion',
+            text: 'What a wonderful photo! Would you like to tell me more about it? 📸',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
     }
     saveChatToStorage();
 }
@@ -875,8 +1071,8 @@ async function uploadPhotoToChat() {
 function addPhotoMessageToChat(message) {
     const chatMessages = document.querySelector('.chat-messages');
     if (!chatMessages) return;
-    const typingIndicator = document.querySelector('.typing-indicator');
-    if (typingIndicator) typingIndicator.remove();
+    const typingMsg = chatMessages.querySelector('.typing-indicator-msg');
+    if (typingMsg) typingMsg.remove();
 
     const el = document.createElement('div');
     el.className = `message ${message.type}-message photo-message`;
@@ -942,9 +1138,9 @@ function loadInitialData() {
 
 // Reminder due-check
 setInterval(function checkDueReminders() {
-    const now = new Date();
+    const now         = new Date();
     const currentTime = now.toTimeString().substring(0, 5);
-    const today = now.toISOString().split('T')[0];
+    const today       = now.toISOString().split('T')[0];
     currentReminders.forEach(r => {
         if (r.date === today && r.time === currentTime && !r.completed) {
             showNotification(`⏰ Reminder: ${r.title}`, 'info');
@@ -963,6 +1159,8 @@ function setupConsoleCommands() {
         console.log('🗝️ User Key:', getUserKey());
         console.log('📅 Days Active:', getDaysActive());
         console.log('💬 Chats Today:', getChatsToday());
+        console.log('🔊 TTS Enabled:', ttsEnabled);
+        console.log('🎤 Voice Recording:', isRecording);
     };
     window.clearAIChat = clearCurrentChat;
     window.resetAICompanionReminders = resetRemindersToDefault;
@@ -972,5 +1170,6 @@ function setupConsoleCommands() {
 // ─── Global Export ────────────────────────────────────────────────────────────
 window.AICompanion = {
     sendMessage, openReminderModal, closeModal, saveReminder,
-    startGame, showNotification, openCameraModal, openSettingsModal
+    startGame, showNotification, openCameraModal, openSettingsModal,
+    speakText, stopRecording
 };

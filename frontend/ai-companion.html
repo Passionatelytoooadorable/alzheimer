@@ -8,20 +8,20 @@
     <link rel="stylesheet" href="ai-companion.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <style>
-        /* ── Enhancement styles layered on top of ai-companion.css ── */
+        /* ── Voice / TTS / Status / Typing enhancement styles ── */
 
-        /* Typing indicator */
-        .typing-indicator {
+        /* Typing indicator (bar below chat, separate from inline bubble) */
+        .typing-indicator-bar {
             display: none; align-items: center; gap: 0.4rem;
             padding: 0.5rem 1rem; font-size: 0.82rem; color: #888;
         }
-        .typing-indicator.visible { display: flex; }
-        .typing-dot {
+        .typing-indicator-bar.visible { display: flex; }
+        .typing-indicator-bar .typing-dot {
             width: 7px; height: 7px; border-radius: 50%; background: #bbb;
             animation: bounce 1.2s ease-in-out infinite;
         }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        .typing-indicator-bar .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator-bar .typing-dot:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
 
         /* Voice input button */
@@ -32,21 +32,22 @@
         }
         .voice-input-btn:hover   { background: #f0f7ff; color: #4a86e8; }
         .voice-input-btn.active  { color: #f44336; animation: pulse-red 1s infinite; }
+        .voice-input-btn:disabled { opacity: 0.35; cursor: not-allowed; }
         @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
         /* TTS toggle */
         .tts-toggle {
             display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem;
             color: #888; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 6px;
-            background: none; border: none; transition: background 0.2s;
+            background: none; border: none; transition: background 0.2s; white-space: nowrap;
         }
         .tts-toggle:hover   { background: #f0f7ff; }
         .tts-toggle.enabled { color: #4a86e8; font-weight: 600; }
 
-        /* Status dot — live connection */
+        /* Status dot live colours */
         .status-dot { transition: background 0.3s; }
-        .status-dot.connected    { background: #4caf50; }
-        .status-dot.disconnected { background: #f44336; }
+        .status-dot.connected    { background: #4caf50; animation: none; }
+        .status-dot.disconnected { background: #f44336; animation: none; }
 
         /* ── Game Modal shared styles ─────────────────────────────────────────── */
         .game-modal-overlay {
@@ -62,7 +63,7 @@
             position: relative;
             animation: gmSlideIn 0.25s ease-out;
         }
-        .game-modal--word { max-width: 700px; }
+        .game-modal--word   { max-width: 700px; }
         .game-modal--memory { max-width: 620px; }
 
         @keyframes gmSlideIn {
@@ -137,7 +138,7 @@
             font-size: 0.88rem; font-weight: 600; cursor: pointer;
             transition: all 0.2s;
         }
-        .gm-btn--primary  { background: #4ecdc4; color: white; }
+        .gm-btn--primary   { background: #4ecdc4; color: white; }
         .gm-btn--primary:hover  { background: #3dbab0; transform: translateY(-1px); }
         .gm-btn--secondary { background: #e9ecef; color: #555; }
         .gm-btn--secondary:hover { background: #dde2e6; transform: translateY(-1px); }
@@ -150,10 +151,10 @@
             animation: gmSlideIn 0.3s ease-out;
         }
         .gm-win-box { text-align: center; padding: 2rem; }
-        .gm-win-emoji { font-size: 3.5rem; margin-bottom: 0.75rem; animation: bounce 1s infinite; }
+        .gm-win-emoji { font-size: 3.5rem; margin-bottom: 0.75rem; animation: winBounce 1s infinite; }
         .gm-win-box h3 { font-size: 1.5rem; color: #374785; margin: 0 0 0.5rem 0; }
         .gm-win-box p  { color: #666; font-size: 0.9rem; margin-bottom: 1.25rem; }
-        @keyframes bounce { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+        @keyframes winBounce { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
 
         /* Confetti */
         .gm-confetti {
@@ -192,7 +193,7 @@
             background: white; font-size: 0.88rem; cursor: pointer;
             transition: all 0.2s; text-align: left;
         }
-        .gm-option:hover  { border-color: #4ecdc4; background: #f0fffe; }
+        .gm-option:hover   { border-color: #4ecdc4; background: #f0fffe; }
         .gm-option.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; font-weight: 600; }
         .gm-option.wrong   { background: #fdecea; border-color: #f44336; color: #c62828; }
         .gm-feedback { font-size: 0.88rem; min-height: 1.3em; margin: 0.4rem 0; font-weight: 600; }
@@ -231,9 +232,9 @@
         .wa-pair--matched { border-style: solid; background: #f0fff4; }
         .wa-pair.wa-hover  { border-color: #ff6b6b; background: #fff5f5; border-style: solid; transform: scale(1.02); }
 
-        .wa-anchor { background: #4ecdc4; color: white; padding: 3px 10px; border-radius: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .wa-anchor       { background: #4ecdc4; color: white; padding: 3px 10px; border-radius: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
         .wa-matched-word { background: #4ecdc4; color: white; padding: 3px 10px; border-radius: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
-        .wa-connector { color: #aaa; font-weight: 700; flex-shrink: 0; }
+        .wa-connector    { color: #aaa; font-weight: 700; flex-shrink: 0; }
         .wa-drop {
             flex: 1; min-width: 80px; padding: 4px 8px; border: 1px dashed #ccc;
             border-radius: 10px; color: #999; font-size: 0.78rem; text-align: center;
@@ -336,7 +337,7 @@
                             </div>
                         </div>
                         <div class="chat-controls" style="display:flex;align-items:center;gap:0.5rem;">
-                            <!-- TTS toggle -->
+                            <!-- TTS toggle — wired in ai-companion.js -->
                             <button class="tts-toggle" id="ttsToggle" aria-pressed="false" title="Read responses aloud">
                                 🔇 TTS Off
                             </button>
@@ -350,14 +351,6 @@
                     </div>
 
                     <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat messages"></div>
-
-                    <!-- Typing indicator -->
-                    <div class="typing-indicator" id="typingIndicator" aria-live="polite" aria-label="AI is typing">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <span style="margin-left:0.25rem;">Care Companion is thinking…</span>
-                    </div>
 
                     <div class="quick-actions">
                         <button class="quick-action-btn medication" data-prompt="Can you remind me about my medication and give tips for remembering to take it?">
@@ -373,8 +366,12 @@
 
                     <div class="chat-input-container">
                         <div class="input-wrapper" style="display:flex;align-items:center;gap:0.4rem;">
-                            <button class="voice-input-btn" id="voiceInputBtn" title="Voice input" aria-label="Start voice input">🎤</button>
-                            <input type="text" id="chatInput" placeholder="Type your message here… or use 🎤" maxlength="500"
+                            <!-- Voice input button — wired in ai-companion.js setupVoiceInput() -->
+                            <button class="voice-input-btn" id="voiceInputBtn"
+                                    title="Voice input" aria-label="Start voice input">🎤</button>
+                            <input type="text" id="chatInput"
+                                   placeholder="Type your message… or tap 🎤 to speak"
+                                   maxlength="500"
                                    aria-label="Chat message input">
                             <button id="sendMessage" class="send-btn" aria-label="Send message">
                                 <span class="send-icon">➤</span>
@@ -475,32 +472,26 @@
             <h2 id="mmTitle">🧠 Memory Match</h2>
             <p class="game-subtitle">Find all matching pairs — great for keeping your memory sharp!</p>
 
-            <!-- Difficulty -->
             <div class="gm-difficulty">
                 <button class="gm-diff-btn gm-diff-btn--easy active" data-level="easy">Easy · 6 pairs</button>
                 <button class="gm-diff-btn gm-diff-btn--med"  data-level="medium">Medium · 9 pairs</button>
                 <button class="gm-diff-btn gm-diff-btn--hard" data-level="hard">Hard · 12 pairs</button>
             </div>
 
-            <!-- Stats bar -->
             <div class="gm-stats">
                 <div class="gm-stat"><span id="mmMoves">0</span><small>Moves</small></div>
                 <div class="gm-stat"><span id="mmMatches">0/6</span><small>Matches</small></div>
                 <div class="gm-stat"><span id="mmTimer">00:00</span><small>Time</small></div>
             </div>
 
-            <!-- AI message -->
             <div class="gm-ai-msg" id="mmAiMsg">Choose a difficulty and start flipping cards! 🌟</div>
 
-            <!-- Board -->
             <div class="gm-board" id="mmBoard" aria-label="Memory match game board"></div>
 
-            <!-- Controls -->
             <div class="gm-controls">
                 <button class="gm-btn gm-btn--primary" id="mmNewGame">🔄 New Game</button>
             </div>
 
-            <!-- Win overlay (inside modal) -->
             <div class="gm-win-overlay" id="mmWin" style="display:none;">
                 <div class="gm-win-box">
                     <div class="gm-win-emoji">🏆</div>
@@ -521,42 +512,34 @@
             <h2 id="triviaTitle">❓ Simple Trivia</h2>
             <p class="game-subtitle">Test your knowledge — 6 questions per round!</p>
 
-            <!-- Difficulty -->
             <div class="gm-difficulty">
                 <button class="gm-diff-btn gm-diff-btn--easy active" data-level="easy">Easy</button>
                 <button class="gm-diff-btn gm-diff-btn--med"  data-level="medium">Medium</button>
                 <button class="gm-diff-btn gm-diff-btn--hard" data-level="hard">Hard</button>
             </div>
 
-            <!-- Stats -->
             <div class="gm-stats">
                 <div class="gm-stat"><span id="tScore">0</span><small>Score</small></div>
                 <div class="gm-stat"><span id="tProgress">0/6</span><small>Progress</small></div>
                 <div class="gm-stat"><span id="tCorrect">0</span><small>Correct</small></div>
             </div>
 
-            <!-- Progress bar -->
             <div class="gm-progress-track"><div class="gm-progress-fill" id="tProgressBar" style="width:0%"></div></div>
 
-            <!-- AI message -->
             <div class="gm-ai-msg" id="tAiMsg">Choose a difficulty and let's test your knowledge! 🧠</div>
 
-            <!-- Question area -->
             <div class="gm-question-box" id="tQuestionBox" style="display:none;">
                 <div class="gm-question-text" id="tQuestionText"></div>
                 <div class="gm-options" id="tOptions" role="group" aria-label="Answer options"></div>
             </div>
 
-            <!-- Feedback -->
             <div class="gm-feedback" id="tFeedback"></div>
 
-            <!-- Controls -->
             <div class="gm-controls">
                 <button class="gm-btn gm-btn--primary" id="tNextBtn" style="display:none;">Next Question →</button>
                 <button class="gm-btn gm-btn--primary" id="tStartBtn">▶ Start Game</button>
             </div>
 
-            <!-- Win overlay -->
             <div class="gm-win-overlay" id="tWin" style="display:none;">
                 <div class="gm-win-box">
                     <div class="gm-win-emoji">🎓</div>
@@ -577,27 +560,22 @@
             <h2 id="wordTitle">🔗 Word Association</h2>
             <p class="game-subtitle">Drag words from the left pool onto their matching partner on the right!</p>
 
-            <!-- Difficulty -->
             <div class="gm-difficulty">
                 <button class="gm-diff-btn gm-diff-btn--easy active" data-level="easy">Easy</button>
                 <button class="gm-diff-btn gm-diff-btn--med"  data-level="medium">Medium</button>
                 <button class="gm-diff-btn gm-diff-btn--hard" data-level="hard">Hard</button>
             </div>
 
-            <!-- Stats -->
             <div class="gm-stats">
                 <div class="gm-stat"><span id="wMatched">0</span><small>Matched</small></div>
                 <div class="gm-stat"><span id="wTotal">6</span><small>Total Pairs</small></div>
                 <div class="gm-stat"><span id="wScore">0</span><small>Score</small></div>
             </div>
 
-            <!-- Progress bar -->
             <div class="gm-progress-track"><div class="gm-progress-fill" id="wProgressBar" style="width:0%"></div></div>
 
-            <!-- AI message -->
             <div class="gm-ai-msg" id="wAiMsg">Drag words to their matching partners! 🧠</div>
 
-            <!-- Game area: two-column -->
             <div class="wa-game-area">
                 <div class="wa-pool-col">
                     <h4>Words to Match</h4>
@@ -609,13 +587,11 @@
                 </div>
             </div>
 
-            <!-- Controls -->
             <div class="gm-controls">
                 <button class="gm-btn gm-btn--primary" id="wCheckBtn">✓ Check Matches</button>
                 <button class="gm-btn gm-btn--secondary" id="wNewGame">🔄 New Game</button>
             </div>
 
-            <!-- Win overlay -->
             <div class="gm-win-overlay" id="wWin" style="display:none;">
                 <div class="gm-win-box">
                     <div class="gm-win-emoji">🔗</div>
@@ -645,165 +621,17 @@
         });
     })();
     </script>
+    <!-- Single source of truth: all logic lives in ai-companion.js -->
     <script src="ai-companion.js"></script>
     <script>
     // ─────────────────────────────────────────────────────────────────────────
-    // ENHANCEMENTS — run after ai-companion.js
+    // GAMES ENGINE — Memory Match, Simple Trivia, Word Association
+    // Runs after ai-companion.js so it can call MM.spawnConfetti etc.
     // ─────────────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', async function () {
-
-        // ── Live stat counters ─────────────────────────────────────────────────
-        try {
-            var user = JSON.parse(localStorage.getItem('user') || '{}');
-            // Days active: days since account created_at
-            if (user.created_at || user.createdAt) {
-                var created = new Date(user.created_at || user.createdAt);
-                var days = Math.max(1, Math.floor((Date.now() - created) / 86400000));
-                document.getElementById('daysActiveStat').textContent = days;
-            } else {
-                // Fallback: fetch from profile
-                var pr = await API.get('/profile'); var pd = await pr.json();
-                if (pd.profile && pd.profile.createdAt) {
-                    var days = Math.max(1, Math.floor((Date.now() - pd.profile.createdAt) / 86400000));
-                    document.getElementById('daysActiveStat').textContent = days;
-                }
-            }
-            // Chats today: from localStorage chat session count
-            var todayKey = new Date().toISOString().split('T')[0];
-            var chatCount = parseInt(localStorage.getItem('chatCount_' + todayKey) || '0');
-            document.getElementById('chatSessions').textContent = chatCount;
-        } catch(e) { /* ignore */ }
-
-        // ── Connection status ──────────────────────────────────────────────────
-        async function checkConn() {
-            var dot = document.getElementById('connDot'), txt = document.getElementById('connText');
-            try {
-                var r = await fetch('https://alzheimer-backend-new.onrender.com/api/health');
-                if (r.ok) {
-                    dot.className = 'status-dot connected';
-                    txt.textContent = 'Online';
-                } else throw new Error();
-            } catch {
-                dot.className = 'status-dot disconnected';
-                txt.textContent = 'Offline';
-            }
-        }
-        checkConn(); setInterval(checkConn, 60000);
-
-        // ── Typing indicator hook ───────────────────────────────────────────────
-        // Patch the existing sendMessage function to show/hide indicator
-        var origSend = document.getElementById('sendMessage').onclick;
-        function showTyping()  { document.getElementById('typingIndicator').classList.add('visible'); }
-        function hideTyping()  { document.getElementById('typingIndicator').classList.remove('visible'); }
-        window._showTyping = showTyping; window._hideTyping = hideTyping;
-
-        // Intercept fetch to show typing indicator
-        var origFetch = window.fetch;
-        window.fetch = function() {
-            var url = arguments[0];
-            if (typeof url === 'string' && url.includes('/api/chat')) {
-                showTyping();
-                var p = origFetch.apply(this, arguments);
-                p.then(hideTyping).catch(hideTyping);
-                return p;
-            }
-            return origFetch.apply(this, arguments);
-        };
-
-        // ── Chat counter increment ─────────────────────────────────────────────
-        document.getElementById('sendMessage').addEventListener('click', function() {
-            var todayKey = new Date().toISOString().split('T')[0];
-            var cnt = parseInt(localStorage.getItem('chatCount_' + todayKey) || '0') + 1;
-            localStorage.setItem('chatCount_' + todayKey, cnt);
-            document.getElementById('chatSessions').textContent = cnt;
-        });
-
-        // ── TTS toggle ─────────────────────────────────────────────────────────
-        var ttsEnabled = false;
-        document.getElementById('ttsToggle').addEventListener('click', function() {
-            ttsEnabled = !ttsEnabled;
-            this.textContent = ttsEnabled ? '🔊 TTS On' : '🔇 TTS Off';
-            this.classList.toggle('enabled', ttsEnabled);
-            this.setAttribute('aria-pressed', ttsEnabled);
-            if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
-        });
-
-        function speakText(text) {
-            if (!ttsEnabled || !window.speechSynthesis) return;
-            window.speechSynthesis.cancel();
-            var clean = text.replace(/[^\w\s,.!?'-]/g, ' ').substring(0, 300);
-            var utt = new SpeechSynthesisUtterance(clean);
-            utt.rate = 0.9; utt.pitch = 1;
-            var voices = window.speechSynthesis.getVoices();
-            var pref = voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'));
-            if (pref) utt.voice = pref;
-            window.speechSynthesis.speak(utt);
-        }
-
-        // Hook into chat messages — observe new messages
-        var chatEl = document.getElementById('chatMessages');
-        var obs = new MutationObserver(function(muts) {
-            muts.forEach(function(m) {
-                m.addedNodes.forEach(function(node) {
-                    if (node.nodeType !== 1) return;
-                    var isBotMsg = node.classList && (node.classList.contains('bot-message') || node.classList.contains('ai-message') || node.querySelector('.bot-bubble'));
-                    if (isBotMsg) {
-                        var textEl = node.querySelector('.message-text, .bubble, p') || node;
-                        var text = textEl.innerText || '';
-                        if (ttsEnabled) speakText(text);
-                    }
-                });
-            });
-        });
-        if (chatEl) obs.observe(chatEl, { childList: true });
-
-        // ── Voice input (Web Speech API) ───────────────────────────────────────
-        var voiceBtn = document.getElementById('voiceInputBtn');
-        var recognition = null;
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SR();
-            recognition.continuous = false;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = function(event) {
-                var transcript = Array.from(event.results)
-                    .map(r => r[0].transcript).join('');
-                document.getElementById('chatInput').value = transcript;
-                document.getElementById('inputHint').textContent = '🎤 Listening… ' + transcript.substring(0, 50);
-            };
-            recognition.onend = function() {
-                voiceBtn.classList.remove('active');
-                voiceBtn.title = 'Voice input';
-                document.getElementById('inputHint').textContent = 'Press Enter to send • Maximum 500 characters';
-            };
-            recognition.onerror = function(e) {
-                voiceBtn.classList.remove('active');
-                document.getElementById('inputHint').textContent = '⚠️ Voice not recognised. Please try again.';
-                setTimeout(function() {
-                    document.getElementById('inputHint').textContent = 'Press Enter to send • Maximum 500 characters';
-                }, 2000);
-            };
-
-            voiceBtn.addEventListener('click', function() {
-                if (this.classList.contains('active')) {
-                    recognition.stop();
-                } else {
-                    this.classList.add('active');
-                    this.title = 'Click to stop recording';
-                    document.getElementById('inputHint').textContent = '🎤 Listening… speak now';
-                    recognition.start();
-                }
-            });
-        } else {
-            voiceBtn.title = 'Voice input not supported in this browser';
-            voiceBtn.style.opacity = '0.3';
-            voiceBtn.disabled = true;
-        }
+    document.addEventListener('DOMContentLoaded', function () {
 
         // ─────────────────────────────────────────────────────────────────────
-        // MEMORY MATCH — Full engine (difficulty levels, timer, confetti)
+        // MEMORY MATCH
         // ─────────────────────────────────────────────────────────────────────
         var MM = {
             allSymbols: ['🍎','🍌','🍒','🍕','🏀','🎸','🚗','🌟','⭐','🎵',
@@ -819,115 +647,115 @@
             setDifficulty: function(level) {
                 this.difficulty = level;
                 document.querySelectorAll('#memMatchModal .gm-diff-btn').forEach(function(b){b.classList.remove('active');});
-                var activeBtn = document.querySelector('#memMatchModal .gm-diff-btn[data-level="'+level+'"]');
-                if(activeBtn) activeBtn.classList.add('active');
-                if(level==='easy'){this.pairCount=6;this.gridCols=4;}
-                else if(level==='medium'){this.pairCount=9;this.gridCols=4;}
-                else{this.pairCount=12;this.gridCols=6;}
-                document.getElementById('mmMatches').textContent='0/'+this.pairCount;
+                var btn = document.querySelector('#memMatchModal .gm-diff-btn[data-level="'+level+'"]');
+                if (btn) btn.classList.add('active');
+                if (level==='easy')        { this.pairCount=6;  this.gridCols=4; }
+                else if (level==='medium') { this.pairCount=9;  this.gridCols=4; }
+                else                       { this.pairCount=12; this.gridCols=6; }
+                document.getElementById('mmMatches').textContent = '0/'+this.pairCount;
                 this.startGame();
             },
 
             startGame: function() {
                 this.createCards(); this.renderBoard(); this.resetStats();
                 this.showAI('Starting '+this.difficulty+' mode with '+this.pairCount+' pairs! Good luck! 🍀');
-                document.getElementById('mmWin').style.display='none';
+                document.getElementById('mmWin').style.display = 'none';
             },
 
             createCards: function() {
-                var sel = [...this.allSymbols].sort(function(){return Math.random()-0.5;}).slice(0,this.pairCount);
-                this.cards = [...sel,...sel].map(function(s,i){return{id:i,symbol:s,flipped:false,matched:false};})
+                var sel = [...this.allSymbols].sort(function(){return Math.random()-0.5;}).slice(0, this.pairCount);
+                this.cards = [...sel, ...sel]
+                    .map(function(s,i){ return {id:i, symbol:s, flipped:false, matched:false}; })
                     .sort(function(){return Math.random()-0.5;});
             },
 
             renderBoard: function() {
                 var board = document.getElementById('mmBoard');
-                board.style.gridTemplateColumns='repeat('+this.gridCols+',1fr)';
-                board.innerHTML='';
-                var self=this;
-                this.cards.forEach(function(card){
-                    var el=document.createElement('div');
-                    el.className='mm-card'+(card.flipped?' flipped':'')+(card.matched?' matched':'');
-                    el.textContent=(card.flipped||card.matched)?card.symbol:'❔';
-                    el.setAttribute('aria-label', card.matched?'Matched: '+card.symbol:'Hidden card');
-                    el.addEventListener('click',function(){self.flipCard(card);});
+                board.style.gridTemplateColumns = 'repeat('+this.gridCols+',1fr)';
+                board.innerHTML = '';
+                var self = this;
+                this.cards.forEach(function(card) {
+                    var el = document.createElement('div');
+                    el.className = 'mm-card'+(card.flipped?' flipped':'')+(card.matched?' matched':'');
+                    el.textContent = (card.flipped||card.matched) ? card.symbol : '❔';
+                    el.setAttribute('aria-label', card.matched ? 'Matched: '+card.symbol : 'Hidden card');
+                    el.addEventListener('click', function(){ self.flipCard(card); });
                     board.appendChild(el);
                 });
             },
 
             flipCard: function(card) {
-                if(card.flipped||card.matched||this.flipped.length===2) return;
-                if(!this.gameStarted){this.gameStarted=true;this.startTime=Date.now();this.startTimer();}
-                card.flipped=true; this.flipped.push(card); this.renderBoard();
-                if(this.flipped.length===2){this.moves++;this.updateStats();this.checkMatch();}
+                if (card.flipped || card.matched || this.flipped.length===2) return;
+                if (!this.gameStarted) { this.gameStarted=true; this.startTime=Date.now(); this.startTimer(); }
+                card.flipped = true; this.flipped.push(card); this.renderBoard();
+                if (this.flipped.length===2) { this.moves++; this.updateStats(); this.checkMatch(); }
             },
 
             checkMatch: function() {
                 var self=this, a=this.flipped[0], b=this.flipped[1];
-                if(a.symbol===b.symbol){
+                if (a.symbol===b.symbol) {
                     a.matched=true; b.matched=true; this.matches++;
-                    var msgs=this.matches%3===0?this.aiMessages.encouragement:this.aiMessages.correct;
+                    var msgs = this.matches%3===0 ? this.aiMessages.encouragement : this.aiMessages.correct;
                     this.showAI(msgs[Math.floor(Math.random()*msgs.length)]);
                     this.updateStats(); this.flipped=[];
-                    if(this.matches===this.pairCount) setTimeout(function(){self.gameComplete();},400);
+                    if (this.matches===this.pairCount) setTimeout(function(){ self.gameComplete(); }, 400);
                 } else {
-                    setTimeout(function(){a.flipped=false;b.flipped=false;self.flipped=[];self.renderBoard();},900);
+                    setTimeout(function(){ a.flipped=false; b.flipped=false; self.flipped=[]; self.renderBoard(); }, 900);
                 }
             },
 
             updateStats: function() {
-                document.getElementById('mmMoves').textContent=this.moves;
-                document.getElementById('mmMatches').textContent=this.matches+'/'+this.pairCount;
+                document.getElementById('mmMoves').textContent   = this.moves;
+                document.getElementById('mmMatches').textContent = this.matches+'/'+this.pairCount;
             },
 
             startTimer: function() {
-                var self=this;
-                this.timerInterval=setInterval(function(){
-                    if(!self.gameStarted) return;
-                    var e=Math.floor((Date.now()-self.startTime)/1000);
-                    var m=String(Math.floor(e/60)).padStart(2,'0');
-                    var s=String(e%60).padStart(2,'0');
-                    document.getElementById('mmTimer').textContent=m+':'+s;
-                },1000);
+                var self = this;
+                this.timerInterval = setInterval(function() {
+                    if (!self.gameStarted) return;
+                    var e = Math.floor((Date.now()-self.startTime)/1000);
+                    document.getElementById('mmTimer').textContent =
+                        String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
+                }, 1000);
             },
 
             resetStats: function() {
-                this.moves=0;this.matches=0;this.gameStarted=false;this.flipped=[];
+                this.moves=0; this.matches=0; this.gameStarted=false; this.flipped=[];
                 clearInterval(this.timerInterval);
-                document.getElementById('mmMoves').textContent='0';
-                document.getElementById('mmMatches').textContent='0/'+this.pairCount;
-                document.getElementById('mmTimer').textContent='00:00';
+                document.getElementById('mmMoves').textContent   = '0';
+                document.getElementById('mmMatches').textContent = '0/'+this.pairCount;
+                document.getElementById('mmTimer').textContent   = '00:00';
             },
 
             showAI: function(msg) {
-                var el=document.getElementById('mmAiMsg');
-                el.style.opacity='0'; var self=this;
-                setTimeout(function(){el.textContent=msg;el.style.opacity='1';},200);
+                var el = document.getElementById('mmAiMsg');
+                el.style.opacity = '0';
+                setTimeout(function(){ el.textContent=msg; el.style.opacity='1'; }, 200);
             },
 
             gameComplete: function() {
                 clearInterval(this.timerInterval);
-                var finalTime=document.getElementById('mmTimer').textContent;
-                var perf=this.moves<=this.pairCount*1.5?'Outstanding! 🏆':this.moves<=this.pairCount*2?'Excellent! ⭐':'Great job! 🌟';
-                document.getElementById('mmWinStats').innerHTML=
-                    'Completed in <strong>'+finalTime+'</strong> with <strong>'+this.moves+'</strong> moves!<br>'+perf;
-                document.getElementById('mmWin').style.display='flex';
+                var t    = document.getElementById('mmTimer').textContent;
+                var perf = this.moves<=this.pairCount*1.5 ? 'Outstanding! 🏆' : this.moves<=this.pairCount*2 ? 'Excellent! ⭐' : 'Great job! 🌟';
+                document.getElementById('mmWinStats').innerHTML =
+                    'Completed in <strong>'+t+'</strong> with <strong>'+this.moves+'</strong> moves!<br>'+perf;
+                document.getElementById('mmWin').style.display = 'flex';
                 this.showAI('🎉 CONGRATULATIONS! '+perf);
                 MM.spawnConfetti('memMatchModal');
             },
 
             spawnConfetti: function(containerId) {
-                var container=document.getElementById(containerId);
-                var colors=['#ff6b6b','#4ecdc4','#c4b5fd','#ffd166','#06d6a0'];
-                for(var i=0;i<60;i++){
-                    (function(delay){
-                        setTimeout(function(){
-                            var c=document.createElement('div');
-                            c.className='gm-confetti';
-                            c.style.cssText='left:'+Math.random()*100+'%;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-delay:'+Math.random()*2+'s;width:'+(Math.random()*8+4)+'px;height:'+(Math.random()*8+4)+'px;';
+                var container = document.getElementById(containerId);
+                var colors = ['#ff6b6b','#4ecdc4','#c4b5fd','#ffd166','#06d6a0'];
+                for (var i=0; i<60; i++) {
+                    (function(delay) {
+                        setTimeout(function() {
+                            var c = document.createElement('div');
+                            c.className = 'gm-confetti';
+                            c.style.cssText = 'left:'+Math.random()*100+'%;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-delay:'+Math.random()*2+'s;width:'+(Math.random()*8+4)+'px;height:'+(Math.random()*8+4)+'px;';
                             container.appendChild(c);
-                            setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},3000);
-                        },delay);
+                            setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 3000);
+                        }, delay);
                     })(i*30);
                 }
             }
@@ -948,7 +776,7 @@
         });
 
         // ─────────────────────────────────────────────────────────────────────
-        // SIMPLE TRIVIA — Full engine (45 questions, 3 difficulties, progress)
+        // SIMPLE TRIVIA
         // ─────────────────────────────────────────────────────────────────────
         var TRIVIA_BANK = {
             easy: [
@@ -1012,91 +840,90 @@
             },
 
             setDifficulty: function(level) {
-                this.difficulty=level;
+                this.difficulty = level;
                 document.querySelectorAll('#triviaModal .gm-diff-btn').forEach(function(b){b.classList.remove('active');});
-                var btn=document.querySelector('#triviaModal .gm-diff-btn[data-level="'+level+'"]');
-                if(btn) btn.classList.add('active');
+                var btn = document.querySelector('#triviaModal .gm-diff-btn[data-level="'+level+'"]');
+                if (btn) btn.classList.add('active');
                 this.showAI('Selected '+level+' difficulty! Press Start to begin 🎯');
             },
 
             startGame: function() {
-                this.questions=[...TRIVIA_BANK[this.difficulty]].sort(function(){return Math.random()-0.5;}).slice(0,6);
+                this.questions = [...TRIVIA_BANK[this.difficulty]].sort(function(){return Math.random()-0.5;}).slice(0,6);
                 this.idx=0; this.score=0; this.correct=0; this.gameActive=true;
-                document.getElementById('tStartBtn').style.display='none';
-                document.getElementById('tQuestionBox').style.display='block';
-                document.getElementById('tWin').style.display='none';
+                document.getElementById('tStartBtn').style.display    = 'none';
+                document.getElementById('tQuestionBox').style.display = 'block';
+                document.getElementById('tWin').style.display         = 'none';
                 this.updateStats(); this.displayQuestion();
                 this.showAI('Welcome to Trivia! Let\'s see how much you know! 🧠');
             },
 
             displayQuestion: function() {
-                if(this.idx>=this.questions.length){this.gameComplete();return;}
-                var q=this.questions[this.idx];
-                document.getElementById('tQuestionText').innerHTML=
+                if (this.idx >= this.questions.length) { this.gameComplete(); return; }
+                var q = this.questions[this.idx];
+                document.getElementById('tQuestionText').innerHTML =
                     q.q+' <span class="gm-cat-badge">'+q.cat+'</span>';
-                var opts=document.getElementById('tOptions');
-                opts.innerHTML='';
-                var self=this;
-                q.opts.forEach(function(opt,i){
-                    var btn=document.createElement('button');
-                    btn.className='gm-option';
-                    btn.textContent=opt;
-                    btn.addEventListener('click',function(){self.selectAnswer(i);});
+                var opts = document.getElementById('tOptions');
+                opts.innerHTML = '';
+                var self = this;
+                q.opts.forEach(function(opt,i) {
+                    var btn = document.createElement('button');
+                    btn.className = 'gm-option';
+                    btn.textContent = opt;
+                    btn.addEventListener('click', function(){ self.selectAnswer(i); });
                     opts.appendChild(btn);
                 });
-                document.getElementById('tNextBtn').style.display='none';
-                document.getElementById('tFeedback').textContent='';
-                document.getElementById('tFeedback').className='gm-feedback';
+                document.getElementById('tNextBtn').style.display  = 'none';
+                document.getElementById('tFeedback').textContent   = '';
+                document.getElementById('tFeedback').className     = 'gm-feedback';
                 this.updateProgress();
             },
 
             selectAnswer: function(idx) {
-                if(!this.gameActive) return;
-                var q=this.questions[this.idx];
-                var opts=document.querySelectorAll('#tOptions .gm-option');
-                opts.forEach(function(o){o.style.pointerEvents='none';});
-                var feedback=document.getElementById('tFeedback');
-                if(idx===q.ans){
+                if (!this.gameActive) return;
+                var q    = this.questions[this.idx];
+                var opts = document.querySelectorAll('#tOptions .gm-option');
+                opts.forEach(function(o){ o.style.pointerEvents='none'; });
+                var feedback = document.getElementById('tFeedback');
+                if (idx===q.ans) {
                     opts[idx].classList.add('correct');
-                    feedback.textContent='Correct! 🎉'; feedback.className='gm-feedback gm-feedback--correct';
+                    feedback.textContent = 'Correct! 🎉'; feedback.className='gm-feedback gm-feedback--correct';
                     this.score+=10; this.correct++;
                     this.showAI(this.aiMessages.correct[Math.floor(Math.random()*this.aiMessages.correct.length)]);
                 } else {
                     opts[idx].classList.add('wrong');
                     opts[q.ans].classList.add('correct');
-                    feedback.textContent='Good try! The answer was: '+q.opts[q.ans];
-                    feedback.className='gm-feedback gm-feedback--wrong';
+                    feedback.textContent = 'Good try! The answer was: '+q.opts[q.ans];
+                    feedback.className = 'gm-feedback gm-feedback--wrong';
                     this.showAI(this.aiMessages.incorrect[Math.floor(Math.random()*this.aiMessages.incorrect.length)]);
                 }
                 this.updateStats();
-                document.getElementById('tNextBtn').style.display='block';
-                this.gameActive=false;
+                document.getElementById('tNextBtn').style.display = 'block';
+                this.gameActive = false;
             },
 
             updateStats: function() {
-                document.getElementById('tScore').textContent=this.score;
-                document.getElementById('tProgress').textContent=(this.idx+1)+'/'+this.questions.length;
-                document.getElementById('tCorrect').textContent=this.correct;
+                document.getElementById('tScore').textContent    = this.score;
+                document.getElementById('tProgress').textContent = (this.idx+1)+'/'+this.questions.length;
+                document.getElementById('tCorrect').textContent  = this.correct;
             },
 
             updateProgress: function() {
-                var pct=(this.idx/this.questions.length)*100;
-                document.getElementById('tProgressBar').style.width=pct+'%';
+                document.getElementById('tProgressBar').style.width = (this.idx/this.questions.length*100)+'%';
             },
 
             showAI: function(msg) {
-                var el=document.getElementById('tAiMsg');
-                el.style.opacity='0';
-                setTimeout(function(){el.textContent=msg;el.style.opacity='1';},200);
+                var el = document.getElementById('tAiMsg');
+                el.style.opacity = '0';
+                setTimeout(function(){ el.textContent=msg; el.style.opacity='1'; }, 200);
             },
 
             gameComplete: function() {
-                var pct=Math.round((this.correct/this.questions.length)*100);
-                var perf=pct===100?'PERFECT SCORE! 🏆':pct>=80?'Outstanding! ⭐':pct>=60?'Great job! 🎯':'Good effort! 🌟';
-                document.getElementById('tWinStats').innerHTML=
+                var pct  = Math.round(this.correct/this.questions.length*100);
+                var perf = pct===100?'PERFECT SCORE! 🏆':pct>=80?'Outstanding! ⭐':pct>=60?'Great job! 🎯':'Good effort! 🌟';
+                document.getElementById('tWinStats').innerHTML =
                     'You scored <strong>'+this.score+'</strong> points — '+this.correct+'/'+this.questions.length+' correct ('+pct+'%)<br>'+perf;
-                document.getElementById('tWin').style.display='flex';
-                document.getElementById('tQuestionBox').style.display='none';
+                document.getElementById('tWin').style.display         = 'flex';
+                document.getElementById('tQuestionBox').style.display = 'none';
                 this.showAI('🎉 '+perf);
                 MM.spawnConfetti('triviaModal');
             }
@@ -1110,16 +937,16 @@
         document.getElementById('tStartBtn').addEventListener('click', function(){ TQ.startGame(); });
         document.getElementById('tNextBtn').addEventListener('click', function(){ TQ.idx++; TQ.gameActive=true; TQ.displayQuestion(); });
         document.getElementById('tPlayAgain').addEventListener('click', function(){
-            document.getElementById('tWin').style.display='none';
-            document.getElementById('tStartBtn').style.display='inline-block';
-            document.getElementById('tQuestionBox').style.display='none';
+            document.getElementById('tWin').style.display         = 'none';
+            document.getElementById('tStartBtn').style.display    = 'inline-block';
+            document.getElementById('tQuestionBox').style.display = 'none';
         });
         document.querySelectorAll('#triviaModal .gm-diff-btn').forEach(function(btn){
-            btn.addEventListener('click',function(){ TQ.setDifficulty(this.dataset.level); });
+            btn.addEventListener('click', function(){ TQ.setDifficulty(this.dataset.level); });
         });
 
         // ─────────────────────────────────────────────────────────────────────
-        // WORD ASSOCIATION — Full drag-and-drop engine (3 difficulties, 15 pairs each)
+        // WORD ASSOCIATION
         // ─────────────────────────────────────────────────────────────────────
         var WA_BANK = {
             easy:[
@@ -1156,7 +983,6 @@
 
         var WG = {
             difficulty:'easy', availableWords:[], pairs:[], matched:0, score:0,
-            draggingIdx:null,
             aiMessages:{
                 correct:['Perfect match! 🌟','Excellent connection! 💫','Brilliant! 🎯','Wonderful! ⭐','Amazing! 🔥'],
                 incorrect:['Good try! That\'s not quite right. 💪','Almost! Try a different word. 🌟','Keep exploring! 🎯'],
@@ -1164,67 +990,66 @@
             },
 
             setDifficulty: function(level) {
-                this.difficulty=level;
+                this.difficulty = level;
                 document.querySelectorAll('#wordModal .gm-diff-btn').forEach(function(b){b.classList.remove('active');});
-                var btn=document.querySelector('#wordModal .gm-diff-btn[data-level="'+level+'"]');
-                if(btn) btn.classList.add('active');
-                document.getElementById('wTotal').textContent='6';
+                var btn = document.querySelector('#wordModal .gm-diff-btn[data-level="'+level+'"]');
+                if (btn) btn.classList.add('active');
+                document.getElementById('wTotal').textContent = '6';
                 this.startGame();
             },
 
             startGame: function() {
-                var sel=[...WA_BANK[this.difficulty]].sort(function(){return Math.random()-0.5;}).slice(0,6);
-                this.availableWords=[];
-                sel.forEach(function(p){
-                    WG.availableWords.push({word:p.w1,pair:p.w2,cat:p.cat});
-                    WG.availableWords.push({word:p.w2,pair:p.w1,cat:p.cat});
+                var sel = [...WA_BANK[this.difficulty]].sort(function(){return Math.random()-0.5;}).slice(0,6);
+                this.availableWords = [];
+                sel.forEach(function(p) {
+                    WG.availableWords.push({word:p.w1, pair:p.w2, cat:p.cat});
+                    WG.availableWords.push({word:p.w2, pair:p.w1, cat:p.cat});
                 });
-                this.availableWords=this.availableWords.sort(function(){return Math.random()-0.5;});
-                this.pairs=sel.map(function(p){return{w1:p.w1,w2:null,cat:p.cat,matched:false};});
-                this.matched=0; this.score=0;
+                this.availableWords = this.availableWords.sort(function(){return Math.random()-0.5;});
+                this.pairs   = sel.map(function(p){ return {w1:p.w1, w2:null, cat:p.cat, matched:false}; });
+                this.matched = 0; this.score = 0;
                 this.renderPool(); this.renderPairs(); this.updateStats();
-                document.getElementById('wWin').style.display='none';
+                document.getElementById('wWin').style.display = 'none';
                 this.showAI('Starting '+this.difficulty+' mode! Drag words to their partners! 🍀');
             },
 
             renderPool: function() {
-                var pool=document.getElementById('waPool'); pool.innerHTML='';
-                this.availableWords.forEach(function(wo,i){
-                    var el=document.createElement('div');
-                    el.className='wa-word'; el.textContent=wo.word;
-                    el.draggable=true; el.dataset.idx=i;
-                    el.addEventListener('dragstart',function(e){
-                        WG.draggingIdx=i;
-                        e.dataTransfer.setData('text/plain',String(i));
+                var pool = document.getElementById('waPool'); pool.innerHTML = '';
+                this.availableWords.forEach(function(wo, i) {
+                    var el = document.createElement('div');
+                    el.className = 'wa-word'; el.textContent = wo.word;
+                    el.draggable = true; el.dataset.idx = i;
+                    el.addEventListener('dragstart', function(e) {
+                        WG.draggingIdx = i;
+                        e.dataTransfer.setData('text/plain', String(i));
                         el.classList.add('wa-dragging');
                     });
-                    el.addEventListener('dragend',function(){el.classList.remove('wa-dragging');});
+                    el.addEventListener('dragend', function(){ el.classList.remove('wa-dragging'); });
                     pool.appendChild(el);
                 });
             },
 
             renderPairs: function() {
-                var pairsEl=document.getElementById('waPairs'); pairsEl.innerHTML='';
-                this.pairs.forEach(function(pair,i){
-                    var el=document.createElement('div');
-                    el.className='wa-pair'+(pair.matched?' wa-pair--matched':'');
-                    el.dataset.idx=i;
-                    if(pair.matched){
-                        el.innerHTML='<span class="wa-matched-word">'+pair.w1+'</span>'
-                            +'<span class="wa-connector">↔</span>'
-                            +'<span class="wa-matched-word">'+pair.w2+'</span>'
-                            +'<span class="gm-cat-badge">'+pair.cat+'</span>';
+                var pairsEl = document.getElementById('waPairs'); pairsEl.innerHTML = '';
+                this.pairs.forEach(function(pair, i) {
+                    var el = document.createElement('div');
+                    el.className = 'wa-pair'+(pair.matched?' wa-pair--matched':'');
+                    el.dataset.idx = i;
+                    if (pair.matched) {
+                        el.innerHTML = '<span class="wa-matched-word">'+pair.w1+'</span>'
+                                     + '<span class="wa-connector">↔</span>'
+                                     + '<span class="wa-matched-word">'+pair.w2+'</span>'
+                                     + '<span class="gm-cat-badge">'+pair.cat+'</span>';
                     } else {
-                        el.innerHTML='<span class="wa-anchor">'+pair.w1+'</span>'
-                            +'<span class="wa-connector">+</span>'
-                            +'<div class="wa-drop" data-pair="'+i+'">Drop match here</div>'
-                            +'<span class="gm-cat-badge">'+pair.cat+'</span>';
-                        el.querySelector('.wa-drop').addEventListener('dragover',function(e){e.preventDefault();el.classList.add('wa-hover');});
-                        el.querySelector('.wa-drop').addEventListener('dragleave',function(){el.classList.remove('wa-hover');});
-                        el.querySelector('.wa-drop').addEventListener('drop',function(e){
+                        el.innerHTML = '<span class="wa-anchor">'+pair.w1+'</span>'
+                                     + '<span class="wa-connector">+</span>'
+                                     + '<div class="wa-drop" data-pair="'+i+'">Drop match here</div>'
+                                     + '<span class="gm-cat-badge">'+pair.cat+'</span>';
+                        el.querySelector('.wa-drop').addEventListener('dragover',  function(e){ e.preventDefault(); el.classList.add('wa-hover'); });
+                        el.querySelector('.wa-drop').addEventListener('dragleave', function(){ el.classList.remove('wa-hover'); });
+                        el.querySelector('.wa-drop').addEventListener('drop', function(e) {
                             e.preventDefault(); el.classList.remove('wa-hover');
-                            var wordIdx=parseInt(e.dataTransfer.getData('text/plain'));
-                            WG.handleDrop(wordIdx,i);
+                            WG.handleDrop(parseInt(e.dataTransfer.getData('text/plain')), i);
                         });
                     }
                     pairsEl.appendChild(el);
@@ -1232,44 +1057,43 @@
             },
 
             handleDrop: function(wordIdx, pairIdx) {
-                var wo=this.availableWords[wordIdx];
-                var pair=this.pairs[pairIdx];
-                if(!wo || !pair || pair.matched) return;
-                if(wo.pair===pair.w1){
+                var wo   = this.availableWords[wordIdx];
+                var pair = this.pairs[pairIdx];
+                if (!wo || !pair || pair.matched) return;
+                if (wo.pair === pair.w1) {
                     pair.w2=wo.word; pair.matched=true; this.matched++; this.score+=10;
-                    this.availableWords.splice(wordIdx,1);
+                    this.availableWords.splice(wordIdx, 1);
                     this.showAI(this.aiMessages.correct[Math.floor(Math.random()*this.aiMessages.correct.length)]);
                     this.renderPool(); this.renderPairs(); this.updateStats();
-                    if(this.matched===6) setTimeout(function(){WG.gameComplete();},600);
+                    if (this.matched===6) setTimeout(function(){ WG.gameComplete(); }, 600);
                 } else {
                     this.showAI(this.aiMessages.incorrect[Math.floor(Math.random()*this.aiMessages.incorrect.length)]);
                 }
             },
 
             checkMatches: function() {
-                var c=this.pairs.filter(function(p){return p.matched;}).length;
-                if(c===6) this.showAI('🎉 All matches correct! You\'re a word association genius! 🌟');
-                else this.showAI('You have '+c+' correct matches out of 6. Keep going! 💪');
+                var c = this.pairs.filter(function(p){ return p.matched; }).length;
+                if (c===6) this.showAI('🎉 All matches correct! You\'re a word association genius! 🌟');
+                else       this.showAI('You have '+c+' correct matches out of 6. Keep going! 💪');
             },
 
             updateStats: function() {
-                document.getElementById('wMatched').textContent=this.matched;
-                document.getElementById('wScore').textContent=this.score;
-                var pct=(this.matched/6)*100;
-                document.getElementById('wProgressBar').style.width=pct+'%';
+                document.getElementById('wMatched').textContent = this.matched;
+                document.getElementById('wScore').textContent   = this.score;
+                document.getElementById('wProgressBar').style.width = (this.matched/6*100)+'%';
             },
 
             showAI: function(msg) {
-                var el=document.getElementById('wAiMsg');
-                el.style.opacity='0';
-                setTimeout(function(){el.textContent=msg;el.style.opacity='1';},200);
+                var el = document.getElementById('wAiMsg');
+                el.style.opacity = '0';
+                setTimeout(function(){ el.textContent=msg; el.style.opacity='1'; }, 200);
             },
 
             gameComplete: function() {
-                var perf=this.score===60?'PERFECT SCORE! Word master! 🏆':this.score>=40?'Excellent word skills! ⭐':'Great connections! 🌟';
-                document.getElementById('wWinStats').innerHTML=
+                var perf = this.score===60?'PERFECT SCORE! Word master! 🏆':this.score>=40?'Excellent word skills! ⭐':'Great connections! 🌟';
+                document.getElementById('wWinStats').innerHTML =
                     'You matched all <strong>6 pairs</strong> with <strong>'+this.score+'</strong> points!<br>'+perf;
-                document.getElementById('wWin').style.display='flex';
+                document.getElementById('wWin').style.display = 'flex';
                 this.showAI('🎉 '+perf);
                 MM.spawnConfetti('wordModal');
             }
@@ -1283,16 +1107,16 @@
         document.getElementById('wNewGame').addEventListener('click', function(){ WG.startGame(); });
         document.getElementById('wCheckBtn').addEventListener('click', function(){ WG.checkMatches(); });
         document.getElementById('wPlayAgain').addEventListener('click', function(){
-            document.getElementById('wWin').style.display='none'; WG.startGame();
+            document.getElementById('wWin').style.display = 'none'; WG.startGame();
         });
         document.querySelectorAll('#wordModal .gm-diff-btn').forEach(function(btn){
-            btn.addEventListener('click',function(){ WG.setDifficulty(this.dataset.level); });
+            btn.addEventListener('click', function(){ WG.setDifficulty(this.dataset.level); });
         });
 
         // Close all game modals on overlay click
-        ['memMatchModal','triviaModal','wordModal'].forEach(function(id){
-            document.getElementById(id).addEventListener('click',function(e){
-                if(e.target===this) this.classList.remove('open');
+        ['memMatchModal','triviaModal','wordModal'].forEach(function(id) {
+            document.getElementById(id).addEventListener('click', function(e) {
+                if (e.target===this) this.classList.remove('open');
             });
         });
 
