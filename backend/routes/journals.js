@@ -94,6 +94,29 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// ─── MOOD STATS — must be BEFORE /:id routes ─────────────────────────────────
+// Called by the frontend mood trend chart (journal_mood_patch / journal.js)
+router.get('/stats/moods', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const result = await query(
+      `SELECT mood, entry_date
+       FROM journals
+       WHERE user_id = $1
+         AND entry_date >= CURRENT_DATE - INTERVAL '30 days'
+       ORDER BY entry_date ASC`,
+      [userId]
+    );
+
+    res.json({ moods: result.rows });
+
+  } catch (error) {
+    console.error('Mood stats error:', error);
+    res.status(500).json({ error: 'Failed to load mood stats' });
+  }
+});
+
 // ─── READ ONE ─────────────────────────────────────────────────────────────────
 router.get('/:id', auth, async (req, res) => {
   try {
@@ -188,28 +211,6 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Delete journal error:', error);
     res.status(500).json({ error: 'Failed to delete journal entry' });
-  }
-});
-
-// ─── MOOD STATS (for caregiver mood trend chart) ──────────────────────────────
-router.get('/stats/moods', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const result = await query(
-      `SELECT mood, entry_date
-       FROM journals
-       WHERE user_id = $1
-         AND entry_date >= CURRENT_DATE - INTERVAL '30 days'
-       ORDER BY entry_date ASC`,
-      [userId]
-    );
-
-    res.json({ moods: result.rows });
-
-  } catch (error) {
-    console.error('Mood stats error:', error);
-    res.status(500).json({ error: 'Failed to load mood stats' });
   }
 });
 
