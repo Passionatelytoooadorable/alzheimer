@@ -6,12 +6,11 @@
     <title>Alzheimer's Support - Login</title>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
-    <script>
-        if (localStorage.getItem('token')) window.location.replace('dashboard.html');
-        window.addEventListener('pageshow', function(e) {
-            if (e.persisted && localStorage.getItem('token')) window.location.replace('dashboard.html');
-        });
-    </script>
+    <!--
+        SECURITY UPDATE: Removed the inline localStorage.getItem('token') check.
+        The JWT is now in an httpOnly cookie — JS cannot read it.
+        Auth check is now done in login.js via API.getCurrentUser() (calls /auth/me).
+    -->
     <link rel="stylesheet" href="login.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
     <style>
@@ -92,7 +91,7 @@
     </header>
 
     <main class="login-container">
-        <!-- Illustration side (unchanged visual) -->
+        <!-- Illustration side -->
         <div class="illustration-section">
             <div class="animation-container">
                 <svg width="320" height="260" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -215,21 +214,10 @@
         <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
+    <!-- api.js must load before login.js -->
     <script src="api.js"></script>
-    <script src="user-store.js"></script>
+    <script src="login.js"></script>
     <script>
-    // ── Accessibility toggles ──────────────────────────────────────────────────
-    document.getElementById('textSize').addEventListener('click', function() {
-        document.body.classList.toggle('large-text');
-        this.classList.toggle('active');
-        this.setAttribute('aria-pressed', document.body.classList.contains('large-text'));
-    });
-    document.getElementById('highContrast').addEventListener('click', function() {
-        document.body.classList.toggle('high-contrast');
-        this.classList.toggle('active');
-        this.setAttribute('aria-pressed', document.body.classList.contains('high-contrast'));
-    });
-
     // ── Password toggle ────────────────────────────────────────────────────────
     document.getElementById('togglePassword').addEventListener('click', function() {
         var inp = document.getElementById('password');
@@ -237,82 +225,6 @@
         inp.type = show ? 'text' : 'password';
         this.textContent = show ? '🙈' : '👁';
         this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-    });
-
-    // ── Alert helpers ──────────────────────────────────────────────────────────
-    function showAlert(id, msg, type) {
-        var el = document.getElementById(id);
-        el.textContent = (type === 'error' ? '❌ ' : '✅ ') + msg;
-        el.className = 'alert-banner visible ' + type;
-    }
-    function hideAlert(id) {
-        document.getElementById(id).className = 'alert-banner';
-    }
-    function fieldError(inputId, errorId, show) {
-        var inp = document.getElementById(inputId);
-        var err = document.getElementById(errorId);
-        if (show) {
-            inp.classList.add('invalid');
-            err.classList.add('visible');
-        } else {
-            inp.classList.remove('invalid');
-            err.classList.remove('visible');
-        }
-    }
-
-    // Clear errors on typing
-    ['username','password'].forEach(function(id) {
-        document.getElementById(id).addEventListener('input', function() {
-            fieldError(id, id + 'Error', false);
-            hideAlert('alertBanner');
-        });
-    });
-
-    // ── Login form submit ──────────────────────────────────────────────────────
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        var username = document.getElementById('username').value.trim();
-        var password = document.getElementById('password').value;
-        var btn = document.getElementById('loginBtn');
-        var valid = true;
-
-        // Client-side validation
-        if (!username) { fieldError('username', 'usernameError', true); valid = false; }
-        if (!password)  { fieldError('password',  'passwordError',  true); valid = false; }
-        if (!valid) return;
-
-        // Loading state
-        btn.classList.add('loading');
-        btn.querySelector('.btn-spinner').style.display = 'block';
-        hideAlert('alertBanner');
-
-        try {
-            var res  = await API.post('/auth/signin', { email: username, password });
-            var data = await res.json();
-
-            if (!res.ok) {
-                // Show specific error messages
-                var msg = data.error || 'Login failed. Please try again.';
-                if (res.status === 401) msg = 'Incorrect username or password. Please try again.';
-                if (res.status === 429) msg = 'Too many attempts. Please wait a moment and try again.';
-                showAlert('alertBanner', msg, 'error');
-                return;
-            }
-
-            // Success — store token & user
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            if (document.getElementById('rememberMe').checked) {
-                localStorage.setItem('rememberMe', 'true');
-            }
-            showAlert('alertBanner', 'Signed in successfully! Redirecting…', 'success');
-            setTimeout(function() { window.location.replace('dashboard.html'); }, 600);
-
-        } catch (err) {
-            showAlert('alertBanner', 'Could not connect to the server. Please check your connection and try again.', 'error');
-        } finally {
-            btn.classList.remove('loading');
-        }
     });
 
     // ── Forgot password flow ───────────────────────────────────────────────────
@@ -324,26 +236,34 @@
     document.getElementById('backToLogin').addEventListener('click', function() {
         document.getElementById('loginForm').classList.remove('hidden');
         document.getElementById('forgotForm').classList.remove('visible');
-        hideAlert('forgotAlert');
+        var el = document.getElementById('forgotAlert');
+        if (el) el.className = 'alert-banner';
     });
 
     document.getElementById('sendResetBtn').addEventListener('click', async function() {
         var email = document.getElementById('resetEmail').value.trim();
+        var btn   = this;
+        var alert = document.getElementById('forgotAlert');
+
         if (!email) {
-            showAlert('forgotAlert', 'Please enter your email address.', 'error');
+            alert.textContent = '❌ Please enter your email address.';
+            alert.className   = 'alert-banner visible error';
             return;
         }
-        this.classList.add('loading');
-        hideAlert('forgotAlert');
+        btn.classList.add('loading');
+        alert.className = 'alert-banner';
+
         try {
-            var res  = await API.post('/auth/forgot-password', { email });
-            // Always show success to prevent email enumeration
-            showAlert('forgotAlert', 'If that email exists, a reset link has been sent. Check your inbox.', 'success');
+            await API.post('/auth/forgot-password', { email: email });
+            // Always show success (server never reveals if email exists)
+            alert.textContent = '✅ If that email exists, a reset link has been sent. Check your inbox.';
+            alert.className   = 'alert-banner visible success';
             document.getElementById('resetEmail').value = '';
         } catch (err) {
-            showAlert('forgotAlert', 'Could not send reset email. Please try again later.', 'error');
+            alert.textContent = '❌ Could not send reset email. Please try again later.';
+            alert.className   = 'alert-banner visible error';
         } finally {
-            this.classList.remove('loading');
+            btn.classList.remove('loading');
         }
     });
     </script>

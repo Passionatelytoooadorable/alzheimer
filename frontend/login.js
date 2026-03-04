@@ -1,14 +1,25 @@
 /**
  * login.js
  * Uses API helper (api.js) which handles Render cold-start retries automatically.
- * Does NOT depend on user-store.js so no crash if it hasn't loaded.
+ *
+ * Security update: JWT is now stored in an httpOnly cookie set by the server.
+ * We no longer store the token in localStorage — the browser manages the cookie.
+ * On successful login, only non-sensitive user info (name, email) goes to localStorage.
  */
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
 
-    // Already logged in → go to dashboard
-    if (localStorage.getItem('token')) {
-        window.location.replace('dashboard.html');
-        return;
+    // ── Already logged in? Check via cookie (server validates it) ────────────
+    // We can no longer check localStorage.getItem('token') since the token
+    // is in an httpOnly cookie that JS cannot read.
+    // Instead, ask the server — if /auth/me succeeds, user is logged in.
+    try {
+        var user = await API.getCurrentUser();
+        if (user) {
+            window.location.replace('dashboard.html');
+            return;
+        }
+    } catch (e) {
+        // Not logged in — continue to show login form
     }
 
     var loginForm       = document.getElementById('loginForm');
@@ -23,53 +34,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
-        if (!username || !password) { showMsg('Please fill in all fields.', 'error'); return; }
+
+        // Client-side validation
+        var valid = true;
+        if (!username) { fieldError('username', 'usernameError', true); valid = false; }
+        if (!password)  { fieldError('password',  'passwordError',  true); valid = false; }
+        if (!valid) return;
 
         setBtn('Signing In…', true);
-        showMsg('Connecting to server… (first load may take up to 30 seconds)', 'info');
+        hideAlert('alertBanner');
 
         try {
-            // API.post handles Render cold-start retries automatically
             var res    = await API.post('/auth/signin', { email: username, password: password });
             var result = await res.json();
 
-            if (result.token) {
-                var u = result.user || {};
-                var userData = {
-                    id:       u.id       || u._id      || '',
-                    name:     u.name     || username,
-                    email:    u.email    || username,
-                    username: u.username || username,
-                    phone:    u.phone_number || u.phone || ''
-                };
-
-                // Clear any old session keys
-                ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted']
-                    .forEach(function (k) { localStorage.removeItem(k); });
-
-                localStorage.setItem('token',        result.token);
-                localStorage.setItem('user',         JSON.stringify(userData));
-                localStorage.setItem('isLoggedIn',   'true');
-                localStorage.setItem('userName',     userData.name);
-                localStorage.setItem('userEmail',    userData.email);
-                localStorage.setItem('isNewUser',    'false');
-                localStorage.setItem('scanCompleted','true');
-
-                showMsg('✅ Login successful! Redirecting…', 'success');
-                setTimeout(function () {
-                    window.location.href = 'dashboard.html';
-                }, 1000);
-
-            } else {
+            if (!res.ok) {
+                var msg = result.error || 'Login failed. Please try again.';
+                if (res.status === 401) msg = 'Incorrect username or password. Please try again.';
+                if (res.status === 429) msg = 'Too many attempts. Please wait a moment and try again.';
+                showAlert('alertBanner', msg, 'error');
                 setBtn('Sign In', false);
-                showMsg(result.error || result.message || 'Invalid username or password.', 'error');
                 document.getElementById('password').value = '';
                 document.getElementById('password').focus();
+                return;
             }
+
+            // ── Success ───────────────────────────────────────────────────────
+            // The server has already set the httpOnly cookie — we don't handle the token.
+            // Only store non-sensitive user info in localStorage for display purposes.
+            var u = result.user || {};
+            localStorage.setItem('user',       JSON.stringify(u));
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userName',   u.name     || username);
+            localStorage.setItem('userEmail',  u.email    || username);
+
+            showAlert('alertBanner', 'Signed in successfully! Redirecting…', 'success');
+            setTimeout(function () {
+                window.location.replace('dashboard.html');
+            }, 600);
 
         } catch (err) {
             setBtn('Sign In', false);
-            showMsg('⚠️ Could not reach server. Please check your internet and try again.', 'error');
+            showAlert('alertBanner', '⚠️ Could not reach server. Please check your internet and try again.', 'error');
             console.error('Login error:', err);
         }
     }
@@ -78,46 +84,58 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!loginBtn) return;
         loginBtn.textContent = text;
         loginBtn.disabled    = disabled;
-    }
-
-    function showMsg(msg, type) {
-        document.querySelectorAll('.login-message').forEach(function (el) { el.remove(); });
-        var div = document.createElement('div');
-        div.className = 'login-message';
-        div.textContent = msg;
-        var colors = {
-            success: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
-            error:   { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
-            info:    { bg: '#fff3cd', color: '#856404', border: '#ffeeba' }
-        };
-        var c = colors[type] || colors.info;
-        Object.assign(div.style, {
-            padding: '0.8rem 1rem', margin: '0.6rem 0', borderRadius: '8px',
-            textAlign: 'center', fontWeight: '500', fontSize: '0.88rem',
-            background: c.bg, color: c.color, border: '1px solid ' + c.border
-        });
-        var footer = document.querySelector('.login-footer');
-        if (footer) footer.insertAdjacentElement('beforebegin', div);
-        if (type !== 'success' && type !== 'info') {
-            setTimeout(function () { if (div.parentNode) div.remove(); }, 6000);
+        if (disabled) {
+            loginBtn.classList.add('loading');
+        } else {
+            loginBtn.classList.remove('loading');
         }
     }
 
+    function showAlert(id, msg, type) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = (type === 'error' ? '❌ ' : '✅ ') + msg;
+        el.className = 'alert-banner visible ' + type;
+    }
+    function hideAlert(id) {
+        var el = document.getElementById(id);
+        if (el) el.className = 'alert-banner';
+    }
+    function fieldError(inputId, errorId, show) {
+        var inp = document.getElementById(inputId);
+        var err = document.getElementById(errorId);
+        if (!inp || !err) return;
+        if (show) {
+            inp.classList.add('invalid');
+            err.classList.add('visible');
+        } else {
+            inp.classList.remove('invalid');
+            err.classList.remove('visible');
+        }
+    }
+
+    // Clear errors on typing
+    ['username', 'password'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', function () {
+            fieldError(id, id + 'Error', false);
+            hideAlert('alertBanner');
+        });
+    });
+
     // Accessibility toggles
     if (textSizeBtn) {
-        var big = false;
         textSizeBtn.addEventListener('click', function () {
             document.body.classList.toggle('large-text');
-            big = !big;
-            textSizeBtn.textContent = big ? 'Decrease Text Size' : 'Increase Text Size';
+            this.classList.toggle('active');
+            this.setAttribute('aria-pressed', document.body.classList.contains('large-text'));
         });
     }
     if (highContrastBtn) {
-        var hc = false;
         highContrastBtn.addEventListener('click', function () {
             document.body.classList.toggle('high-contrast');
-            hc = !hc;
-            highContrastBtn.textContent = hc ? 'Normal Contrast' : 'High Contrast';
+            this.classList.toggle('active');
+            this.setAttribute('aria-pressed', document.body.classList.contains('high-contrast'));
         });
     }
 });
