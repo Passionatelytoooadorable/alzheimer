@@ -810,6 +810,69 @@
 
 .reminder-form { display: flex; flex-direction: column; gap: 1.25rem; }
 
+/* ── MOOD CHART SECTION ──────────────────────────────────────── */
+.mood-chart-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem 2rem;
+    margin: 0 0 0 0;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    border-top: 4px solid #96ceb4;
+    /* sits between journal-header and main-content */
+    max-width: 100%;
+}
+
+.mood-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.mood-chart-header h3 {
+    color: #374785;
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.mood-chart-sub {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-left: 0.4rem;
+}
+
+.mood-chart-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.mood-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.moodDot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.mood-chart-canvas-wrap {
+    height: 170px;
+    position: relative;
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 1200px) {
     .main-content { grid-template-columns: 1fr; }
@@ -846,6 +909,10 @@
     .prompts-section { padding: 1.25rem; }
 
     .voice-panel-actions { flex-direction: column; }
+
+    .mood-chart-section { padding: 1.25rem; margin: 0; border-radius: 0; }
+    .mood-chart-header  { flex-direction: column; align-items: flex-start; }
+    .mood-chart-canvas-wrap { height: 140px; }
 }
 
 @media (max-width: 480px) {

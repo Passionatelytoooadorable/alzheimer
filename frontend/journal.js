@@ -36,6 +36,7 @@ class Journal {
         this.updateCalendar(this.currentCalendarDate);
         this.fetchEntries();
         this._setupVoice();
+        this.loadMoodChart();
     }
 
     // ── Inject new elements into the existing HTML ────────────────────────────
@@ -519,6 +520,7 @@ class Journal {
             this._clearDraft();
             this._closeForm();
             await this.fetchEntries(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+            this.loadMoodChart(); // refresh chart with new entry's mood
         } catch (_) {
             // Offline — save locally
             try {
@@ -604,6 +606,7 @@ class Journal {
         }
         this.showNotification('Entry deleted.', 'success');
         await this.fetchEntries(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+        this.loadMoodChart(); // refresh chart after deletion
     }
 
     // ── Voice entry ───────────────────────────────────────────────────────────
@@ -986,6 +989,109 @@ class Journal {
                 const de = document.getElementById('entryDate');
                 if (de) de.value = ds;
             }
+        }
+    }
+
+    // ── Mood Chart ────────────────────────────────────────────────────────────
+    async loadMoodChart() {
+        try {
+            const data  = await this._api('/journals/stats/moods');
+            const moods = data.moods || [];
+
+            const moodScore = { '😊': 5, '😌': 4, '😐': 3, '😴': 3, '😢': 2, '😠': 2 };
+            const moodColors = {
+                5: 'rgba(76,175,80,0.85)',
+                4: 'rgba(74,134,232,0.85)',
+                3: 'rgba(158,158,158,0.75)',
+                2: 'rgba(244,67,54,0.8)'
+            };
+
+            const days = [], scores = [], colors = [], borderColors = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().split('T')[0];
+                days.push(d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+
+                const dayMoods = moods.filter(m => (m.entry_date || '').startsWith(key));
+                if (dayMoods.length) {
+                    const avg     = dayMoods.reduce((s, m) => s + (moodScore[m.mood] || 3), 0) / dayMoods.length;
+                    const rounded = Math.round(avg);
+                    scores.push(rounded);
+                    colors.push(moodColors[rounded] || 'rgba(158,158,158,0.75)');
+                    borderColors.push((moodColors[rounded] || 'rgba(158,158,158,0.75)').replace('0.85','1').replace('0.75','1').replace('0.8','1'));
+                } else {
+                    scores.push(null);
+                    colors.push('rgba(200,200,200,0.35)');
+                    borderColors.push('rgba(200,200,200,0.5)');
+                }
+            }
+
+            const section = document.getElementById('moodChartSection');
+            if (section) section.style.display = 'block';
+
+            const ctx = document.getElementById('moodTrendChart');
+            if (!ctx) return;
+
+            // Destroy previous instance if re-rendering after a new entry
+            if (this._moodChart) { this._moodChart.destroy(); }
+
+            this._moodChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Mood Score',
+                        data: scores,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 1.5,
+                        borderRadius: 7,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(55,71,133,0.92)',
+                            titleColor: '#fff',
+                            bodyColor: '#e0e7ff',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: ctx => {
+                                    const map = { 5:'😊 Happy', 4:'😌 Calm', 3:'😐 Neutral / Tired', 2:'😢 Sad / Frustrated' };
+                                    return ctx.raw !== null ? map[ctx.raw] || 'No entry' : 'No entry';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0, max: 5,
+                            ticks: {
+                                stepSize: 1,
+                                color: '#6c757d',
+                                font: { size: 11 },
+                                callback: v => ({ 1:'😢', 2:'😐', 3:'😌', 4:'😊', 5:'🤩' }[v] || '')
+                            },
+                            grid: { color: '#f0f2f5' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#6c757d', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            if (err.message === 'SESSION_EXPIRED') return;
+            // Silently hide chart section if API fails — don't break page
+            console.warn('Mood chart could not load:', err.message);
         }
     }
 

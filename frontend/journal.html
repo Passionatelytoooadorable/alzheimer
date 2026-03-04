@@ -9,6 +9,7 @@
     <link rel="icon" href="#" id="dynamic-favicon">
     <script src="favicon-config.js"></script>
     <script src="user-store.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
     <header class="header">
@@ -50,6 +51,22 @@
                 </div>
             </div>
         </section>
+
+        <!-- ── Mood Trend Chart ─────────────────────────────────────── -->
+        <div id="moodChartSection" class="mood-chart-section" style="display:none;">
+            <div class="mood-chart-header">
+                <h3>😊 Mood Trend <span class="mood-chart-sub">Last 7 Days</span></h3>
+                <div id="moodChartLegend" class="mood-chart-legend">
+                    <span class="mood-legend-item"><span class="moodDot" style="background:rgba(76,175,80,0.8)"></span>Happy</span>
+                    <span class="mood-legend-item"><span class="moodDot" style="background:rgba(74,134,232,0.8)"></span>Calm</span>
+                    <span class="mood-legend-item"><span class="moodDot" style="background:rgba(158,158,158,0.8)"></span>Neutral</span>
+                    <span class="mood-legend-item"><span class="moodDot" style="background:rgba(244,67,54,0.8)"></span>Low</span>
+                </div>
+            </div>
+            <div class="mood-chart-canvas-wrap">
+                <canvas id="moodTrendChart"></canvas>
+            </div>
+        </div>
 
         <div class="main-content">
             <div class="journal-content">
