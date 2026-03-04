@@ -108,7 +108,7 @@
 
     <main class="dashboard-container">
 
-        <!-- Row 1 -->
+        <!-- Row 1: Reminders | Recent Activity | Emergency -->
         <div class="feature-row">
 
             <!-- Today's Reminders -->
@@ -128,49 +128,6 @@
                 </div>
             </div>
 
-            <!-- Your Progress -->
-            <div class="feature-tile progress-tile">
-                <div class="tile-header">
-                    <div class="tile-icon">📊</div>
-                    <h3>Your Progress</h3>
-                    <span class="tile-chip chip-sky">Live</span>
-                </div>
-                <div class="tile-content">
-                    <div class="progress-stats">
-                        <div class="prog-stat">
-                            <div class="prog-num" id="msM">—</div>
-                            <div class="prog-lbl">Memories</div>
-                        </div>
-                        <div class="prog-stat">
-                            <div class="prog-num" id="msJ">—</div>
-                            <div class="prog-lbl">Journals</div>
-                        </div>
-                        <div class="prog-stat">
-                            <div class="prog-num" id="msW">—</div>
-                            <div class="prog-lbl">This Week</div>
-                        </div>
-                    </div>
-                    <div class="quick-nav-grid">
-                        <a href="memory-vault.html" class="qnav-box">
-                            <span class="qnav-ico">📸</span>
-                            <span class="qnav-lbl">Memory Vault</span>
-                        </a>
-                        <a href="journal.html" class="qnav-box">
-                            <span class="qnav-ico">📝</span>
-                            <span class="qnav-lbl">Daily Journal</span>
-                        </a>
-                        <a href="ai-companion.html" class="qnav-box">
-                            <span class="qnav-ico">🤖</span>
-                            <span class="qnav-lbl">AI Companion</span>
-                        </a>
-                        <a href="caregiver.html" class="qnav-box qnav-caregiver">
-                            <span class="qnav-ico">👩‍⚕️</span>
-                            <span class="qnav-lbl">Caregiver</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
             <!-- Recent Activity -->
             <div class="feature-tile activity-tile">
                 <div class="tile-header">
@@ -184,10 +141,6 @@
                     </ul>
                 </div>
             </div>
-        </div>
-
-        <!-- Row 2 -->
-        <div class="feature-row">
 
             <!-- Emergency -->
             <div class="feature-tile emergency-tile">
@@ -216,49 +169,72 @@
                     <button class="emergency-btn" id="emergencyBtn">🆘 Emergency Help</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Row 2: Memory Vault | Journal | Location | AI Companion -->
+        <div class="feature-row">
+
+            <!-- Memory Vault -->
+            <a href="memory-vault.html" class="feature-tile memory-tile">
+                <div class="tile-header">
+                    <div class="tile-icon">📸</div>
+                    <h3>Memory Vault</h3>
+                    <span class="tile-chip chip-sky" id="memoryBadge">0 memories</span>
+                </div>
+                <div class="tile-content">
+                    <p class="tile-desc">Store and revisit your precious memories — photos, voice notes, and family stories</p>
+                    <div class="feature-stats">
+                        <span class="stat-box"><strong id="memoryCount2">—</strong> memories</span>
+                        <span class="stat-box">📷 Photos &amp; notes</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Daily Journal -->
+            <a href="journal.html" class="feature-tile journal-tile">
+                <div class="tile-header">
+                    <div class="tile-icon">📝</div>
+                    <h3>Daily Journal</h3>
+                    <span class="tile-chip chip-peach" id="journalBadge">0 entries</span>
+                </div>
+                <div class="tile-content">
+                    <p class="tile-desc">Record your thoughts, moods, and daily experiences</p>
+                    <div class="feature-stats">
+                        <span class="stat-box"><strong id="journalCount2">—</strong> entries</span>
+                        <span class="stat-box"><strong id="weeklyCount">—</strong> this week</span>
+                    </div>
+                </div>
+            </a>
 
             <!-- Location Safety -->
-            <div class="feature-tile location-tile">
+            <a href="location-tracker.html" class="feature-tile location-tile">
                 <div class="tile-header">
                     <div class="tile-icon">📍</div>
                     <h3>Location Safety</h3>
                     <span class="tile-chip chip-mint" id="locChip">Checking…</span>
                 </div>
                 <div class="tile-content">
-                    <p class="tile-desc">Share your location with trusted contacts for safety</p>
+                    <p class="tile-desc">Share your location with trusted contacts for safety and peace of mind</p>
                     <div class="location-info">
                         <div class="location-status" id="locUpdate">Last updated: —</div>
                         <div class="safe-zone">Safe zone: Home</div>
                     </div>
-                    <div class="loc-link-box" onclick="event.preventDefault();location.href='location-tracker.html'">
-                        <span>🗺️</span>
-                        <div>
-                            <div class="cl-title loc-title">Location Tracker</div>
-                            <div class="cl-sub">Share with caregivers</div>
-                        </div>
-                    </div>
-                    <div class="caregiver-link-box" onclick="event.preventDefault();location.href='caregiver.html'">
-                        <span>👩‍⚕️</span>
-                        <div>
-                            <div class="cl-title">Caregiver Dashboard</div>
-                            <div class="cl-sub">Patient overview &amp; map</div>
-                        </div>
-                    </div>
                 </div>
-            </div>
+            </a>
 
-            <!-- Support Resources -->
-            <a href="resources.html" class="feature-tile resources-tile">
+            <!-- AI Companion -->
+            <a href="ai-companion.html" class="feature-tile ai-tile">
                 <div class="tile-header">
-                    <div class="tile-icon">📚</div>
-                    <h3>Support Resources</h3>
-                    <span class="tile-chip chip-peach">50+ links</span>
+                    <div class="tile-icon">🤖</div>
+                    <h3>AI Care Companion</h3>
+                    <span class="tile-chip chip-sky">Online</span>
                 </div>
                 <div class="tile-content">
-                    <p class="tile-desc">Guides, helplines, community, legal &amp; financial planning for patients &amp; caregivers</p>
-                    <div class="resources-preview">
-                        <div class="res-icon-large">📚</div>
-                        <div class="res-cta">Browse 50+ curated resources →</div>
+                    <p class="tile-desc">Get help with reminders, questions, and friendly daily support</p>
+                    <div class="ai-features">
+                        <span class="ai-feature">💊 Medication help</span>
+                        <span class="ai-feature">🧠 Memory games</span>
+                        <span class="ai-feature">💬 Friendly chat</span>
                     </div>
                 </div>
             </a>
@@ -371,11 +347,20 @@
             var jt = parseInt((jr.stats || {}).total || 0);
             var jw = parseInt((jr.stats || {}).this_week || 0);
             var mc = (mr.memories || []).length;
+            // Hero stats
             document.getElementById('journalCount').textContent = jt;
             document.getElementById('memoryCount').textContent  = mc;
-            document.getElementById('msM').textContent = mc;
-            document.getElementById('msJ').textContent = jt;
-            document.getElementById('msW').textContent = jw;
+            // Tile stats
+            var jc2 = document.getElementById('journalCount2');
+            var mc2 = document.getElementById('memoryCount2');
+            var wc  = document.getElementById('weeklyCount');
+            var jb  = document.getElementById('journalBadge');
+            var mb  = document.getElementById('memoryBadge');
+            if (jc2) jc2.textContent = jt;
+            if (mc2) mc2.textContent = mc;
+            if (wc)  wc.textContent  = jw;
+            if (jb)  jb.textContent  = jt + ' entries';
+            if (mb)  mb.textContent  = mc + ' memories';
         }).catch(function() {});
     }
 

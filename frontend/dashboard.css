@@ -158,10 +158,10 @@
 }
 .floating-icon:hover { transform: scale(1.1) !important; }
 
-.floating-icon:nth-child(1) { background: linear-gradient(135deg,#ffd6e0,#ffb3c1); animation-delay:0s; }
-.floating-icon:nth-child(2) { background: linear-gradient(135deg,#b8f0d8,#80e8b8); animation-delay:0.5s; }
-.floating-icon:nth-child(3) { background: linear-gradient(135deg,#ffd6a5,#ffb347); animation-delay:1s; }
-.floating-icon:nth-child(4) { background: linear-gradient(135deg,#d0b8f5,#b89de8); animation-delay:1.5s; }
+.floating-icon:nth-child(1) { background: linear-gradient(135deg,#d63b6e,#e8557f); animation-delay:0s; }
+.floating-icon:nth-child(2) { background: linear-gradient(135deg,#1a8a5a,#22aa72); animation-delay:0.5s; }
+.floating-icon:nth-child(3) { background: linear-gradient(135deg,#c97000,#e08a10); animation-delay:1s; }
+.floating-icon:nth-child(4) { background: linear-gradient(135deg,#5e2db5,#7b45d0); animation-delay:1.5s; }
 
 .icon-label {
     font-size: 0.72rem; font-weight: 700; color: white;
@@ -180,6 +180,9 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 1.25rem;
     margin-bottom: 1.25rem;
+}
+.feature-row:last-child {
+    grid-template-columns: repeat(4, 1fr);
 }
 
 /* ── Tile base ── */
@@ -438,9 +441,46 @@
 .loc-title    { color: #1d7a50; }
 .cl-sub       { font-size: 0.72rem; color: #bbb; }
 
+
+/* ── Tile accent borders ── */
+.memory-tile  { border-top-color: #b8d9f5; }
+.journal-tile { border-top-color: #ffd6a5; }
+.ai-tile      { border-top-color: #d0b8f5; }
+
+/* ── Feature stats (memory/journal tiles) ── */
+.feature-stats {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+.stat-box {
+    background: #f8f8ff;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+/* ── AI features ── */
+.ai-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: auto;
+}
+.ai-feature {
+    background: #f8f5ff;
+    padding: 0.38rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #555;
+}
+
 /* ── Responsive ── */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
     .feature-row { grid-template-columns: 1fr 1fr; }
+    .feature-row:last-child { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 768px) {
