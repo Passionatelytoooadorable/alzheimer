@@ -14,7 +14,7 @@ function buildProfileNav(user) {
     var firstName = name.split(' ')[0];
 
     return [
-        '<a href="dashboard.html" class="nav-link">Home</a>',
+        '<a href="dashboard.html" class="nav-link" >Home</a>',
         '<a href="resources.html" class="nav-link">Resources</a>',
         '<div class="profile-nav-wrap" id="profileNavWrap">',
             '<button type="button" class="profile-nav-btn" id="profileNavBtn">',
