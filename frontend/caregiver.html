@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caregiver Dashboard - Alzheimer's Support</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Leaflet.js for location map -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    <!-- Chart.js for mood trends -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👩‍⚕️</text></svg>">
     <style>
@@ -18,139 +16,118 @@
             --success: #4caf50; --warning: #ff9800;
             --danger: #f44336;  --purple: #7c4dff;
         }
-
-        /* ── Page hero ── */
         .caregiver-hero {
             background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fbbf24 100%);
-            color: white; padding: 2rem; display: flex;
+            color: white; padding: 1.5rem 2rem; display: flex;
             align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
         }
         .hero-title h1 { font-size: 1.8rem; }
         .hero-title p  { opacity: 0.85; font-size: 0.95rem; margin-top: 0.25rem; }
-        .hero-badges   { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .hero-badges   { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
         .hero-badge    {
             background: rgba(255,255,255,0.2); border-radius: 20px;
             padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600;
             display: flex; align-items: center; gap: 0.4rem;
         }
-
-        /* ── Two-column layout ── */
+        .patient-selector-bar {
+            background: white; border-bottom: 1px solid #eee;
+            padding: 0.9rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+        }
+        .patient-selector-bar label { font-weight: 600; color: #444; font-size: 0.9rem; white-space: nowrap; }
+        .patient-select {
+            border: 1.5px solid #ddd; border-radius: 8px; padding: 0.45rem 0.9rem;
+            font-size: 0.9rem; background: #f8f9fa; cursor: pointer; min-width: 220px; color: #333;
+        }
+        .patient-select:focus { outline: none; border-color: var(--primary); }
+        .patient-count-badge {
+            background: var(--primary-light); color: var(--primary);
+            border-radius: 12px; padding: 0.2rem 0.7rem; font-size: 0.78rem; font-weight: 700;
+        }
+        .no-patients-banner {
+            background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px;
+            padding: 1rem 1.5rem; margin: 1.5rem 2rem; color: #795548; font-size: 0.9rem;
+            display: flex; align-items: flex-start; gap: 0.75rem;
+        }
+        .no-patients-banner.hidden { display: none; }
+        .pending-badge {
+            background: #fdecea; color: #c62828; border-radius: 12px;
+            padding: 0.2rem 0.7rem; font-size: 0.78rem; font-weight: 700; display: none;
+        }
+        .pending-badge.visible { display: inline-flex; align-items: center; gap: 0.3rem; }
+        .pending-panel {
+            background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 10px;
+            padding: 1rem 1.5rem; margin: 0.75rem 2rem; display: none;
+        }
+        .pending-panel.visible { display: block; }
+        .pending-panel h4 { color: #e65100; margin-bottom: 0.75rem; font-size: 0.92rem; }
+        .pending-request {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.5rem 0; border-bottom: 1px solid #ffe0b2; font-size: 0.85rem; gap: 1rem;
+        }
+        .pending-request:last-child { border-bottom: none; }
+        .req-name  { font-weight: 600; color: #333; }
+        .req-email { color: #888; font-size: 0.78rem; }
+        .req-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .btn-accept { background: #4caf50; color: white; border: none; border-radius: 6px; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .btn-reject { background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 6px; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.8rem; }
+        .btn-accept:hover { background: #388e3c; }
+        .btn-reject:hover { background: #eee; }
         .caregiver-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
-            max-width: 1200px; margin: 0 auto; padding: 2rem;
+            max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem;
         }
-        @media (max-width: 768px) { .caregiver-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .caregiver-grid { grid-template-columns: 1fr; padding: 1rem; } }
         .full-width { grid-column: 1 / -1; }
-
-        /* ── Cards ── */
-        .card {
-            background: white; border-radius: 14px; padding: 1.5rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden;
-        }
+        .card { background: white; border-radius: 14px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }
         .card h3 { font-size: 1rem; color: #444; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-        .card-badge {
-            font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px;
-            background: var(--primary-light); color: var(--primary); font-weight: 600; margin-left: auto;
-        }
-
-        /* ── Patient summary strip ── */
-        .patient-strip {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
-        }
+        .card-badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; background: var(--primary-light); color: var(--primary); font-weight: 600; margin-left: auto; }
+        .patient-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         @media (max-width: 600px) { .patient-strip { grid-template-columns: repeat(2,1fr); } }
-        .patient-stat {
-            text-align: center; padding: 1rem; border-radius: 10px;
-            background: var(--primary-light);
-        }
+        .patient-stat { text-align: center; padding: 1rem; border-radius: 10px; background: var(--primary-light); }
         .patient-stat .ps-num { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
         .patient-stat .ps-lbl { font-size: 0.75rem; color: #666; margin-top: 0.1rem; }
-
-        /* ── Map ── */
         #locationMap { height: 280px; border-radius: 10px; background: #f0f0f0; }
-        .map-status  {
-            display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem;
-            color: #666; margin-top: 0.6rem;
-        }
+        .map-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #666; margin-top: 0.6rem; }
         .map-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
         .map-dot.green  { background: var(--success); }
         .map-dot.orange { background: var(--warning); }
         .map-dot.gray   { background: #bbb; }
-        .geofence-toggle {
-            display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem;
-            padding: 0.6rem 1rem; background: var(--teal-light); border-radius: 8px;
-            font-size: 0.85rem;
-        }
+        .geofence-toggle { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; padding: 0.6rem 1rem; background: var(--teal-light); border-radius: 8px; font-size: 0.85rem; }
         .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider {
-            position: absolute; inset: 0; background: #ccc; border-radius: 22px; cursor: pointer; transition: 0.3s;
-        }
-        .toggle-slider:before {
-            content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
-            background: white; border-radius: 50%; transition: 0.3s;
-        }
+        .toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 22px; cursor: pointer; transition: 0.3s; }
+        .toggle-slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.3s; }
         input:checked + .toggle-slider { background: var(--teal); }
         input:checked + .toggle-slider:before { transform: translateX(18px); }
-
-        /* ── Activity feed ── */
-        .activity-item {
-            display: flex; align-items: flex-start; gap: 0.75rem;
-            padding: 0.6rem 0; border-bottom: 1px solid #f5f5f5; font-size: 0.85rem;
-        }
+        .activity-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #f5f5f5; font-size: 0.85rem; }
         .activity-item:last-child { border-bottom: none; }
-        .act-icon  { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }
-        .act-text  { color: #444; }
-        .act-time  { font-size: 0.75rem; color: #aaa; margin-top: 0.1rem; }
+        .act-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }
+        .act-text { color: #444; }
+        .act-time { font-size: 0.75rem; color: #aaa; margin-top: 0.1rem; }
         .activity-empty { color: #aaa; font-size: 0.85rem; text-align: center; padding: 1rem; }
-
-        /* ── Mood chart ── */
         .mood-chart-wrap { height: 200px; }
-
-        /* ── Reminders compliance ── */
-        .compliance-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.4rem 0; border-bottom: 1px solid #f5f5f5; font-size: 0.83rem;
-        }
-        .compliance-row:last-child { border-bottom: none; }
-        .comp-bar-mini { width: 80px; height: 6px; background: #eee; border-radius: 3px; }
-        .comp-fill-mini { height: 100%; background: var(--success); border-radius: 3px; }
-
-        /* ── Alert panel ── */
-        .alert-item {
-            display: flex; align-items: flex-start; gap: 0.75rem;
-            padding: 0.75rem; border-radius: 8px; margin-bottom: 0.6rem; font-size: 0.85rem;
-        }
+        .alert-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.6rem; font-size: 0.85rem; }
         .alert-item.warn   { background: #fff3e0; color: #e65100; }
         .alert-item.danger { background: #fdecea; color: #c62828; }
         .alert-item.ok     { background: #e8f5e9; color: #2e7d32; }
         .alert-icon { font-size: 1.2rem; flex-shrink: 0; }
         .no-alerts  { color: #aaa; font-size: 0.85rem; text-align: center; padding: 1rem; }
-
-        /* ── Send message ── */
         .send-msg-form { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        .send-msg-form input {
-            flex: 1; min-width: 180px; padding: 0.6rem 0.9rem; border: 1px solid #ddd;
-            border-radius: 8px; font-size: 0.9rem;
-        }
+        .send-msg-form input { flex: 1; min-width: 180px; padding: 0.6rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
         .send-msg-form input:focus { outline: none; border-color: var(--primary); }
-        .send-btn {
-            background: var(--primary); color: white; border: none; border-radius: 8px;
-            padding: 0.6rem 1.2rem; cursor: pointer; font-weight: 600; font-size: 0.88rem;
-            white-space: nowrap;
-        }
+        .send-btn { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 0.6rem 1.2rem; cursor: pointer; font-weight: 600; font-size: 0.88rem; white-space: nowrap; }
         .send-btn:hover { background: #3a76d8; }
-
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: #333; color: white; padding: 0.65rem 1.5rem; border-radius: 24px;
-            font-size: 0.85rem; opacity: 0; transition: all 0.3s; z-index: 9999; pointer-events: none;
-        }
+        .message-history { margin-top: 0.75rem; max-height: 200px; overflow-y: auto; }
+        .msg-item { padding: 0.5rem 0.75rem; border-radius: 8px; background: #f0f7ff; margin-bottom: 0.4rem; font-size: 0.83rem; }
+        .msg-text { color: #333; }
+        .msg-meta { font-size: 0.72rem; color: #aaa; margin-top: 0.15rem; display: flex; gap: 0.5rem; }
+        .msg-read   { color: #4caf50; }
+        .msg-unread { color: #ff9800; }
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px); background: #333; color: white; padding: 0.65rem 1.5rem; border-radius: 24px; font-size: 0.85rem; opacity: 0; transition: all 0.3s; z-index: 9999; pointer-events: none; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* Spinner */
         .spinner-sm { display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--primary);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .dashboard-content.hidden { display: none; }
     </style>
 </head>
 <body>
@@ -162,99 +139,137 @@
         <nav class="nav-links" id="sharedNav"></nav>
     </header>
 
-    <!-- Hero -->
     <section class="caregiver-hero">
         <div class="hero-title">
             <h1>👩‍⚕️ Caregiver Dashboard</h1>
-            <p>Monitor, support, and stay connected with your loved one</p>
+            <p>Monitor, support, and stay connected with your patients</p>
         </div>
         <div class="hero-badges">
-            <div class="hero-badge" id="heroConnBadge">
+            <div class="hero-badge">
                 <span id="heroConnDot">🟡</span> <span id="heroConnText">Connecting…</span>
             </div>
-            <div class="hero-badge" id="heroLastSeen">
+            <div class="hero-badge">
                 🕐 <span id="heroLastSeenText">Last seen: —</span>
             </div>
+            <span class="pending-badge" id="pendingBadge">⏳ <span id="pendingCount">0</span> pending</span>
         </div>
     </section>
 
-    <div class="caregiver-grid">
+    <!-- Pending requests panel -->
+    <div class="pending-panel" id="pendingPanel">
+        <h4>⏳ Pending Patient Link Requests</h4>
+        <div id="pendingList"></div>
+    </div>
 
-        <!-- Patient summary strip -->
-        <div class="card full-width">
-            <h3>📊 Patient Overview <span class="card-badge" id="patientName">Loading…</span></h3>
-            <div class="patient-strip">
-                <div class="patient-stat">
-                    <div class="ps-num" id="psJournals">—</div>
-                    <div class="ps-lbl">Journal Entries</div>
+    <!-- Patient selector -->
+    <div class="patient-selector-bar">
+        <label for="patientSelect">👤 Viewing patient:</label>
+        <select id="patientSelect" class="patient-select">
+            <option value="">— Select a patient —</option>
+        </select>
+        <span class="patient-count-badge" id="patientCountBadge">0 patients</span>
+    </div>
+
+    <!-- No patients state -->
+    <div class="no-patients-banner" id="noPatientsMsg">
+        <span style="font-size:1.4rem;">ℹ️</span>
+        <div>
+            <strong>No linked patients yet.</strong><br>
+            Ask your patient to go to their dashboard → <em>Link to Caregiver</em> and enter your email or username:
+            <strong id="myEmailDisplay"></strong>.<br>
+            Once they send a request it will appear above for you to accept.
+        </div>
+    </div>
+
+    <!-- Main dashboard content (hidden until patient selected) -->
+    <div class="dashboard-content hidden" id="dashboardContent">
+        <div class="caregiver-grid">
+
+            <!-- Patient overview -->
+            <div class="card full-width">
+                <h3>📊 Patient Overview <span class="card-badge" id="patientNameBadge">—</span></h3>
+                <div class="patient-strip">
+                    <div class="patient-stat">
+                        <div class="ps-num" id="psJournals">—</div>
+                        <div class="ps-lbl">Journal Entries</div>
+                    </div>
+                    <div class="patient-stat" style="background:#e0f2f1;">
+                        <div class="ps-num" style="color:#f97316;" id="psReminders">—</div>
+                        <div class="ps-lbl">Today's Reminders</div>
+                    </div>
+                    <div class="patient-stat" style="background:#f3e5f5;">
+                        <div class="ps-num" style="color:#7c4dff;" id="psMemories">—</div>
+                        <div class="ps-lbl">Memories Saved</div>
+                    </div>
+                    <div class="patient-stat" style="background:#fff3e0;">
+                        <div class="ps-num" style="color:#e65100;" id="psCompliance">—%</div>
+                        <div class="ps-lbl">Reminder Compliance</div>
+                    </div>
                 </div>
-                <div class="patient-stat" style="background:#e0f2f1;">
-                    <div class="ps-num" style="color:#f97316;" id="psReminders">—</div>
-                    <div class="ps-lbl">Today's Reminders</div>
+            </div>
+
+            <!-- Location map -->
+            <div class="card">
+                <h3>📍 Patient Location</h3>
+                <div id="locationMap"></div>
+                <div class="map-status">
+                    <div class="map-dot gray" id="mapDot"></div>
+                    <span id="mapStatusText">Loading last known location…</span>
                 </div>
-                <div class="patient-stat" style="background:#f3e5f5;">
-                    <div class="ps-num" style="color:#7c4dff;" id="psMemories">—</div>
-                    <div class="ps-lbl">Memories Saved</div>
+                <div class="geofence-toggle">
+                    <label class="toggle-switch" for="geofenceToggle">
+                        <input type="checkbox" id="geofenceToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>Geofence Alerts (notify if patient leaves home area)</span>
                 </div>
-                <div class="patient-stat" style="background:#fff3e0;">
-                    <div class="ps-num" style="color:#e65100;" id="psCompliance">—%</div>
-                    <div class="ps-lbl">Reminder Compliance</div>
+            </div>
+
+            <!-- Mood chart -->
+            <div class="card">
+                <h3>😊 Mood Trends (Last 14 Days)</h3>
+                <div class="mood-chart-wrap">
+                    <canvas id="moodChart"></canvas>
                 </div>
             </div>
-        </div>
 
-        <!-- Location map -->
-        <div class="card">
-            <h3>📍 Patient Location</h3>
-            <div id="locationMap"></div>
-            <div class="map-status">
-                <div class="map-dot gray" id="mapDot"></div>
-                <span id="mapStatusText">Loading last known location…</span>
+            <!-- Activity feed -->
+            <div class="card">
+                <h3>📋 Recent Activity <span class="card-badge">Live</span></h3>
+                <div id="activityFeed">
+                    <div class="activity-empty"><span class="spinner-sm"></span> Loading…</div>
+                </div>
             </div>
-            <div class="geofence-toggle">
-                <label class="toggle-switch" for="geofenceToggle">
-                    <input type="checkbox" id="geofenceToggle">
-                    <span class="toggle-slider"></span>
-                </label>
-                <span>Geofence Alerts (notify if patient leaves home area)</span>
-            </div>
-        </div>
 
-        <!-- Mood trend chart -->
-        <div class="card">
-            <h3>😊 Mood Trends (Last 14 Days)</h3>
-            <div class="mood-chart-wrap">
-                <canvas id="moodChart"></canvas>
+            <!-- Alerts -->
+            <div class="card">
+                <h3>🚨 Alerts</h3>
+                <div id="alertsPanel">
+                    <div class="activity-empty"><span class="spinner-sm"></span> Checking…</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Recent activity feed -->
-        <div class="card">
-            <h3>📋 Recent Activity <span class="card-badge">Live</span></h3>
-            <div id="activityFeed">
-                <div class="activity-empty"><span class="spinner-sm"></span> Loading…</div>
+            <!-- Send message -->
+            <div class="card full-width">
+                <h3>💬 Send a Message to Patient</h3>
+                <p style="font-size:0.85rem;color:#888;margin-bottom:0.75rem;">
+                    Messages appear as a notification card on the <strong>patient's dashboard</strong>. 
+                    The patient can read and dismiss them. You can see read/unread status below.
+                </p>
+                <div class="send-msg-form">
+                    <input type="text" id="msgInput" placeholder="e.g. 'Don't forget to take your 8pm medication!'" maxlength="200">
+                    <button class="send-btn" id="sendMsgBtn">📤 Send Message</button>
+                </div>
+                <div id="msgStatus" style="font-size:0.82rem;margin-top:0.5rem;color:#888;"></div>
+                <div style="margin-top:1.25rem;">
+                    <div style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:0.4rem;">📬 Sent Messages</div>
+                    <div class="message-history" id="messageHistory">
+                        <div class="activity-empty">No messages sent yet.</div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Alerts panel -->
-        <div class="card">
-            <h3>🚨 Alerts</h3>
-            <div id="alertsPanel">
-                <div class="activity-empty"><span class="spinner-sm"></span> Checking…</div>
-            </div>
         </div>
-
-        <!-- Send message to patient -->
-        <div class="card full-width">
-            <h3>💬 Send a Message to Patient</h3>
-            <p style="font-size:0.85rem;color:#888;margin-bottom:1rem;">Send a notification or note that will appear on the patient's dashboard.</p>
-            <div class="send-msg-form">
-                <input type="text" id="msgInput" placeholder="Type a message, e.g. 'Don't forget to take your medication!'" maxlength="200">
-                <button class="send-btn" id="sendMsgBtn">📤 Send Message</button>
-            </div>
-            <div id="msgStatus" style="font-size:0.82rem;margin-top:0.5rem;color:#888;"></div>
-        </div>
-
     </div>
 
     <div class="toast" id="toast"></div>
@@ -267,310 +282,298 @@
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', async function() {
+    var selectedPatientId   = null;
+    var selectedPatientName = '';
+    var moodChartInstance   = null;
+    var map = null, patientMarker = null;
+
+    document.addEventListener('DOMContentLoaded', async function () {
         if (!localStorage.getItem('token')) { window.location.replace('login.html'); return; }
-        // ── Role guard: only caregivers can access this page ────────────────────
         var _cu = JSON.parse(localStorage.getItem('user') || '{}');
-        if (_cu.role && _cu.role !== 'caregiver') {
-            window.location.replace('dashboard.html');
-            return;
-        }
+        if (_cu.role && _cu.role !== 'caregiver') { window.location.replace('dashboard.html'); return; }
+
         if (typeof initSharedNav === 'function') initSharedNav('caregiver.html');
 
-        // ── Connection health ─────────────────────────────────────────────────
-        async function checkHealth() {
-            try {
-                var r = await fetch('https://alzheimer-backend-new.onrender.com/api/health');
-                if (r.ok) {
-                    document.getElementById('heroConnDot').textContent  = '🟢';
-                    document.getElementById('heroConnText').textContent = 'Connected';
-                } else throw new Error();
-            } catch {
-                document.getElementById('heroConnDot').textContent  = '🔴';
-                document.getElementById('heroConnText').textContent = 'Offline';
-            }
-        }
+        document.getElementById('myEmailDisplay').textContent = _cu.email || _cu.username || '(your email)';
+
         checkHealth();
         setInterval(checkHealth, 60000);
 
-        // ── User name ─────────────────────────────────────────────────────────
-        var stored = localStorage.getItem('user');
-        if (stored) {
-            var u = JSON.parse(stored);
-            document.getElementById('patientName').textContent = u.name || u.username || 'Patient';
-        }
+        await Promise.allSettled([loadPatients(), loadPendingRequests()]);
 
-        // ── Load all data ─────────────────────────────────────────────────────
-        await Promise.allSettled([
-            loadStats(),
-            loadLocation(),
-            loadActivity(),
-            loadMoodChart(),
-            buildAlerts()
-        ]);
+        document.getElementById('patientSelect').addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            selectedPatientId   = this.value ? parseInt(this.value) : null;
+            selectedPatientName = opt ? opt.text : '';
+            if (selectedPatientId) {
+                document.getElementById('dashboardContent').classList.remove('hidden');
+                document.getElementById('noPatientsMsg').classList.add('hidden');
+                document.getElementById('patientNameBadge').textContent = selectedPatientName;
+                loadPatientDashboard(selectedPatientId);
+            } else {
+                document.getElementById('dashboardContent').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
+        document.getElementById('geofenceToggle').addEventListener('change', function () {
+            showToast(this.checked ? '🔔 Geofence alerts enabled' : '🔕 Geofence alerts disabled');
+        });
     });
 
-    // ── Stats ─────────────────────────────────────────────────────────────────
-    async function loadStats() {
+    async function checkHealth() {
         try {
-            var [jr, mr, rr] = await Promise.all([
-                API.get('/journals').then(r => r.json()),
-                API.get('/memories').then(r => r.json()),
-                API.get('/reminders?filter=today').then(r => r.json())
-            ]);
-            var journalTotal = parseInt((jr.stats||{}).total || 0);
-            var memTotal     = (mr.memories || []).length;
-            var remList      = rr.reminders || [];
-            var done         = remList.filter(x=>x.completed).length;
-            var compPct      = remList.length ? Math.round((done/remList.length)*100) : 0;
-
-            document.getElementById('psJournals').textContent   = journalTotal;
-            document.getElementById('psMemories').textContent   = memTotal;
-            document.getElementById('psReminders').textContent  = rr.today_pending || 0;
-            document.getElementById('psCompliance').textContent = compPct + '%';
-
-            // Last seen from sessions activity
-            var ar = await API.get('/auth/activities').then(r => r.json());
-            var acts = (ar.activities||[]);
-            var login = acts.find(a=>a.activity_type==='login');
-            if (login) {
-                document.getElementById('heroLastSeenText').textContent =
-                    'Last seen: ' + timeAgo(new Date(login.timestamp));
-            }
-        } catch(e) { /* ignore */ }
+            var r = await fetch('https://alzheimer-backend-new.onrender.com/api/health');
+            document.getElementById('heroConnDot').textContent  = r.ok ? '🟢' : '🔴';
+            document.getElementById('heroConnText').textContent = r.ok ? 'Connected' : 'Offline';
+        } catch {
+            document.getElementById('heroConnDot').textContent  = '🔴';
+            document.getElementById('heroConnText').textContent = 'Offline';
+        }
     }
 
-    // ── Location map ──────────────────────────────────────────────────────────
-    var map = null;
-    var patientMarker = null;
-
-    async function loadLocation() {
+    async function loadPatients() {
         try {
-            var res  = await API.get('/locations/last');
+            var res      = await API.get('/caregiver/patients');
+            var data     = await res.json();
+            var accepted = (data.patients || []).filter(function (p) { return p.status === 'accepted'; });
+            var sel      = document.getElementById('patientSelect');
+
+            sel.innerHTML = '<option value="">— Select a patient —</option>';
+            document.getElementById('patientCountBadge').textContent = accepted.length + ' patient' + (accepted.length !== 1 ? 's' : '');
+
+            if (!accepted.length) {
+                document.getElementById('noPatientsMsg').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('noPatientsMsg').classList.add('hidden');
+
+            accepted.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value       = p.patient_id;
+                opt.textContent = p.name + ' (' + p.email + ')';
+                sel.appendChild(opt);
+            });
+
+            if (accepted.length === 1) {
+                sel.value = accepted[0].patient_id;
+                sel.dispatchEvent(new Event('change'));
+            }
+        } catch (e) { console.error('loadPatients:', e); }
+    }
+
+    async function loadPendingRequests() {
+        try {
+            var res     = await API.get('/caregiver/patients');
+            var data    = await res.json();
+            var pending = (data.patients || []).filter(function (p) { return p.status === 'pending'; });
+            if (!pending.length) return;
+
+            document.getElementById('pendingBadge').classList.add('visible');
+            document.getElementById('pendingCount').textContent = pending.length;
+            document.getElementById('pendingPanel').classList.add('visible');
+
+            document.getElementById('pendingList').innerHTML = pending.map(function (p) {
+                return '<div class="pending-request">' +
+                    '<div><div class="req-name">' + esc(p.name) + '</div>' +
+                    '<div class="req-email">' + esc(p.email) + '</div></div>' +
+                    '<div class="req-actions">' +
+                        '<button class="btn-accept" onclick="respondToRequest(' + p.link_id + ',\'accept\')">✅ Accept</button>' +
+                        '<button class="btn-reject" onclick="respondToRequest(' + p.link_id + ',\'reject\')">✕ Reject</button>' +
+                    '</div></div>';
+            }).join('');
+        } catch (e) { console.error('loadPendingRequests:', e); }
+    }
+
+    async function respondToRequest(linkId, action) {
+        try {
+            await API.put('/caregiver/link/' + linkId + '/' + action, {});
+            showToast(action === 'accept' ? '✅ Patient accepted!' : '✕ Request rejected');
+            await Promise.allSettled([loadPatients(), loadPendingRequests()]);
+        } catch (e) { showToast('❌ Failed to respond'); }
+    }
+
+    async function loadPatientDashboard(pid) {
+        ['psJournals','psReminders','psMemories','psCompliance'].forEach(function (id) {
+            document.getElementById(id).textContent = '—';
+        });
+        document.getElementById('activityFeed').innerHTML = '<div class="activity-empty"><span class="spinner-sm"></span> Loading…</div>';
+        document.getElementById('alertsPanel').innerHTML  = '<div class="activity-empty"><span class="spinner-sm"></span> Checking…</div>';
+        document.getElementById('mapStatusText').textContent = 'Loading location…';
+
+        await Promise.allSettled([
+            loadStats(pid), loadLocation(pid), loadActivity(pid),
+            loadMoodChart(pid), buildAlerts(pid), loadMessageHistory(pid)
+        ]);
+    }
+
+    async function loadStats(pid) {
+        try {
+            var res  = await API.get('/caregiver/patient/' + pid + '/stats');
+            var data = await res.json();
+            document.getElementById('psJournals').textContent   = data.journals  || 0;
+            document.getElementById('psMemories').textContent   = data.memories  || 0;
+            document.getElementById('psReminders').textContent  = data.reminders_today || 0;
+            document.getElementById('psCompliance').textContent = (data.compliance_pct || 0) + '%';
+            if (data.last_activity) {
+                document.getElementById('heroLastSeenText').textContent =
+                    'Last seen: ' + timeAgo(new Date(data.last_activity.timestamp));
+            }
+        } catch (e) { console.error('loadStats:', e); }
+    }
+
+    async function loadLocation(pid) {
+        try {
+            var res  = await API.get('/caregiver/patient/' + pid + '/location');
             var data = await res.json();
             var loc  = data.location;
+            var center = loc ? [parseFloat(loc.latitude), parseFloat(loc.longitude)] : [20.5937, 78.9629];
 
-            // Init map
-            var center = loc ? [parseFloat(loc.latitude), parseFloat(loc.longitude)] : [20.5937, 78.9629]; // fallback India center
             if (!map) {
                 map = L.map('locationMap').setView(center, loc ? 14 : 4);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors', maxZoom: 19
-                }).addTo(map);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
+            } else {
+                map.setView(center, loc ? 14 : 4);
             }
+            if (patientMarker) { patientMarker.remove(); patientMarker = null; }
 
             if (loc) {
                 var lat = parseFloat(loc.latitude), lng = parseFloat(loc.longitude);
                 var icon = L.divIcon({ className: '', html: '<div style="font-size:28px;">📍</div>', iconSize:[30,30], iconAnchor:[15,30] });
-                if (patientMarker) patientMarker.remove();
                 patientMarker = L.marker([lat, lng], {icon}).addTo(map)
-                    .bindPopup('<strong>Patient Location</strong><br>' + (loc.address||'') + '<br><small>' + timeAgo(new Date(loc.timestamp)) + '</small>')
+                    .bindPopup('<strong>' + esc(selectedPatientName) + '</strong><br>' + (loc.address||'') + '<br><small>' + timeAgo(new Date(loc.timestamp)) + '</small>')
                     .openPopup();
-                map.setView([lat, lng], 14);
-
-                // Geofence circle
                 L.circle([lat, lng], { radius: 500, color: '#4a86e8', fillOpacity: 0.08, weight: 1 }).addTo(map);
-
-                var dotEl = document.getElementById('mapDot');
-                var age = (Date.now() - new Date(loc.timestamp)) / 60000; // minutes
-                if (age < 30) { dotEl.className = 'map-dot green'; }
-                else if (age < 120) { dotEl.className = 'map-dot orange'; }
-                else { dotEl.className = 'map-dot gray'; }
-
+                var age = (Date.now() - new Date(loc.timestamp)) / 60000;
+                document.getElementById('mapDot').className = 'map-dot ' + (age < 30 ? 'green' : age < 120 ? 'orange' : 'gray');
                 document.getElementById('mapStatusText').textContent =
-                    'Last updated ' + timeAgo(new Date(loc.timestamp)) +
-                    (loc.address ? ' · ' + loc.address : '');
+                    'Last updated ' + timeAgo(new Date(loc.timestamp)) + (loc.address ? ' · ' + loc.address : '');
             } else {
-                document.getElementById('mapStatusText').textContent = 'No location data yet. Location sharing must be enabled by patient.';
-                L.marker([20.5937, 78.9629], {
-                    icon: L.divIcon({ className:'', html:'<div style="font-size:24px;opacity:0.4;">📍</div>', iconSize:[30,30], iconAnchor:[15,30] })
-                }).addTo(map).bindPopup('No patient location yet').openPopup();
+                document.getElementById('mapStatusText').textContent = 'No location data. Patient must enable location sharing from their dashboard.';
             }
-        } catch(e) {
-            document.getElementById('mapStatusText').textContent = 'Location unavailable.';
-            if (!map) {
-                map = L.map('locationMap').setView([20.5937, 78.9629], 4);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(map);
-            }
-        }
+        } catch (e) { document.getElementById('mapStatusText').textContent = 'Location unavailable.'; }
     }
 
-    // ── Activity feed ─────────────────────────────────────────────────────────
-    async function loadActivity() {
+    async function loadActivity(pid) {
         try {
-            var res  = await API.get('/auth/activities');
+            var res  = await API.get('/caregiver/patient/' + pid + '/activities');
             var data = await res.json();
             var acts = (data.activities || []).slice(0, 10);
             var feed = document.getElementById('activityFeed');
             if (!acts.length) { feed.innerHTML = '<div class="activity-empty">No activity recorded yet.</div>'; return; }
-
-            var icons = { login:'🔐', signup:'🎉', journal_added:'📝', journal_deleted:'🗑️',
-                          memory_added:'📸', memory_deleted:'🗑️', reminder_added:'⏰',
-                          reminder_deleted:'🗑️', location_updated:'📍', report_added:'🔬' };
-            feed.innerHTML = acts.map(function(a) {
+            var icons = { login:'🔐', signup:'🎉', journal_added:'📝', journal_deleted:'🗑️', memory_added:'📸', memory_deleted:'🗑️', reminder_added:'⏰', reminder_deleted:'🗑️', location_updated:'📍', report_added:'🔬' };
+            feed.innerHTML = acts.map(function (a) {
                 return '<div class="activity-item"><span class="act-icon">' + (icons[a.activity_type]||'📌') + '</span>' +
-                    '<div><div class="act-text">' + esc(a.description) + '</div>' +
-                    '<div class="act-time">' + timeAgo(new Date(a.timestamp)) + '</div></div></div>';
+                    '<div><div class="act-text">' + esc(a.description) + '</div><div class="act-time">' + timeAgo(new Date(a.timestamp)) + '</div></div></div>';
             }).join('');
-        } catch(e) {
-            document.getElementById('activityFeed').innerHTML = '<div class="activity-empty">Activity unavailable.</div>';
-        }
+        } catch (e) { document.getElementById('activityFeed').innerHTML = '<div class="activity-empty">Activity unavailable.</div>'; }
     }
 
-    // ── Mood chart ────────────────────────────────────────────────────────────
-    async function loadMoodChart() {
+    async function loadMoodChart(pid) {
         try {
-            var res  = await API.get('/journals/stats/moods');
-            var data = await res.json();
+            var res   = await API.get('/caregiver/patient/' + pid + '/moods');
+            var data  = await res.json();
             var moods = data.moods || [];
-
-            // Map mood emoji → numeric score
             var moodScore = { '😊': 5, '😌': 4, '😐': 3, '😢': 2, '😠': 2, '😴': 3 };
-
-            // Last 14 days
-            var days = [];
-            var scores = [];
+            var days = [], scores = [];
             for (var i = 13; i >= 0; i--) {
                 var d = new Date(); d.setDate(d.getDate() - i);
                 var key = d.toISOString().split('T')[0];
                 days.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
-                var dayMoods = moods.filter(m => m.entry_date === key);
-                if (dayMoods.length) {
-                    var avg = dayMoods.reduce((s, m) => s + (moodScore[m.mood] || 3), 0) / dayMoods.length;
-                    scores.push(Math.round(avg * 10) / 10);
-                } else {
-                    scores.push(null);
-                }
+                var dm = moods.filter(function (m) { return m.entry_date === key; });
+                scores.push(dm.length ? Math.round(dm.reduce(function (s,m) { return s+(moodScore[m.mood]||3); }, 0) / dm.length * 10) / 10 : null);
             }
-
-            var ctx = document.getElementById('moodChart').getContext('2d');
-            new Chart(ctx, {
+            if (moodChartInstance) { moodChartInstance.destroy(); moodChartInstance = null; }
+            moodChartInstance = new Chart(document.getElementById('moodChart').getContext('2d'), {
                 type: 'line',
-                data: {
-                    labels: days,
-                    datasets: [{
-                        label: 'Mood Score (1–5)',
-                        data: scores,
-                        borderColor: '#4a86e8',
-                        backgroundColor: 'rgba(74,134,232,0.1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#4a86e8',
-                        pointRadius: 4,
-                        tension: 0.4,
-                        fill: true,
-                        spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { min: 1, max: 5, ticks: { stepSize: 1,
-                            callback: v => ['','😠','😢','😐','😌','😊'][v] || v
-                        }, grid: { color: '#f5f5f5' } },
-                        x: { ticks: { maxTicksLimit: 7, font: { size: 10 } }, grid: { display: false } }
-                    }
-                }
+                data: { labels: days, datasets: [{ label: 'Mood (1–5)', data: scores, borderColor: '#4a86e8', backgroundColor: 'rgba(74,134,232,0.1)', borderWidth: 2, pointBackgroundColor: '#4a86e8', pointRadius: 4, tension: 0.4, fill: true, spanGaps: true }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { min:1, max:5, ticks: { stepSize:1, callback: function(v){ return ['','😠','😢','😐','😌','😊'][v]||v; } }, grid:{color:'#f5f5f5'} },
+                              x: { ticks: { maxTicksLimit:7, font:{size:10} }, grid:{display:false} } } }
             });
-        } catch(e) {
-            document.getElementById('moodChart').parentElement.innerHTML =
-                '<div class="activity-empty">Mood data unavailable.</div>';
-        }
+        } catch (e) { document.getElementById('moodChart').parentElement.innerHTML = '<div class="activity-empty">Mood data unavailable.</div>'; }
     }
 
-    // ── Alerts ────────────────────────────────────────────────────────────────
-    async function buildAlerts() {
+    async function buildAlerts(pid) {
         var panel = document.getElementById('alertsPanel');
         var alerts = [];
         try {
-            var [rr, jr, lr] = await Promise.all([
-                API.get('/reminders?filter=today').then(r=>r.json()),
-                API.get('/journals').then(r=>r.json()),
-                API.get('/locations/last').then(r=>r.json())
-            ]);
-
-            var remList = rr.reminders || [];
-            var overdue = remList.filter(r => !r.completed);
-            if (overdue.length > 0) {
-                alerts.push({ type:'warn', icon:'⏰', text: overdue.length + ' reminder(s) not yet completed today.' });
-            } else if (remList.length > 0) {
-                alerts.push({ type:'ok', icon:'✅', text: 'All ' + remList.length + ' reminders completed today.' });
+            var sRes = await API.get('/caregiver/patient/' + pid + '/stats').then(function(r){return r.json();});
+            var lRes = await API.get('/caregiver/patient/' + pid + '/location').then(function(r){return r.json();});
+            var pct  = sRes.compliance_pct || 0;
+            if (sRes.reminders_today > 0) {
+                if (pct < 100) alerts.push({ type:'warn', icon:'⏰', text: (sRes.reminders_today - sRes.reminders_done) + ' reminder(s) not yet completed today.' });
+                else           alerts.push({ type:'ok',   icon:'✅', text: 'All ' + sRes.reminders_today + ' reminders completed today.' });
             }
-
-            var stats = (jr.stats||{});
-            if (parseInt(stats.today||0) === 0) {
-                alerts.push({ type:'warn', icon:'📝', text: 'No journal entry written today.' });
+            if (!sRes.last_activity) {
+                alerts.push({ type:'warn', icon:'📱', text: 'Patient has not logged in yet.' });
             } else {
-                alerts.push({ type:'ok', icon:'📝', text: 'Journal entry written today.' });
+                var lastAge = (Date.now() - new Date(sRes.last_activity.timestamp)) / 3600000;
+                if (lastAge > 24) alerts.push({ type:'warn', icon:'📱', text: 'Patient inactive for ' + Math.round(lastAge) + 'h.' });
+                else              alerts.push({ type:'ok',   icon:'📱', text: 'Patient was active recently.' });
             }
-
-            var loc = lr.location;
+            var loc = lRes.location;
             if (!loc) {
-                alerts.push({ type:'warn', icon:'📍', text: 'Location not sharing. Ask patient to enable location.' });
+                alerts.push({ type:'warn', icon:'📍', text: 'Location not sharing. Ask patient to enable it.' });
             } else {
                 var locAge = (Date.now() - new Date(loc.timestamp)) / 60000;
-                if (locAge > 120) {
-                    alerts.push({ type:'warn', icon:'📍', text: 'Location not updated for ' + Math.round(locAge/60) + ' hours.' });
-                } else {
-                    alerts.push({ type:'ok', icon:'📍', text: 'Location updated recently.' });
-                }
+                alerts.push(locAge > 120
+                    ? { type:'warn', icon:'📍', text: 'Location not updated for ' + Math.round(locAge/60) + 'h.' }
+                    : { type:'ok',   icon:'📍', text: 'Location updated recently.' });
             }
-        } catch(e) {
-            alerts.push({ type:'warn', icon:'⚠️', text: 'Could not load alert data. Check connection.' });
-        }
-
-        if (!alerts.length) {
-            panel.innerHTML = '<div class="no-alerts">✅ No alerts right now. All looks good!</div>';
-        } else {
-            panel.innerHTML = alerts.map(function(a) {
-                return '<div class="alert-item ' + a.type + '"><span class="alert-icon">' + a.icon + '</span><span>' + a.text + '</span></div>';
-            }).join('');
-        }
+        } catch (e) { alerts.push({ type:'warn', icon:'⚠️', text: 'Could not load alert data.' }); }
+        panel.innerHTML = alerts.length
+            ? alerts.map(function(a){ return '<div class="alert-item ' + a.type + '"><span class="alert-icon">' + a.icon + '</span><span>' + a.text + '</span></div>'; }).join('')
+            : '<div class="no-alerts">✅ No alerts right now.</div>';
     }
 
-    // ── Send message ──────────────────────────────────────────────────────────
-    document.getElementById('sendMsgBtn').addEventListener('click', async function() {
+    async function sendMessage() {
+        if (!selectedPatientId) { showToast('⚠️ Select a patient first'); return; }
         var msg = document.getElementById('msgInput').value.trim();
         if (!msg) { showToast('⚠️ Enter a message first'); return; }
-        this.textContent = 'Sending…'; this.disabled = true;
+        var btn = document.getElementById('sendMsgBtn');
+        btn.textContent = 'Sending…'; btn.disabled = true;
         try {
-            // Store as a journal note on behalf of the caregiver
-            await API.post('/journals', {
-                title: '💬 Message from Caregiver',
-                content: msg,
-                mood: '😊',
-                entry_date: new Date().toISOString().split('T')[0],
-                tags: ['caregiver_message']
-            });
-            document.getElementById('msgStatus').textContent = '✅ Message sent! It will appear in the patient\'s journal.';
+            var res = await API.post('/caregiver/message', { patient_id: selectedPatientId, message: msg });
+            var data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+            document.getElementById('msgStatus').textContent = '✅ Sent! Appears on patient\'s dashboard.';
             document.getElementById('msgInput').value = '';
             showToast('✅ Message sent!');
-        } catch(e) {
-            document.getElementById('msgStatus').textContent = '❌ Failed to send message.';
-            showToast('❌ Could not send message');
-        } finally {
-            this.textContent = '📤 Send Message'; this.disabled = false;
-        }
-    });
+            await loadMessageHistory(selectedPatientId);
+        } catch (e) {
+            document.getElementById('msgStatus').textContent = '❌ Failed: ' + e.message;
+            showToast('❌ Could not send');
+        } finally { btn.textContent = '📤 Send Message'; btn.disabled = false; }
+    }
 
-    // ── Geofence toggle ───────────────────────────────────────────────────────
-    document.getElementById('geofenceToggle').addEventListener('change', function() {
-        showToast(this.checked ? '🔔 Geofence alerts enabled' : '🔕 Geofence alerts disabled');
-    });
+    async function loadMessageHistory(pid) {
+        try {
+            var res  = await API.get('/caregiver/messages/patient/' + pid);
+            var data = await res.json();
+            var msgs = data.messages || [];
+            var box  = document.getElementById('messageHistory');
+            if (!msgs.length) { box.innerHTML = '<div class="activity-empty">No messages sent yet.</div>'; return; }
+            box.innerHTML = msgs.map(function (m) {
+                return '<div class="msg-item"><div class="msg-text">' + esc(m.message) + '</div>' +
+                    '<div class="msg-meta"><span>' + timeAgo(new Date(m.created_at)) + '</span>' +
+                    '<span class="' + (m.is_read ? 'msg-read' : 'msg-unread') + '">' + (m.is_read ? '✓ Read' : '● Unread') + '</span></div></div>';
+            }).join('');
+        } catch (e) { document.getElementById('messageHistory').innerHTML = '<div class="activity-empty">Could not load messages.</div>'; }
+    }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function timeAgo(date) {
         var secs = Math.floor((Date.now() - date) / 1000);
         if (secs < 60)    return 'Just now';
-        if (secs < 3600)  return Math.floor(secs/60)  + 'm ago';
+        if (secs < 3600)  return Math.floor(secs/60) + 'm ago';
         if (secs < 86400) return Math.floor(secs/3600) + 'h ago';
         return Math.floor(secs/86400) + 'd ago';
     }
     function showToast(msg) {
         var t = document.getElementById('toast');
         t.textContent = msg; t.classList.add('show');
-        setTimeout(function() { t.classList.remove('show'); }, 2800);
+        setTimeout(function () { t.classList.remove('show'); }, 2800);
     }
     </script>
 </body>
