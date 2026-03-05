@@ -269,6 +269,12 @@
     <script>
     document.addEventListener('DOMContentLoaded', async function() {
         if (!localStorage.getItem('token')) { window.location.replace('login.html'); return; }
+        // ── Role guard: only caregivers can access this page ────────────────────
+        var _cu = JSON.parse(localStorage.getItem('user') || '{}');
+        if (_cu.role && _cu.role !== 'caregiver') {
+            window.location.replace('dashboard.html');
+            return;
+        }
         if (typeof initSharedNav === 'function') initSharedNav('caregiver.html');
 
         // ── Connection health ─────────────────────────────────────────────────

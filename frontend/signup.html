@@ -3,82 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alzheimer's Support - Create Account</title>
-    <!-- Prevent bfcache from restoring stale page state -->
+    <title>Alzheimer's Support - Sign Up</title>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <script>
-        // Runs on fresh load AND on bfcache restore (back button)
-        function checkAuthSignup() {
-            if (localStorage.getItem('token')) {
-                window.location.replace('dashboard.html');
-            }
+        if (localStorage.getItem('token')) {
+            var u = JSON.parse(localStorage.getItem('user') || '{}');
+            window.location.replace(u.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
         }
-        checkAuthSignup();
-        // pageshow fires on bfcache restore — persisted=true means it was cached
         window.addEventListener('pageshow', function(e) {
-            if (e.persisted) checkAuthSignup();
+            if (e.persisted && localStorage.getItem('token')) {
+                var u = JSON.parse(localStorage.getItem('user') || '{}');
+                window.location.replace(u.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+            }
         });
     </script>
     <link rel="stylesheet" href="login.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
     <style>
-        .animation-container { background: linear-gradient(135deg, #e8f4fd 0%, #f0e6ff 100%); display:flex; align-items:center; justify-content:center; }
-
-        /* Make illustration section fill full height alongside the taller signup form */
-        .illustration-section {
-            position: sticky;
-            top: 1rem;
-            align-self: flex-start;
-        }
-
-        /* Feature cards below illustration */
-        .signup-features {
-            width: 100%;
-            max-width: 420px;
+        /* ── Role selector ── */
+        .role-selector {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.85rem;
-            margin-top: 1.2rem;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
         }
-        .signup-feat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
-            border-left: 4px solid #a8d0e6;
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
+        .role-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0.9rem 0.75rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            background: #f8f9fa;
+            position: relative;
         }
-        .signup-feat-card .feat-emoji { font-size: 1.5rem; }
-        .signup-feat-card h4 { font-size: 0.88rem; color: #374785; font-weight: 700; margin: 0; }
-        .signup-feat-card p  { font-size: 0.78rem; color: #6c757d; margin: 0; line-height: 1.4; }
-        .signup-feat-card:nth-child(2) { border-left-color: #81c784; }
-        .signup-feat-card:nth-child(3) { border-left-color: #f093fb; }
-        .signup-feat-card:nth-child(4) { border-left-color: #ffd54f; }
+        .role-card:hover {
+            border-color: #a8d0e6;
+            background: #f0f7ff;
+        }
+        .role-card.selected {
+            border-color: #374785;
+            background: #eef2ff;
+            box-shadow: 0 0 0 3px rgba(55,71,133,0.12);
+        }
+        .role-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .role-icon { font-size: 1.6rem; display: block; margin-bottom: 0.3rem; }
+        .role-label { font-weight: 600; font-size: 0.9rem; color: #374785; display: block; }
+        .role-desc  { font-size: 0.73rem; color: #888; margin-top: 0.2rem; display: block; line-height: 1.3; }
+        .role-card.selected .role-label { color: #374785; }
 
-        /* Trust strip */
-        .trust-strip {
-            width: 100%;
-            max-width: 420px;
-            background: linear-gradient(135deg, #374785, #4a86e8);
-            border-radius: 12px;
-            padding: 1rem 1.3rem;
-            margin-top: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            color: white;
+        /* ── Password strength ── */
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e0e0e0;
+            margin-top: 0.4rem;
+            overflow: hidden;
         }
-        .trust-strip .trust-icon { font-size: 2rem; flex-shrink: 0; }
-        .trust-strip h4 { font-size: 0.9rem; font-weight: 700; margin: 0 0 0.2rem; }
-        .trust-strip p  { font-size: 0.78rem; opacity: 0.88; margin: 0; line-height: 1.4; }
-
-        @media (max-width: 768px) {
-            .illustration-section { position: static; }
-            .signup-features { grid-template-columns: 1fr 1fr; }
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+            width: 0%;
         }
+        .strength-text {
+            font-size: 0.72rem;
+            margin-top: 0.2rem;
+            color: #888;
+        }
+        .strength-fill.weak   { width: 33%; background: #e53935; }
+        .strength-fill.medium { width: 66%; background: #fb8c00; }
+        .strength-fill.strong { width: 100%; background: #43a047; }
+        .strength-text.weak   { color: #e53935; }
+        .strength-text.medium { color: #fb8c00; }
+        .strength-text.strong { color: #43a047; }
     </style>
 </head>
 <body>
@@ -88,17 +92,15 @@
             <div class="logo-text">Alzheimer's Support</div>
         </div>
         <nav class="nav-links">
-            <a href="login.html">Login</a>
+            <a href="login.html">Sign In</a>
         </nav>
     </header>
 
     <main class="login-container">
         <div class="illustration-section">
             <div class="animation-container">
-                <!-- Real SVG illustration replaces empty CSS figures -->
-                <svg width="320" height="260" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg">
+                <svg width="320" height="260" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <circle cx="160" cy="130" r="105" fill="rgba(168,208,230,0.12)"/>
-                    <!-- Elderly person (left) -->
                     <ellipse cx="105" cy="204" rx="26" ry="9" fill="rgba(0,0,0,0.08)"/>
                     <rect x="97" y="174" width="11" height="30" rx="5" fill="#78909c"/>
                     <rect x="112" y="174" width="11" height="30" rx="5" fill="#78909c"/>
@@ -110,124 +112,294 @@
                     <circle cx="103" cy="91" r="3" fill="#5d4037"/>
                     <circle cx="117" cy="91" r="3" fill="#5d4037"/>
                     <path d="M104 101 Q110 107 116 101" stroke="#5d4037" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <!-- Caregiver (right) -->
                     <ellipse cx="210" cy="201" rx="24" ry="9" fill="rgba(0,0,0,0.08)"/>
                     <rect x="202" y="173" width="10" height="28" rx="5" fill="#66bb6a"/>
                     <rect x="216" y="173" width="10" height="28" rx="5" fill="#66bb6a"/>
                     <ellipse cx="210" cy="150" rx="26" ry="31" fill="#81c784"/>
                     <rect x="184" y="120" width="12" height="34" rx="6" fill="#81c784" transform="rotate(-12 190 137)"/>
                     <rect x="214" y="116" width="12" height="34" rx="6" fill="#81c784" transform="rotate(20 220 133)"/>
-                    <!-- Phone -->
                     <rect x="222" y="126" width="17" height="26" rx="4" fill="#374785"/>
                     <rect x="225" y="130" width="11" height="14" rx="2" fill="#a8d0e6"/>
-                    <circle cx="230" cy="148" r="2" fill="#a8d0e6"/>
                     <circle cx="210" cy="96" r="22" fill="#ffd54f"/>
                     <ellipse cx="210" cy="78" rx="16" ry="7" fill="#f57f17"/>
                     <circle cx="204" cy="95" r="2.5" fill="#5d4037"/>
                     <circle cx="216" cy="95" r="2.5" fill="#5d4037"/>
                     <path d="M205 104 Q210 109 215 104" stroke="#5d4037" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <!-- Connection / care line -->
                     <path d="M136 128 Q160 108 184 128" stroke="#a8d0e6" stroke-width="2.5" fill="none" stroke-dasharray="6,4" opacity="0.9"/>
-                    <!-- Floating hearts -->
-                    <text x="152" y="78" font-size="18" opacity="0.85" class="heart-anim">❤️</text>
+                    <text x="152" y="78" font-size="18" opacity="0.85">❤️</text>
                     <text x="170" y="60" font-size="13" opacity="0.65">❤️</text>
                     <text x="135" y="68" font-size="11" opacity="0.55">❤️</text>
-                    <!-- Brain icon top center -->
                     <text x="148" y="38" font-size="22" opacity="0.5">🧠</text>
                 </svg>
             </div>
             <div class="illustration-text">
-                <h2>Join Our Caring Community</h2>
-                <p>Create your account to access personalized support, memory tools, and connect with caregivers.</p>
-            </div>
-
-            <!-- Feature cards to fill space -->
-            <div class="signup-features">
-                <div class="signup-feat-card">
-                    <div class="feat-emoji">🧠</div>
-                    <h4>AI-Powered Scan</h4>
-                    <p>Upload your medical PDF and get instant Alzheimer's risk analysis.</p>
-                </div>
-                <div class="signup-feat-card">
-                    <div class="feat-emoji">📸</div>
-                    <h4>Memory Vault</h4>
-                    <p>Store precious memories with photos, notes, and voice recordings.</p>
-                </div>
-                <div class="signup-feat-card">
-                    <div class="feat-emoji">📝</div>
-                    <h4>Daily Journal</h4>
-                    <p>Track thoughts, feelings, and daily experiences with ease.</p>
-                </div>
-                <div class="signup-feat-card">
-                    <div class="feat-emoji">🤖</div>
-                    <h4>AI Companion</h4>
-                    <p>24/7 AI support for medication reminders and caregiving help.</p>
-                </div>
-            </div>
-
-            <!-- Trust strip -->
-            <div class="trust-strip">
-                <div class="trust-icon">🔒</div>
-                <div>
-                    <h4>Private &amp; Secure Platform</h4>
-                    <p>Your data is encrypted and never shared. HIPAA-compliant infrastructure trusted by thousands of families.</p>
-                </div>
+                <h2>Join Our Support Community</h2>
+                <p>Create your account as a patient or caregiver and access tools designed to help every step of the journey.</p>
             </div>
         </div>
 
         <div class="login-card">
             <div class="login-header">
                 <h1>Create Account</h1>
-                <p>Join our supportive community today</p>
+                <p>Join the Alzheimer's Support Platform</p>
             </div>
-            <form id="signupForm" class="login-form">
+
+            <div class="alert-banner" id="alertBanner" role="alert" aria-live="assertive"></div>
+
+            <form id="signupForm" class="login-form" novalidate>
+
+                <!-- Role selector — the key new element -->
                 <div class="form-group">
-                    <label for="fullName">Full Name</label>
-                    <input type="text" id="fullName" required autocomplete="name" placeholder="Enter your full name">
+                    <label>I am a…</label>
+                    <div class="role-selector" role="radiogroup" aria-label="Select your role">
+                        <label class="role-card selected" id="rolePatientCard">
+                            <input type="radio" name="role" id="rolePatient" value="patient" checked
+                                   aria-label="Patient">
+                            <span class="role-icon">🧑</span>
+                            <span class="role-label">Patient</span>
+                            <span class="role-desc">I have or may have Alzheimer's</span>
+                        </label>
+                        <label class="role-card" id="roleCaregiverCard">
+                            <input type="radio" name="role" id="roleCaregiver" value="caregiver"
+                                   aria-label="Caregiver">
+                            <span class="role-icon">👩‍⚕️</span>
+                            <span class="role-label">Caregiver</span>
+                            <span class="role-desc">I support someone with Alzheimer's</span>
+                        </label>
+                    </div>
+                    <div class="field-error" id="roleError" role="alert">⚠ Please select a role</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" required autocomplete="username" placeholder="Choose a unique username">
-                    <small style="color:#888;margin-top:3px;">Must be unique</small>
+                    <label for="name">Full Name</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="name" autocomplete="name"
+                               placeholder="Enter your full name"
+                               aria-required="true" aria-describedby="nameError">
+                    </div>
+                    <div class="field-error" id="nameError" role="alert">⚠ Please enter your full name</div>
                 </div>
+
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" required autocomplete="email" placeholder="your@email.com">
-                    <small style="color:#888;margin-top:3px;">Must be unique</small>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" autocomplete="email"
+                               placeholder="Enter your email"
+                               aria-required="true" aria-describedby="emailError">
+                    </div>
+                    <div class="field-error" id="emailError" role="alert">⚠ Please enter a valid email address</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" required autocomplete="tel" placeholder="+91 98765 43210">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="username" autocomplete="username"
+                               placeholder="Choose a username"
+                               aria-required="true" aria-describedby="usernameError">
+                    </div>
+                    <div class="field-error" id="usernameError" role="alert">⚠ Please enter a username</div>
                 </div>
+
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" required autocomplete="new-password" placeholder="Create a strong password">
-                    <div id="strengthBar" style="height:4px;border-radius:2px;background:#dee2e6;width:0%;transition:all 0.3s;margin-top:6px;"></div>
-                    <small id="strengthText" style="color:#6c757d;margin-top:2px;">Password strength</small>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" autocomplete="new-password"
+                               placeholder="Create a password (min. 6 characters)"
+                               aria-required="true" aria-describedby="passwordError">
+                        <button type="button" class="toggle-password" id="togglePassword"
+                                aria-label="Show password" title="Show/hide password">👁</button>
+                    </div>
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText"></div>
+                    <div class="field-error" id="passwordError" role="alert">⚠ Password must be at least 6 characters</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" required autocomplete="new-password" placeholder="Repeat your password">
+                    <label for="phone">Phone Number <span style="color:#aaa;font-weight:400;">(optional)</span></label>
+                    <div class="input-wrapper">
+                        <input type="tel" id="phone" autocomplete="tel"
+                               placeholder="e.g. +44 7700 900000">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-weight:normal;">
-                        <input type="checkbox" id="terms" required style="margin-top:3px;flex-shrink:0;">
-                        <span style="font-size:0.88rem;line-height:1.4;">I agree to the <a href="#" style="color:#374785;">Terms of Service</a> and <a href="#" style="color:#374785;">Privacy Policy</a></span>
-                    </label>
-                </div>
-                <button type="submit" class="login-button" id="submitBtn">Create Account</button>
+
+                <button type="submit" class="login-button" id="signupBtn">
+                    Create Account
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                </button>
             </form>
+
             <div class="login-footer">
-                <p>Already have an account? <a href="login.html">Sign In</a></p>
+                <p>Already have an account? <a href="login.html">Sign in</a></p>
+                <div class="accessibility-options" role="toolbar" aria-label="Accessibility options">
+                    <button id="textSize" class="accessibility-btn" aria-pressed="false">🔤 Larger Text</button>
+                    <button id="highContrast" class="accessibility-btn" aria-pressed="false">🔆 High Contrast</button>
+                </div>
             </div>
         </div>
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
+
     <script src="api.js"></script>
-    <script src="user-store.js"></script>
-    <script src="signup.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        var signupForm  = document.getElementById('signupForm');
+        var signupBtn   = document.getElementById('signupBtn');
+        var togglePwBtn = document.getElementById('togglePassword');
+        var pwInput     = document.getElementById('password');
+
+        // ── Role card toggle ──────────────────────────────────────────────────
+        document.querySelectorAll('input[name="role"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                document.getElementById('rolePatientCard').classList.toggle('selected', document.getElementById('rolePatient').checked);
+                document.getElementById('roleCaregiverCard').classList.toggle('selected', document.getElementById('roleCaregiver').checked);
+            });
+        });
+        // Allow clicking anywhere on the card to select it
+        ['rolePatientCard', 'roleCaregiverCard'].forEach(function (cardId) {
+            document.getElementById(cardId).addEventListener('click', function () {
+                var radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+
+        // ── Password strength meter ───────────────────────────────────────────
+        pwInput.addEventListener('input', function () {
+            var val  = this.value;
+            var fill = document.getElementById('strengthFill');
+            var txt  = document.getElementById('strengthText');
+            if (!val) { fill.className = 'strength-fill'; fill.style.width = '0'; txt.textContent = ''; return; }
+            var score = 0;
+            if (val.length >= 6)  score++;
+            if (val.length >= 10) score++;
+            if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+            if (score === 1) { fill.className = 'strength-fill weak';   txt.className = 'strength-text weak';   txt.textContent = 'Weak'; }
+            if (score === 2) { fill.className = 'strength-fill medium'; txt.className = 'strength-text medium'; txt.textContent = 'Medium'; }
+            if (score === 3) { fill.className = 'strength-fill strong'; txt.className = 'strength-text strong'; txt.textContent = 'Strong'; }
+        });
+
+        // ── Password visibility toggle ────────────────────────────────────────
+        if (togglePwBtn) {
+            togglePwBtn.addEventListener('click', function () {
+                var isText = pwInput.type === 'text';
+                pwInput.type = isText ? 'password' : 'text';
+                this.textContent = isText ? '👁' : '🙈';
+                this.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
+            });
+        }
+
+        // ── Form submission ───────────────────────────────────────────────────
+        signupForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            var role     = document.querySelector('input[name="role"]:checked')?.value;
+            var name     = document.getElementById('name').value.trim();
+            var email    = document.getElementById('email').value.trim();
+            var username = document.getElementById('username').value.trim();
+            var password = document.getElementById('password').value;
+            var phone    = document.getElementById('phone').value.trim();
+
+            var valid = true;
+            if (!role)                     { fieldError('roleError',     true); valid = false; }
+            if (!name)                     { fieldError('nameError',     true); valid = false; }
+            if (!email || !email.includes('@')) { fieldError('emailError', true); valid = false; }
+            if (!username)                 { fieldError('usernameError', true); valid = false; }
+            if (!password || password.length < 6) { fieldError('passwordError', true); valid = false; }
+            if (!valid) return;
+
+            setBtn('Creating Account…', true);
+            hideAlert('alertBanner');
+
+            try {
+                var res    = await API.post('/auth/signup', { name, email, username, password, phone_number: phone || undefined, role });
+                var result = await res.json();
+
+                if (!res.ok) {
+                    var msg = result.error || 'Sign up failed. Please try again.';
+                    showAlert('alertBanner', msg, 'error');
+                    setBtn('Create Account', false);
+                    return;
+                }
+
+                // Store user including role for redirect logic
+                var u = result.user || {};
+                localStorage.setItem('token',      'cookie'); // sentinel — real auth is via httpOnly cookie
+                localStorage.setItem('user',       JSON.stringify({ ...u, role: u.role || role }));
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userName',   u.name     || name);
+                localStorage.setItem('userEmail',  u.email    || email);
+
+                showAlert('alertBanner', 'Account created! Redirecting…', 'success');
+
+                // Role-based redirect
+                setTimeout(function () {
+                    window.location.replace(role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+                }, 700);
+
+            } catch (err) {
+                setBtn('Create Account', false);
+                showAlert('alertBanner', '⚠️ Could not reach server. Please check your connection.', 'error');
+                console.error('Signup error:', err);
+            }
+        });
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        function setBtn(text, disabled) {
+            if (!signupBtn) return;
+            signupBtn.childNodes[0].textContent = text + ' ';
+            signupBtn.disabled = disabled;
+            signupBtn.classList.toggle('loading', disabled);
+        }
+        function showAlert(id, msg, type) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = (type === 'error' ? '❌ ' : '✅ ') + msg;
+            el.className = 'alert-banner visible ' + type;
+        }
+        function hideAlert(id) {
+            var el = document.getElementById(id);
+            if (el) el.className = 'alert-banner';
+        }
+        function fieldError(errorId, show) {
+            var err = document.getElementById(errorId);
+            if (!err) return;
+            if (show) err.classList.add('visible');
+            else      err.classList.remove('visible');
+        }
+
+        // Clear errors on input
+        ['name', 'email', 'username', 'password'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', function () {
+                fieldError(id + 'Error', false);
+                hideAlert('alertBanner');
+            });
+        });
+
+        // ── Accessibility toggles ─────────────────────────────────────────────
+        var textSizeBtn     = document.getElementById('textSize');
+        var highContrastBtn = document.getElementById('highContrast');
+        if (textSizeBtn) {
+            textSizeBtn.addEventListener('click', function () {
+                document.body.classList.toggle('large-text');
+                this.classList.toggle('active');
+                this.setAttribute('aria-pressed', document.body.classList.contains('large-text'));
+            });
+        }
+        if (highContrastBtn) {
+            highContrastBtn.addEventListener('click', function () {
+                document.body.classList.toggle('high-contrast');
+                this.classList.toggle('active');
+                this.setAttribute('aria-pressed', document.body.classList.contains('high-contrast'));
+            });
+        }
+    });
+    </script>
 </body>
 </html>

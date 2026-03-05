@@ -2,7 +2,14 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     if (!localStorage.getItem('token')) {
-        window.location.href = 'signup.html';
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // ── Role guard: caregivers do not belong on the patient dashboard ─────────
+    var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (storedUser.role === 'caregiver') {
+        window.location.replace('caregiver.html');
         return;
     }
 
@@ -48,7 +55,6 @@ function updateDashboardData() {
 
     // Reports
     var reports    = UserStore.get('userReports', []);
-    var today      = new Date().toDateString();
     setTxt('reminderCount', reports.length);
 }
 

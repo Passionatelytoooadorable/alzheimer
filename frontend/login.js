@@ -5,9 +5,10 @@
  */
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Already logged in → go to dashboard
+    // Already logged in → redirect based on stored role
     if (localStorage.getItem('token')) {
-        window.location.replace('dashboard.html');
+        var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        window.location.replace(storedUser.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
         return;
     }
 
@@ -15,6 +16,53 @@ document.addEventListener('DOMContentLoaded', function () {
     var loginBtn        = document.getElementById('loginBtn');
     var textSizeBtn     = document.getElementById('textSize');
     var highContrastBtn = document.getElementById('highContrast');
+
+    // ── Forgot password UI toggle ─────────────────────────────────────────────
+    var forgotBtn   = document.getElementById('forgotPasswordBtn');
+    var forgotForm  = document.getElementById('forgotForm');
+    var backBtn     = document.getElementById('backToLogin');
+    var sendResetBtn = document.getElementById('sendResetBtn');
+
+    if (forgotBtn) {
+        forgotBtn.addEventListener('click', function () {
+            loginForm.classList.add('hidden');
+            forgotForm.classList.add('visible');
+        });
+    }
+    if (backBtn) {
+        backBtn.addEventListener('click', function () {
+            forgotForm.classList.remove('visible');
+            loginForm.classList.remove('hidden');
+        });
+    }
+    if (sendResetBtn) {
+        sendResetBtn.addEventListener('click', async function () {
+            var email = document.getElementById('resetEmail').value.trim();
+            if (!email) { showAlert('forgotAlert', 'Please enter your email address.', 'error'); return; }
+            this.textContent = 'Sending…'; this.disabled = true;
+            try {
+                var res = await API.post('/auth/forgot-password', { email });
+                var result = await res.json();
+                showAlert('forgotAlert', result.message || 'Reset link sent if email exists.', 'success');
+            } catch (err) {
+                showAlert('forgotAlert', 'Could not send reset link. Please try again.', 'error');
+            } finally {
+                this.textContent = 'Send Reset Link'; this.disabled = false;
+            }
+        });
+    }
+
+    // ── Password toggle ───────────────────────────────────────────────────────
+    var togglePwBtn = document.getElementById('togglePassword');
+    var pwInput     = document.getElementById('password');
+    if (togglePwBtn && pwInput) {
+        togglePwBtn.addEventListener('click', function () {
+            var isText = pwInput.type === 'text';
+            pwInput.type = isText ? 'password' : 'text';
+            this.textContent = isText ? '👁' : '🙈';
+            this.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
+        });
+    }
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
@@ -46,17 +94,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Success — store token & user
+            // Success — store token & user (role is now included in result.user)
             var u = result.user || {};
-            localStorage.setItem('token',      result.token);
-            localStorage.setItem('user',       JSON.stringify(u));
+            var userRole = u.role || 'patient';
+
+            localStorage.setItem('token',      result.token || 'cookie'); // 'cookie' sentinel if using httpOnly cookies
+            localStorage.setItem('user',       JSON.stringify({ ...u, role: userRole }));
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('userName',   u.name     || username);
             localStorage.setItem('userEmail',  u.email    || username);
 
             showAlert('alertBanner', 'Signed in successfully! Redirecting…', 'success');
+
+            // Role-based redirect — the core of this feature
             setTimeout(function () {
-                window.location.replace('dashboard.html');
+                window.location.replace(userRole === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
             }, 600);
 
         } catch (err) {
@@ -68,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setBtn(text, disabled) {
         if (!loginBtn) return;
-        loginBtn.textContent = text;
+        loginBtn.childNodes[0].textContent = text + ' ';
         loginBtn.disabled    = disabled;
         if (disabled) {
             loginBtn.classList.add('loading');
@@ -109,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Accessibility toggles
+    // ── Accessibility toggles ─────────────────────────────────────────────────
     if (textSizeBtn) {
         textSizeBtn.addEventListener('click', function () {
             document.body.classList.toggle('large-text');
