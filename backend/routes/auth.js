@@ -71,8 +71,9 @@ router.post('/signup', async (req, res) => {
 
     res.status(201).json({
       message: 'User created successfully',
+      token,
       user: newUser.rows[0]
-      // token intentionally NOT included in body
+
     });
 
   } catch (error) {
@@ -131,8 +132,9 @@ router.post('/signin', async (req, res) => {
     // ADDED: role explicitly included in response so frontend can use it
     res.json({
       message: 'Login successful',
+      token,
       user: { ...userWithoutPassword, role: userRole }
-      // token intentionally NOT included in body
+
     });
 
   } catch (error) {
