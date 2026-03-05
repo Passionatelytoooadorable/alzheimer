@@ -9,12 +9,14 @@
     <script>
         if (localStorage.getItem('token')) {
             var u = JSON.parse(localStorage.getItem('user') || '{}');
-            window.location.replace(u.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+            var _dest = u.role === 'caregiver' ? 'caregiver.html' : (localStorage.getItem('scanCompleted') === 'true' ? 'dashboard.html' : 'index.html');
+            window.location.replace(_dest);
         }
         window.addEventListener('pageshow', function(e) {
             if (e.persisted && localStorage.getItem('token')) {
                 var u = JSON.parse(localStorage.getItem('user') || '{}');
-                window.location.replace(u.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+                var _dest = u.role === 'caregiver' ? 'caregiver.html' : (localStorage.getItem('scanCompleted') === 'true' ? 'dashboard.html' : 'index.html');
+                window.location.replace(_dest);
             }
         });
     </script>
@@ -338,8 +340,10 @@
                 showAlert('alertBanner', 'Account created! Redirecting…', 'success');
 
                 // Role-based redirect
+                // New patients → index.html to upload their first report
+                // Caregivers  → caregiver.html
                 setTimeout(function () {
-                    window.location.replace(role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+                    window.location.replace(role === 'caregiver' ? 'caregiver.html' : 'index.html');
                 }, 700);
 
             } catch (err) {

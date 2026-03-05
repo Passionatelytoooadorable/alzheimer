@@ -2,13 +2,24 @@
  * login.js
  * Uses API helper (api.js) which handles Render cold-start retries automatically.
  * Does NOT depend on user-store.js so no crash if it hasn't loaded.
+ *
+ * Redirect logic after login:
+ *   caregiver  → caregiver.html  (always)
+ *   patient (new / no reports yet) → index.html  (upload report first)
+ *   patient (has reports) → dashboard.html
  */
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Already logged in → redirect based on stored role
+    // Already logged in → send to correct place based on role
     if (localStorage.getItem('token')) {
-        var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        window.location.replace(storedUser.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+        var _su = JSON.parse(localStorage.getItem('user') || '{}');
+        if (_su.role === 'caregiver') {
+            window.location.replace('caregiver.html');
+        } else {
+            // Patient: check if they've uploaded a report before
+            var _hasReport = localStorage.getItem('scanCompleted') === 'true';
+            window.location.replace(_hasReport ? 'dashboard.html' : 'index.html');
+        }
         return;
     }
 
@@ -16,53 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var loginBtn        = document.getElementById('loginBtn');
     var textSizeBtn     = document.getElementById('textSize');
     var highContrastBtn = document.getElementById('highContrast');
-
-    // ── Forgot password UI toggle ─────────────────────────────────────────────
-    var forgotBtn   = document.getElementById('forgotPasswordBtn');
-    var forgotForm  = document.getElementById('forgotForm');
-    var backBtn     = document.getElementById('backToLogin');
-    var sendResetBtn = document.getElementById('sendResetBtn');
-
-    if (forgotBtn) {
-        forgotBtn.addEventListener('click', function () {
-            loginForm.classList.add('hidden');
-            forgotForm.classList.add('visible');
-        });
-    }
-    if (backBtn) {
-        backBtn.addEventListener('click', function () {
-            forgotForm.classList.remove('visible');
-            loginForm.classList.remove('hidden');
-        });
-    }
-    if (sendResetBtn) {
-        sendResetBtn.addEventListener('click', async function () {
-            var email = document.getElementById('resetEmail').value.trim();
-            if (!email) { showAlert('forgotAlert', 'Please enter your email address.', 'error'); return; }
-            this.textContent = 'Sending…'; this.disabled = true;
-            try {
-                var res = await API.post('/auth/forgot-password', { email });
-                var result = await res.json();
-                showAlert('forgotAlert', result.message || 'Reset link sent if email exists.', 'success');
-            } catch (err) {
-                showAlert('forgotAlert', 'Could not send reset link. Please try again.', 'error');
-            } finally {
-                this.textContent = 'Send Reset Link'; this.disabled = false;
-            }
-        });
-    }
-
-    // ── Password toggle ───────────────────────────────────────────────────────
-    var togglePwBtn = document.getElementById('togglePassword');
-    var pwInput     = document.getElementById('password');
-    if (togglePwBtn && pwInput) {
-        togglePwBtn.addEventListener('click', function () {
-            var isText = pwInput.type === 'text';
-            pwInput.type = isText ? 'password' : 'text';
-            this.textContent = isText ? '👁' : '🙈';
-            this.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
-        });
-    }
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
@@ -94,21 +58,45 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Success — store token & user (role is now included in result.user)
+            // Success — store token & user
             var u = result.user || {};
-            var userRole = u.role || 'patient';
-
-            localStorage.setItem('token',      result.token || 'cookie'); // 'cookie' sentinel if using httpOnly cookies
-            localStorage.setItem('user',       JSON.stringify({ ...u, role: userRole }));
+            localStorage.setItem('token',      result.token);
+            localStorage.setItem('user',       JSON.stringify(u));
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userName',   u.name     || username);
-            localStorage.setItem('userEmail',  u.email    || username);
+            localStorage.setItem('userName',   u.name  || username);
+            localStorage.setItem('userEmail',  u.email || username);
 
             showAlert('alertBanner', 'Signed in successfully! Redirecting…', 'success');
 
-            // Role-based redirect — the core of this feature
-            setTimeout(function () {
-                window.location.replace(userRole === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+            setTimeout(async function () {
+                var role = u.role || 'patient';
+
+                // Caregivers always go to caregiver dashboard
+                if (role === 'caregiver') {
+                    window.location.replace('caregiver.html');
+                    return;
+                }
+
+                // Patients: check if they have any reports on the backend
+                // If no reports yet → send to index.html to upload first
+                // If they have reports → send to dashboard
+                try {
+                    var repRes  = await API.get('/reports');
+                    var repData = await repRes.json();
+                    var hasReports = repData.reports && repData.reports.length > 0;
+                    if (hasReports) {
+                        localStorage.setItem('scanCompleted', 'true');
+                        window.location.replace('dashboard.html');
+                    } else {
+                        localStorage.removeItem('scanCompleted');
+                        window.location.replace('index.html');
+                    }
+                } catch (err) {
+                    // If API call fails, fall back to scanCompleted flag
+                    var _hasReport = localStorage.getItem('scanCompleted') === 'true';
+                    window.location.replace(_hasReport ? 'dashboard.html' : 'index.html');
+                }
+
             }, 600);
 
         } catch (err) {
@@ -120,20 +108,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setBtn(text, disabled) {
         if (!loginBtn) return;
-        loginBtn.childNodes[0].textContent = text + ' ';
+        loginBtn.textContent = text;
         loginBtn.disabled    = disabled;
-        if (disabled) {
-            loginBtn.classList.add('loading');
-        } else {
-            loginBtn.classList.remove('loading');
-        }
+        if (disabled) { loginBtn.classList.add('loading'); }
+        else          { loginBtn.classList.remove('loading'); }
     }
 
     function showAlert(id, msg, type) {
         var el = document.getElementById(id);
         if (!el) return;
         el.textContent = (type === 'error' ? '❌ ' : '✅ ') + msg;
-        el.className = 'alert-banner visible ' + type;
+        el.className   = 'alert-banner visible ' + type;
     }
     function hideAlert(id) {
         var el = document.getElementById(id);
@@ -143,16 +128,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var inp = document.getElementById(inputId);
         var err = document.getElementById(errorId);
         if (!inp || !err) return;
-        if (show) {
-            inp.classList.add('invalid');
-            err.classList.add('visible');
-        } else {
-            inp.classList.remove('invalid');
-            err.classList.remove('visible');
-        }
+        if (show) { inp.classList.add('invalid'); err.classList.add('visible'); }
+        else      { inp.classList.remove('invalid'); err.classList.remove('visible'); }
     }
 
-    // Clear errors on typing
     ['username', 'password'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.addEventListener('input', function () {
@@ -161,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Accessibility toggles ─────────────────────────────────────────────────
     if (textSizeBtn) {
         textSizeBtn.addEventListener('click', function () {
             document.body.classList.toggle('large-text');

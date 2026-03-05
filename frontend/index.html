@@ -180,6 +180,16 @@
     <script src="nav-shared.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // After report scan, mark complete and go to dashboard
+            function goToDashboard() {
+                localStorage.setItem('scanCompleted', 'true');
+                window.location.replace('dashboard.html');
+            }
+            var btn1 = document.getElementById('goToDashboard');
+            var btn2 = document.getElementById('goToDashboardNeg');
+            if (btn1) btn1.addEventListener('click', goToDashboard);
+            if (btn2) btn2.addEventListener('click', goToDashboard);
+
             if (typeof initSharedNav === 'function') {
                 initSharedNav('index.html');
             }
