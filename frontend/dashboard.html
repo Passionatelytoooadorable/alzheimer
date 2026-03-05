@@ -479,12 +479,12 @@
 
     window.unlinkCaregiver = async function () {
         if (!confirm('Are you sure you want to unlink from your caregiver?')) return;
-        try { await API.delete('/caregiver/unlink'); document.getElementById('messagesCard').style.display = 'none'; loadLinkStatus(); }
+        try { await (API.delete || API.del)('/caregiver/unlink'); document.getElementById('messagesCard').style.display = 'none'; loadLinkStatus(); }
         catch (e) { alert('Could not unlink. Please try again.'); }
     };
 
     window.unlinkAndReset = async function () {
-        try { await API.delete('/caregiver/unlink'); } catch (e) {}
+        try { await (API.delete || API.del)('/caregiver/unlink'); } catch (e) {}
         loadLinkStatus();
     };
 
