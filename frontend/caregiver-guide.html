@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <script>
+        (function () {
+            if (!localStorage.getItem('token')) window.location.replace('signup.html');
+        })();
+    </script>
+    <title>Caregiver Guide - Alzheimer's Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+    <style>
+        :root {
+            --g1: #14532d;   /* deep forest */
+            --g2: #166534;
+            --g3: #15803d;   /* mid green */
+            --g4: #22c55e;   /* bright accent */
+            --g5: #86efac;   /* soft mint */
+            --g6: #dcfce7;   /* lightest tint */
+            --g7: #f0fdf4;   /* page bg tint */
+            --sage: #6b8f71;
+            --text: #1a2e1d;
+            --muted: #4b6350;
+            --card-shadow: 0 4px 24px rgba(20, 83, 45, 0.10);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--g7); color: var(--text); }
+
+        /* ── Hero ── */
+        .guide-hero {
+            position: relative; overflow: hidden;
+            background: linear-gradient(135deg, var(--g1) 0%, var(--g3) 55%, #16a34a 100%);
+            color: white; padding: 3rem 2rem 3.5rem;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;
+        }
+        .guide-hero::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 80% 50%, rgba(134,239,172,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .confetti-piece {
+            position: absolute; width: 8px; height: 8px; border-radius: 2px; opacity: 0.35;
+            animation: floatUp 6s ease-in-out infinite;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(0)   rotate(0deg);   opacity: 0.35; }
+            50%  { transform: translateY(-60px) rotate(180deg); opacity: 0.6; }
+            100% { transform: translateY(0)   rotate(360deg); opacity: 0.35; }
+        }
+
+        .hero-text { position: relative; z-index: 1; }
+        .hero-text h1 {
+            font-family: 'DM Serif Display', serif; font-size: 2.4rem; line-height: 1.15;
+            margin-bottom: 0.5rem;
+        }
+        .hero-text h1 em { font-style: italic; color: var(--g5); }
+        .hero-text p { opacity: 0.88; font-size: 1rem; max-width: 480px; line-height: 1.6; }
+
+        .hero-icons {
+            display: flex; gap: 1.2rem; flex-wrap: wrap; position: relative; z-index: 1;
+        }
+        .hero-icon-bubble {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 16px; padding: 0.9rem 1.3rem; text-align: center;
+            backdrop-filter: blur(4px);
+            animation: bobble 3s ease-in-out infinite;
+        }
+        .hero-icon-bubble:nth-child(2) { animation-delay: 0.5s; }
+        .hero-icon-bubble:nth-child(3) { animation-delay: 1s; }
+        .hero-icon-bubble:nth-child(4) { animation-delay: 1.5s; }
+        @keyframes bobble {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-8px); }
+        }
+        .hero-icon-bubble .bbl-icon { font-size: 1.8rem; display: block; margin-bottom: 0.25rem; }
+        .hero-icon-bubble .bbl-lbl  { font-size: 0.72rem; font-weight: 600; opacity: 0.9; }
+
+        /* ── Progress bar ── */
+        .progress-bar-wrap {
+            background: white; padding: 1.1rem 2rem;
+            display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+            border-bottom: 1px solid var(--g6);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .progress-bar-wrap span { font-size: 0.8rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+        .prog-track { flex: 1; height: 8px; background: var(--g6); border-radius: 4px; min-width: 100px; }
+        .prog-fill  {
+            height: 100%; background: linear-gradient(90deg, var(--g3), var(--g4));
+            border-radius: 4px; width: 0; transition: width 1s ease;
+        }
+        .prog-sections {
+            display: flex; gap: 0.5rem; flex-wrap: wrap;
+        }
+        .prog-sec {
+            font-size: 0.72rem; padding: 0.2rem 0.65rem; border-radius: 10px;
+            background: var(--g6); color: var(--g2); font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .prog-sec:hover, .prog-sec.active { background: var(--g3); color: white; }
+
+        /* ── Main content ── */
+        .guide-body {
+            max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem;
+            display: grid; grid-template-columns: 260px 1fr; gap: 2rem;
+        }
+        @media (max-width: 768px) { .guide-body { grid-template-columns: 1fr; } }
+
+        /* ── Sticky sidebar ── */
+        .guide-sidebar {
+            position: sticky; top: 1.5rem; align-self: start;
+        }
+        .sidebar-nav {
+            background: white; border-radius: 14px; padding: 1.2rem;
+            box-shadow: var(--card-shadow); overflow: hidden;
+        }
+        .sidebar-nav h4 {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--sage); margin-bottom: 0.75rem;
+        }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.65rem;
+            border-radius: 8px; font-size: 0.85rem; color: var(--muted); text-decoration: none;
+            transition: all 0.18s; font-weight: 500;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background: var(--g6); color: var(--g2); font-weight: 600;
+        }
+        .sidebar-nav a .sn-icon { font-size: 1rem; flex-shrink: 0; }
+
+        .quick-tip {
+            background: linear-gradient(135deg, var(--g3), #16a34a);
+            border-radius: 14px; padding: 1.2rem; margin-top: 1rem;
+            color: white;
+        }
+        .quick-tip h5 { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.4rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.06em; }
+        .quick-tip p  { font-size: 0.83rem; line-height: 1.55; opacity: 0.92; }
+
+        /* ── Content area ── */
+        .guide-content { min-width: 0; }
+
+        /* Section headers */
+        .section-header {
+            display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; margin-top: 2.5rem;
+        }
+        .section-header:first-of-type { margin-top: 0; }
+        .section-number {
+            width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--g3), var(--g4));
+            color: white; font-weight: 700; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .section-header h2 {
+            font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--g1);
+        }
+
+        /* Cards */
+        .guide-card {
+            background: white; border-radius: 14px; padding: 1.5rem;
+            box-shadow: var(--card-shadow); margin-bottom: 1.25rem;
+            border-left: 4px solid var(--g4);
+            animation: fadeSlideIn 0.5s ease both;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .guide-card:nth-child(2) { animation-delay: 0.07s; }
+        .guide-card:nth-child(3) { animation-delay: 0.14s; }
+        .guide-card:nth-child(4) { animation-delay: 0.21s; }
+        .guide-card:nth-child(5) { animation-delay: 0.28s; }
+
+        .guide-card h4 {
+            font-size: 0.97rem; font-weight: 700; color: var(--g2);
+            margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .guide-card p  { font-size: 0.88rem; color: var(--muted); line-height: 1.65; }
+        .guide-card ul { padding-left: 1.2rem; margin-top: 0.5rem; }
+        .guide-card ul li { font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
+        .guide-card ul li::marker { color: var(--g4); }
+
+        /* Tip variant */
+        .guide-card.tip   { border-left-color: #84cc16; background: #f7fee7; }
+        .guide-card.warn  { border-left-color: #facc15; background: #fefce8; }
+        .guide-card.ok    { border-left-color: var(--g4); background: var(--g6); }
+
+        /* Two-column cards */
+        .card-grid-2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;
+        }
+        @media (max-width: 640px) { .card-grid-2 { grid-template-columns: 1fr; } }
+
+        /* Stage cards */
+        .stage-card {
+            background: white; border-radius: 14px; padding: 1.25rem;
+            box-shadow: var(--card-shadow); position: relative; overflow: hidden;
+        }
+        .stage-card::after {
+            content: attr(data-stage); position: absolute; top: -10px; right: -10px;
+            font-size: 4rem; opacity: 0.06; font-weight: 900; line-height: 1;
+            color: var(--g1);
+        }
+        .stage-card .stage-badge {
+            display: inline-block; font-size: 0.72rem; font-weight: 700;
+            padding: 0.15rem 0.6rem; border-radius: 10px; margin-bottom: 0.65rem;
+            background: var(--g6); color: var(--g2);
+        }
+        .stage-card h4 { font-size: 0.92rem; font-weight: 700; color: var(--g1); margin-bottom: 0.4rem; }
+        .stage-card p  { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+
+        /* Checklist */
+        .checklist { list-style: none; padding: 0; margin-top: 0.5rem; }
+        .checklist li {
+            display: flex; align-items: flex-start; gap: 0.65rem;
+            padding: 0.45rem 0; border-bottom: 1px solid var(--g6);
+            font-size: 0.87rem; color: var(--muted); line-height: 1.5;
+        }
+        .checklist li:last-child { border-bottom: none; }
+        .checklist li input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--g3);
+            flex-shrink: 0; margin-top: 2px; cursor: pointer;
+        }
+        .checklist li label { cursor: pointer; }
+        .checklist li.done label { text-decoration: line-through; opacity: 0.5; }
+
+        /* Emergency contacts table */
+        .emergency-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 0.85rem;
+        }
+        .emerg-card {
+            background: #f0fdf4; border: 1px solid var(--g5); border-radius: 10px;
+            padding: 0.9rem 1rem; text-align: center;
+        }
+        .emerg-card .ec-icon  { font-size: 1.6rem; display: block; margin-bottom: 0.3rem; }
+        .emerg-card .ec-name  { font-size: 0.82rem; font-weight: 700; color: var(--g2); margin-bottom: 0.15rem; }
+        .emerg-card .ec-num   { font-size: 0.78rem; color: var(--muted); }
+        .emerg-card a         { color: var(--g3); font-weight: 600; text-decoration: none; font-size: 0.82rem; }
+        .emerg-card a:hover   { text-decoration: underline; }
+
+        /* Accordion */
+        .faq-item { border-bottom: 1px solid var(--g6); }
+        .faq-q {
+            width: 100%; background: none; border: none; text-align: left;
+            padding: 1rem 0; font-size: 0.9rem; font-weight: 600; color: var(--g2);
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        }
+        .faq-q:hover { color: var(--g3); }
+        .faq-caret { font-size: 0.75rem; transition: transform 0.25s; flex-shrink: 0; }
+        .faq-item.open .faq-caret { transform: rotate(180deg); }
+        .faq-a {
+            max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.25s;
+            font-size: 0.86rem; color: var(--muted); line-height: 1.7; padding: 0;
+        }
+        .faq-item.open .faq-a { max-height: 300px; padding-bottom: 1rem; }
+
+        /* Back button */
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: white; border: 1.5px solid var(--g5); border-radius: 8px;
+            padding: 0.45rem 1rem; font-size: 0.83rem; font-weight: 600;
+            color: var(--g2); text-decoration: none; transition: all 0.2s; margin-bottom: 1.5rem;
+        }
+        .back-btn:hover { background: var(--g6); border-color: var(--g3); }
+
+        /* Floating decorative icons */
+        .float-deco {
+            position: fixed; pointer-events: none; z-index: 0; opacity: 0.045;
+            font-size: 5rem; animation: driftAround 18s ease-in-out infinite;
+            user-select: none;
+        }
+        .float-deco:nth-child(1) { top: 12%; right: 4%;  animation-delay: 0s; }
+        .float-deco:nth-child(2) { top: 45%; right: 2%;  animation-delay: 3s;  font-size: 3.5rem; }
+        .float-deco:nth-child(3) { bottom: 20%; left: 2%; animation-delay: 6s; }
+        .float-deco:nth-child(4) { bottom: 40%; right: 5%; animation-delay: 9s; font-size: 4rem; }
+        @keyframes driftAround {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25%       { transform: translate(-12px, -20px) rotate(5deg); }
+            50%       { transform: translate(8px, -35px)  rotate(-3deg); }
+            75%       { transform: translate(-6px, -15px) rotate(4deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating decorative background icons -->
+    <div class="float-deco">🌿</div>
+    <div class="float-deco">🍃</div>
+    <div class="float-deco">🌱</div>
+    <div class="float-deco">☘️</div>
+
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links" id="sharedNav"></nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="guide-hero">
+        <div class="hero-confetti" id="heroConfetti"></div>
+        <div class="hero-text">
+            <h1>Caregiver <em>Guide</em></h1>
+            <p>Practical tools, daily checklists, emergency contacts, and evidence-based advice to help you provide the best care with confidence.</p>
+        </div>
+        <div class="hero-icons">
+            <div class="hero-icon-bubble">
+                <span class="bbl-icon">🏠</span>
+                <span class="bbl-lbl">Daily Care</span>
+            </div>
+            <div class="hero-icon-bubble">
+                <span class="bbl-icon">💊</span>
+                <span class="bbl-lbl">Medication</span>
+            </div>
+            <div class="hero-icon-bubble">
+                <span class="bbl-icon">🆘</span>
+                <span class="bbl-lbl">Emergency</span>
+            </div>
+            <div class="hero-icon-bubble">
+                <span class="bbl-icon">🧘</span>
+                <span class="bbl-lbl">Self Care</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress indicator -->
+    <div class="progress-bar-wrap">
+        <span>Guide Sections</span>
+        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+        <div class="prog-sections">
+            <span class="prog-sec active" onclick="scrollTo('sec-stages')">Stages</span>
+            <span class="prog-sec" onclick="scrollTo('sec-daily')">Daily</span>
+            <span class="prog-sec" onclick="scrollTo('sec-medication')">Medication</span>
+            <span class="prog-sec" onclick="scrollTo('sec-emergency')">Emergency</span>
+            <span class="prog-sec" onclick="scrollTo('sec-selfcare')">Self-Care</span>
+            <span class="prog-sec" onclick="scrollTo('sec-faq')">FAQ</span>
+        </div>
+    </div>
+
+    <div class="guide-body">
+
+        <!-- Sidebar -->
+        <aside class="guide-sidebar">
+            <nav class="sidebar-nav">
+                <h4>In this guide</h4>
+                <a href="#sec-stages" class="active"><span class="sn-icon">📊</span> Disease Stages</a>
+                <a href="#sec-daily"><span class="sn-icon">📅</span> Daily Routine</a>
+                <a href="#sec-medication"><span class="sn-icon">💊</span> Medication</a>
+                <a href="#sec-safety"><span class="sn-icon">🔒</span> Home Safety</a>
+                <a href="#sec-communication"><span class="sn-icon">💬</span> Communication</a>
+                <a href="#sec-emergency"><span class="sn-icon">🆘</span> Emergency</a>
+                <a href="#sec-selfcare"><span class="sn-icon">🧘</span> Caregiver Self-Care</a>
+                <a href="#sec-faq"><span class="sn-icon">❓</span> FAQ</a>
+            </nav>
+            <div class="quick-tip">
+                <h5>💡 Quick Tip</h5>
+                <p>Consistency is your most powerful tool. A predictable daily routine reduces anxiety and confusion for people with Alzheimer's.</p>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="guide-content">
+
+            <a href="profile.html" class="back-btn">← Back to Profile</a>
+
+            <!-- Section 1: Stages -->
+            <div id="sec-stages">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2>Understanding Disease Stages</h2>
+                </div>
+                <div class="card-grid-2">
+                    <div class="stage-card" data-stage="1">
+                        <span class="stage-badge">Early Stage</span>
+                        <h4>🌱 Mild / Early</h4>
+                        <p>Memory lapses, difficulty with complex tasks, personality shifts. Person can still live independently with some support.</p>
+                    </div>
+                    <div class="stage-card" data-stage="2">
+                        <span class="stage-badge">Middle Stage</span>
+                        <h4>🌿 Moderate</h4>
+                        <p>Increased memory loss, confusion with time/place, needs help with daily activities. Supervision is important.</p>
+                    </div>
+                    <div class="stage-card" data-stage="3">
+                        <span class="stage-badge">Late Stage</span>
+                        <h4>🍂 Severe</h4>
+                        <p>Loss of ability to communicate verbally. Full-time care required. Focus shifts to comfort and quality of life.</p>
+                    </div>
+                    <div class="stage-card" data-stage="4">
+                        <span class="stage-badge" style="background:#fef9c3;color:#854d0e;">Watch For</span>
+                        <h4>⚠️ Warning Signs</h4>
+                        <p>Sudden confusion, aggression, wandering at night, refusal to eat, or unexplained falls warrant immediate medical attention.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Daily Routine Checklist -->
+            <div id="sec-daily">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2>Daily Care Routine</h2>
+                </div>
+                <div class="guide-card ok">
+                    <h4>☀️ Morning Checklist</h4>
+                    <ul class="checklist" id="morningList">
+                        <li><input type="checkbox" id="c1"><label for="c1">Help with personal hygiene (brushing, washing face)</label></li>
+                        <li><input type="checkbox" id="c2"><label for="c2">Assist with getting dressed — offer limited choices</label></li>
+                        <li><input type="checkbox" id="c3"><label for="c3">Administer morning medications with breakfast</label></li>
+                        <li><input type="checkbox" id="c4"><label for="c4">Review the day's schedule aloud with the patient</label></li>
+                        <li><input type="checkbox" id="c5"><label for="c5">Check for any overnight incidents or discomfort</label></li>
+                    </ul>
+                </div>
+                <div class="guide-card ok">
+                    <h4>🌞 Afternoon Checklist</h4>
+                    <ul class="checklist" id="afternoonList">
+                        <li><input type="checkbox" id="c6"><label for="c6">Ensure adequate nutrition at lunch</label></li>
+                        <li><input type="checkbox" id="c7"><label for="c7">Encourage light physical activity or short walk</label></li>
+                        <li><input type="checkbox" id="c8"><label for="c8">Engage in familiar activities (music, photos, puzzles)</label></li>
+                        <li><input type="checkbox" id="c9"><label for="c9">Administer afternoon medications if prescribed</label></li>
+                        <li><input type="checkbox" id="c10"><label for="c10">Monitor mood and watch for signs of sundowning</label></li>
+                    </ul>
+                </div>
+                <div class="guide-card ok">
+                    <h4>🌙 Evening Checklist</h4>
+                    <ul class="checklist" id="eveningList">
+                        <li><input type="checkbox" id="c11"><label for="c11">Serve dinner at a consistent time</label></li>
+                        <li><input type="checkbox" id="c12"><label for="c12">Limit stimulation — reduce TV/noise volume</label></li>
+                        <li><input type="checkbox" id="c13"><label for="c13">Help with evening hygiene and bedtime routine</label></li>
+                        <li><input type="checkbox" id="c14"><label for="c14">Administer evening medications</label></li>
+                        <li><input type="checkbox" id="c15"><label for="c15">Ensure home is secure (doors, stove, locks)</label></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 3: Medication -->
+            <div id="sec-medication">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2>Medication Management</h2>
+                </div>
+                <div class="guide-card">
+                    <h4>💊 Best Practices</h4>
+                    <ul>
+                        <li>Use a weekly pill organiser with AM/PM compartments</li>
+                        <li>Give medications at the same time daily — link to meals or routines</li>
+                        <li>Never crush or split tablets without pharmacist approval</li>
+                        <li>Keep an updated medication list with doses and timings</li>
+                        <li>Contact the doctor before stopping or adjusting any medication</li>
+                    </ul>
+                </div>
+                <div class="guide-card tip">
+                    <h4>🌿 Tip: Handling Refusal</h4>
+                    <p>If the patient refuses medication, stay calm. Try offering it with a preferred drink or food, or wait 10–15 minutes and try again. Never force medication. If refusal is consistent, speak with the doctor about alternative formulations (liquid, patch).</p>
+                </div>
+                <div class="guide-card warn">
+                    <h4>⚠️ Watch for Side Effects</h4>
+                    <p>Common medications like donepezil, memantine, or antipsychotics can cause nausea, dizziness, or increased confusion. Report any sudden behaviour changes, falls, or unusual drowsiness to the treating physician immediately.</p>
+                </div>
+            </div>
+
+            <!-- Section 4: Home Safety -->
+            <div id="sec-safety">
+                <div class="section-header">
+                    <div class="section-number">4</div>
+                    <h2>Home Safety Checklist</h2>
+                </div>
+                <div class="card-grid-2">
+                    <div class="guide-card">
+                        <h4>🔒 Prevent Wandering</h4>
+                        <ul>
+                            <li>Install door alarms or motion sensors at exits</li>
+                            <li>Place a STOP sign at exit doors at eye level</li>
+                            <li>Ensure patient wears an ID bracelet at all times</li>
+                            <li>Use location sharing on this platform regularly</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>🍳 Kitchen Safety</h4>
+                        <ul>
+                            <li>Install stove knob covers or auto-shutoff devices</li>
+                            <li>Lock away cleaning products and sharp objects</li>
+                            <li>Set water heater below 48°C (120°F) to prevent scalding</li>
+                            <li>Remove or label expired food regularly</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>🚿 Bathroom Safety</h4>
+                        <ul>
+                            <li>Add non-slip mats in shower and near toilet</li>
+                            <li>Install grab bars beside toilet and shower</li>
+                            <li>Consider a shower chair for stability</li>
+                            <li>Keep the bathroom well-lit at all times</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>💡 General Home</h4>
+                        <ul>
+                            <li>Remove loose rugs and clutter from walkways</li>
+                            <li>Install nightlights in hallways and bathrooms</li>
+                            <li>Label rooms and drawers with pictures + text</li>
+                            <li>Keep the environment calm and familiar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Communication -->
+            <div id="sec-communication">
+                <div class="section-header">
+                    <div class="section-number">5</div>
+                    <h2>Communication Tips</h2>
+                </div>
+                <div class="guide-card">
+                    <h4>🗣️ How to Communicate Effectively</h4>
+                    <ul>
+                        <li>Speak slowly and clearly using simple, short sentences</li>
+                        <li>Use their name and maintain gentle eye contact</li>
+                        <li>Ask one question at a time — offer yes/no options when possible</li>
+                        <li>Never argue or correct — redirect instead</li>
+                        <li>Use a calm, warm tone even when frustrated</li>
+                        <li>Non-verbal cues (touch, smile, gesture) matter greatly in late stages</li>
+                    </ul>
+                </div>
+                <div class="guide-card tip">
+                    <h4>🌿 Tip: When They Repeat Themselves</h4>
+                    <p>Repetition is a symptom, not stubbornness. Respond to the emotion behind the repeated question, not just the question itself. If they ask "When is dinner?" repeatedly, they may really be expressing hunger or anxiety — address that feeling directly.</p>
+                </div>
+            </div>
+
+            <!-- Section 6: Emergency -->
+            <div id="sec-emergency">
+                <div class="section-header">
+                    <div class="section-number">6</div>
+                    <h2>Emergency Contacts &amp; Resources</h2>
+                </div>
+                <div class="guide-card warn" style="margin-bottom:1rem;">
+                    <h4>⚠️ Call Emergency Services Immediately If:</h4>
+                    <ul>
+                        <li>Patient has fallen and is unresponsive or in pain</li>
+                        <li>Signs of stroke (face drooping, arm weakness, speech difficulty)</li>
+                        <li>Patient has wandered and cannot be located</li>
+                        <li>Severe agitation or aggressive behaviour with risk of harm</li>
+                    </ul>
+                </div>
+                <div class="emergency-grid">
+                    <div class="emerg-card">
+                        <span class="ec-icon">🚑</span>
+                        <div class="ec-name">Emergency Services</div>
+                        <div class="ec-num"><a href="tel:112">112 / 911</a></div>
+                    </div>
+                    <div class="emerg-card">
+                        <span class="ec-icon">🧠</span>
+                        <div class="ec-name">Alzheimer's Helpline</div>
+                        <div class="ec-num"><a href="tel:18005720825">1800-572-0825 (India)</a></div>
+                    </div>
+                    <div class="emerg-card">
+                        <span class="ec-icon">☎️</span>
+                        <div class="ec-name">ARDSI Helpline</div>
+                        <div class="ec-num"><a href="tel:18004253225">1800-425-3225</a></div>
+                    </div>
+                    <div class="emerg-card">
+                        <span class="ec-icon">🏥</span>
+                        <div class="ec-name">Alzheimer's Assoc. (US)</div>
+                        <div class="ec-num"><a href="tel:8002723900">800-272-3900</a></div>
+                    </div>
+                    <div class="emerg-card">
+                        <span class="ec-icon">💬</span>
+                        <div class="ec-name">Crisis Support</div>
+                        <div class="ec-num"><a href="tel:iCall">iCall: 9152987821</a></div>
+                    </div>
+                    <div class="emerg-card">
+                        <span class="ec-icon">🌐</span>
+                        <div class="ec-name">ARDSI Website</div>
+                        <div class="ec-num"><a href="https://ardsi.org" target="_blank">ardsi.org</a></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 7: Self-Care -->
+            <div id="sec-selfcare">
+                <div class="section-header">
+                    <div class="section-number">7</div>
+                    <h2>Caregiver Self-Care</h2>
+                </div>
+                <div class="guide-card ok">
+                    <h4>🧘 You Matter Too</h4>
+                    <p>Caregiver burnout is real. Chronic stress, sleep deprivation, and social isolation are common. You cannot give quality care if you are depleted. Self-care is not selfish — it is essential.</p>
+                </div>
+                <div class="card-grid-2">
+                    <div class="guide-card">
+                        <h4>😌 Signs of Burnout</h4>
+                        <ul>
+                            <li>Constant exhaustion even after rest</li>
+                            <li>Feeling resentful, hopeless, or irritable</li>
+                            <li>Neglecting your own health needs</li>
+                            <li>Withdrawing from friends and family</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>🌱 Recovery Steps</h4>
+                        <ul>
+                            <li>Ask for and accept help from family members</li>
+                            <li>Use respite care services for regular breaks</li>
+                            <li>Join a caregiver support group</li>
+                            <li>Speak to a counsellor or therapist</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="guide-card tip">
+                    <h4>🍃 Daily Micro-Breaks</h4>
+                    <p>Even 10 minutes of intentional rest makes a difference. Step outside, do breathing exercises, listen to music, or simply sit in silence. Schedule these breaks like appointments — they are non-negotiable.</p>
+                </div>
+            </div>
+
+            <!-- Section 8: FAQ -->
+            <div id="sec-faq">
+                <div class="section-header">
+                    <div class="section-number">8</div>
+                    <h2>Frequently Asked Questions</h2>
+                </div>
+                <div class="guide-card" style="padding:0.5rem 1.5rem;">
+                    <div class="faq-item open">
+                        <button class="faq-q">How do I handle aggressive behaviour? <span class="faq-caret">▼</span></button>
+                        <div class="faq-a">Stay calm and avoid arguing. Try to identify the trigger — pain, fear, frustration, or unmet needs are common causes. Speak softly, give the person space, redirect to a calming activity, and ensure the environment is quiet and safe. Document incidents to share with the doctor.</div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-q">What is sundowning and how do I manage it? <span class="faq-caret">▼</span></button>
+                        <div class="faq-a">Sundowning refers to increased confusion, anxiety, or agitation in the late afternoon and evening. Manage it by keeping the evening routine predictable, reducing stimulation after 4pm, ensuring bright light exposure during the day, and limiting napping. Speak to a doctor if it is severe.</div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-q">How do I make bathing easier? <span class="faq-caret">▼</span></button>
+                        <div class="faq-a">Choose a consistent time when the person is most cooperative. Explain each step beforehand. Use a handheld shower, bath bench, and warm towels. Keep the bathroom warm and private. If bathing causes distress, a bed bath or dry shampoo is a valid alternative.</div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-q">When should I consider professional or memory care? <span class="faq-caret">▼</span></button>
+                        <div class="faq-a">Consider professional care when the patient's needs exceed your capacity, when safety can no longer be maintained at home, when you are experiencing serious burnout, or when the patient requires 24-hour supervision. It is not a failure — it is a care decision.</div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-q">How do I talk to other family members about caregiving? <span class="faq-caret">▼</span></button>
+                        <div class="faq-a">Hold a family meeting to discuss caregiving roles, responsibilities, and expectations. Use a care plan document to make tasks clear. Be honest about what you need and what is sustainable. Consider a family mediator or social worker if disagreements arise.</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="user-store.js"></script>
+    <script src="nav-shared.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof initSharedNav === 'function') initSharedNav('caregiver-guide.html');
+
+        // ── Confetti ────────────────────────────────────────────────────────────
+        var confetti = document.getElementById('heroConfetti');
+        if (confetti) {
+            var colors = ['#86efac','#4ade80','#bbf7d0','#a3e635','#d9f99d','#f0fdf4'];
+            for (var i = 0; i < 22; i++) {
+                var p = document.createElement('div');
+                p.className = 'confetti-piece';
+                p.style.left             = Math.random() * 100 + '%';
+                p.style.top              = Math.random() * 100 + '%';
+                p.style.background       = colors[Math.floor(Math.random() * colors.length)];
+                p.style.animationDelay   = (Math.random() * 5) + 's';
+                p.style.animationDuration = (4 + Math.random() * 4) + 's';
+                p.style.transform        = 'rotate(' + Math.random() * 360 + 'deg)';
+                p.style.borderRadius     = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.appendChild(p);
+            }
+        }
+
+        // ── Progress fill on scroll ─────────────────────────────────────────────
+        function updateProgress() {
+            var scrolled = window.scrollY;
+            var total    = document.body.scrollHeight - window.innerHeight;
+            var pct      = total > 0 ? Math.round((scrolled / total) * 100) : 0;
+            var fill = document.getElementById('progFill');
+            if (fill) fill.style.width = pct + '%';
+        }
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        setTimeout(function () { document.getElementById('progFill').style.width = '5%'; }, 400);
+
+        // ── Sidebar active link on scroll ───────────────────────────────────────
+        var sections = document.querySelectorAll('[id^="sec-"]');
+        var sideLinks = document.querySelectorAll('.sidebar-nav a');
+        window.addEventListener('scroll', function () {
+            var scrollY = window.scrollY + 120;
+            sections.forEach(function (sec) {
+                if (sec.offsetTop <= scrollY && sec.offsetTop + sec.offsetHeight > scrollY) {
+                    sideLinks.forEach(function (a) { a.classList.remove('active'); });
+                    var match = document.querySelector('.sidebar-nav a[href="#' + sec.id + '"]');
+                    if (match) match.classList.add('active');
+                }
+            });
+        }, { passive: true });
+
+        // ── Progress bar section pills ──────────────────────────────────────────
+        document.querySelectorAll('.prog-sec').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.prog-sec').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+            });
+        });
+
+        // ── FAQ accordion ───────────────────────────────────────────────────────
+        document.querySelectorAll('.faq-q').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var item = btn.closest('.faq-item');
+                var isOpen = item.classList.contains('open');
+                document.querySelectorAll('.faq-item').forEach(function (i) { i.classList.remove('open'); });
+                if (!isOpen) item.classList.add('open');
+            });
+        });
+
+        // ── Checklist persistence ───────────────────────────────────────────────
+        var checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+        var today = new Date().toDateString();
+        checkboxes.forEach(function (cb) {
+            var key = 'cg_check_' + today + '_' + cb.id;
+            if (localStorage.getItem(key) === '1') {
+                cb.checked = true;
+                cb.closest('li').classList.add('done');
+            }
+            cb.addEventListener('change', function () {
+                localStorage.setItem(key, cb.checked ? '1' : '0');
+                cb.closest('li').classList.toggle('done', cb.checked);
+            });
+        });
+
+        // Reset checklist at midnight (new day)
+        var savedDate = localStorage.getItem('cg_checklist_date');
+        if (savedDate !== today) {
+            localStorage.setItem('cg_checklist_date', today);
+            checkboxes.forEach(function (cb) {
+                localStorage.removeItem('cg_check_' + savedDate + '_' + cb.id);
+            });
+        }
+    });
+
+    // Smooth scroll helper
+    function scrollTo(id) {
+        var el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    </script>
+</body>
+</html>
