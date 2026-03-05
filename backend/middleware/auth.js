@@ -13,9 +13,17 @@ const auth = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    req.user = {
+      ...decoded,
+      role: decoded.role || 'patient' // fallback for tokens issued before role was added
+    };
+
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Session expired. Please sign in again.' });
+    }
     res.status(401).json({ error: 'Token is not valid' });
   }
 };
