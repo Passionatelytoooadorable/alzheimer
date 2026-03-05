@@ -331,7 +331,7 @@
 
                 // Store user including role for redirect logic
                 var u = result.user || {};
-                localStorage.setItem('token',      'cookie'); // sentinel — real auth is via httpOnly cookie
+                localStorage.setItem('token',      result.token || '');
                 localStorage.setItem('user',       JSON.stringify({ ...u, role: u.role || role }));
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userName',   u.name     || name);
