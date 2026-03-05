@@ -13,8 +13,12 @@ function buildProfileNav(user) {
     var initial   = name.charAt(0).toUpperCase();
     var firstName = name.split(' ')[0];
 
+    // Role-aware Home: caregivers go to caregiver.html, patients to dashboard.html
+    var role     = fresh.role || (user && user.role) || 'patient';
+    var homeHref = (role === 'caregiver') ? 'caregiver.html' : 'dashboard.html';
+
     return [
-        '<a href="dashboard.html" class="nav-link">Home</a>',
+        '<a href="' + homeHref + '" class="nav-link">Home</a>',
         '<a href="resources.html" class="nav-link">Resources</a>',
         '<div class="profile-nav-wrap" id="profileNavWrap">',
             '<button type="button" class="profile-nav-btn" id="profileNavBtn">',
