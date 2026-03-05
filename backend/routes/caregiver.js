@@ -292,6 +292,25 @@ router.get('/patient/:patientId/moods', auth, requireRole('caregiver'), async (r
   }
 });
 
+// Patient scan reports
+router.get('/patient/:patientId/reports', auth, requireRole('caregiver'), async (req, res) => {
+  try {
+    const pid = parseInt(req.params.patientId);
+    await assertLinked(req.user.userId, pid);
+    const r = await query(
+      `SELECT id, file_name, result, risk_score, findings, doctor, notes, report_date, created_at
+       FROM reports WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [pid]
+    );
+    res.json({ reports: r.rows });
+  } catch (err) {
+    if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
+    console.error('patient reports error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ============================================================
 // MESSAGES
 // ============================================================
