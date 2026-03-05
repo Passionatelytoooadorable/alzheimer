@@ -6,21 +6,21 @@ const auth     = require('../middleware/auth');
 const router   = express.Router();
 
 // ── Cookie config helper ──────────────────────────────────────────────────────
-// Centralised so every route uses identical cookie settings
 function cookieOptions() {
   const isProd = process.env.NODE_ENV === 'production';
   return {
-    httpOnly: true,   // JS cannot read this cookie — blocks XSS token theft
-    secure:   isProd, // HTTPS only in production; plain HTTP allowed in dev
-    sameSite: isProd ? 'none' : 'lax', // 'none' needed for cross-origin (Vercel → Render)
-    maxAge:   24 * 60 * 60 * 1000      // 24 hours in milliseconds
+    httpOnly: true,
+    secure:   isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge:   24 * 60 * 60 * 1000
   };
 }
 
 // ── Sign up ───────────────────────────────────────────────────────────────────
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, username, password, phone_number } = req.body;
+    // ADDED: role field (defaults to 'patient' if not provided)
+    const { name, email, username, password, phone_number, role } = req.body;
 
     if (!name || !email || !username || !password) {
       return res.status(400).json({ error: 'Name, email, username, and password are required' });
@@ -28,6 +28,9 @@ router.post('/signup', async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
+
+    // ADDED: validate role value
+    const userRole = (role === 'caregiver') ? 'caregiver' : 'patient';
 
     const existingUser = await query(
       'SELECT id FROM users WHERE email = $1 OR username = $2',
@@ -39,11 +42,12 @@ router.post('/signup', async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, 10);
 
+    // ADDED: role column inserted into users table
     const newUser = await query(
-      `INSERT INTO users (name, email, username, password_hash, phone_number)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, name, email, username, phone_number, created_at`,
-      [name, email, username, password_hash, phone_number || null]
+      `INSERT INTO users (name, email, username, password_hash, phone_number, role)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, name, email, username, phone_number, role, created_at`,
+      [name, email, username, password_hash, phone_number || null, userRole]
     );
 
     await query(
@@ -56,19 +60,19 @@ router.post('/signup', async (req, res) => {
       [newUser.rows[0].id, 'signup', 'User created account']
     ).catch(() => {});
 
+    // ADDED: role included in JWT payload
     const token = jwt.sign(
-      { userId: newUser.rows[0].id, email: newUser.rows[0].email },
+      { userId: newUser.rows[0].id, email: newUser.rows[0].email, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Set JWT as httpOnly cookie instead of sending it in the body
     res.cookie('token', token, cookieOptions());
 
     res.status(201).json({
       message: 'User created successfully',
       user: newUser.rows[0]
-      // token intentionally NOT included in body anymore
+      // token intentionally NOT included in body
     });
 
   } catch (error) {
@@ -86,6 +90,7 @@ router.post('/signin', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    // ADDED: role included in SELECT
     const userResult = await query(
       'SELECT * FROM users WHERE email = $1 OR username = $1',
       [email]
@@ -111,21 +116,23 @@ router.post('/signin', async (req, res) => {
       [user.id, 'login', 'User logged in']
     ).catch(() => {});
 
+    // ADDED: role included in JWT payload
+    const userRole = user.role || 'patient';
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Set JWT as httpOnly cookie instead of sending it in the body
     res.cookie('token', token, cookieOptions());
 
     const { password_hash, ...userWithoutPassword } = user;
 
+    // ADDED: role explicitly included in response so frontend can use it
     res.json({
       message: 'Login successful',
-      user: userWithoutPassword
-      // token intentionally NOT included in body anymore
+      user: { ...userWithoutPassword, role: userRole }
+      // token intentionally NOT included in body
     });
 
   } catch (error) {
@@ -134,19 +141,18 @@ router.post('/signin', async (req, res) => {
   }
 });
 
-// ── Logout — clears the httpOnly cookie ──────────────────────────────────────
-// NEW endpoint: frontend calls this to properly sign out
+// ── Logout ────────────────────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
   res.clearCookie('token', cookieOptions());
   res.json({ message: 'Logged out successfully' });
 });
 
-// ── Me — lets frontend fetch the current user from the cookie ────────────────
-// NEW endpoint: frontend calls this on page load instead of reading localStorage
+// ── Me ────────────────────────────────────────────────────────────────────────
 router.get('/me', auth, async (req, res) => {
   try {
+    // ADDED: role included in SELECT
     const result = await query(
-      'SELECT id, name, email, username, phone_number, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email, username, phone_number, role, created_at FROM users WHERE id = $1',
       [req.user.userId]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
