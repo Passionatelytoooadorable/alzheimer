@@ -2,16 +2,17 @@ const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const morgan  = require('morgan');
-const cookieParser = require('cookie-parser'); // NEW
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
-const authRoutes     = require('./routes/auth');
-const memoryRoutes   = require('./routes/memories');
-const journalRoutes  = require('./routes/journals');
-const reminderRoutes = require('./routes/reminders');
-const locationRoutes = require('./routes/locations');
-const profileRoutes  = require('./routes/profile');
-const reportRoutes   = require('./routes/reports');
+const authRoutes      = require('./routes/auth');
+const memoryRoutes    = require('./routes/memories');
+const journalRoutes   = require('./routes/journals');
+const reminderRoutes  = require('./routes/reminders');
+const locationRoutes  = require('./routes/locations');
+const profileRoutes   = require('./routes/profile');
+const reportRoutes    = require('./routes/reports');
+const caregiverRoutes = require('./routes/caregiver'); // NEW
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +22,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
-// ── CORS — credentials:true required for cookies to work cross-origin ─────────
+// ── CORS ──────────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   'https://alzheimer-support.vercel.app',
   'http://localhost:3000',
@@ -37,15 +38,15 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true // NEW — required so the browser sends/receives cookies
+  credentials: true
 }));
 
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // NEW — must be before routes
+app.use(cookieParser());
 
-// ── Simple in-memory rate limiter (no extra dependency) ───────────────────────
+// ── Simple in-memory rate limiter ─────────────────────────────────────────────
 const rateLimitStore = new Map();
 
 function rateLimit(maxRequests, windowMs) {
@@ -72,7 +73,6 @@ function rateLimit(maxRequests, windowMs) {
   };
 }
 
-// Clean up rate limit store every 10 minutes to prevent memory bloat
 setInterval(function () {
   const now = Date.now();
   for (const [key, data] of rateLimitStore.entries()) {
@@ -80,13 +80,12 @@ setInterval(function () {
   }
 }, 10 * 60 * 1000);
 
-// Apply rate limits
-app.use('/api/auth/signin',          rateLimit(10,  15 * 60 * 1000)); // 10/15min
-app.use('/api/auth/signup',          rateLimit(5,   60 * 60 * 1000)); // 5/hour
-app.use('/api/auth/forgot-password', rateLimit(3,   60 * 60 * 1000)); // 3/hour
-app.use('/api/chat',                 rateLimit(30,  60 * 1000));       // 30/min
+app.use('/api/auth/signin',          rateLimit(10, 15 * 60 * 1000));
+app.use('/api/auth/signup',          rateLimit(5,  60 * 60 * 1000));
+app.use('/api/auth/forgot-password', rateLimit(3,  60 * 60 * 1000));
+app.use('/api/chat',                 rateLimit(30, 60 * 1000));
 
-// ── Input validation middleware ───────────────────────────────────────────────
+// ── Input sanitisation ────────────────────────────────────────────────────────
 app.use(function (req, res, next) {
   if (req.body && typeof req.body === 'object') {
     JSON.stringify(req.body, function (key, value) {
@@ -105,6 +104,7 @@ app.use('/api/reminders', reminderRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/profile',   profileRoutes);
 app.use('/api/reports',   reportRoutes);
+app.use('/api/caregiver', caregiverRoutes); // NEW
 
 // ── AI Chat endpoint ──────────────────────────────────────────────────────────
 const getSystemPrompt = () => {
@@ -132,18 +132,14 @@ Guidelines:
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages } = req.body;
-
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Invalid request: messages array is required' });
     }
-
     const trimmedMessages = messages.slice(-20);
-
     if (!process.env.GROQ_API_KEY) {
       console.error('GROQ_API_KEY not set');
       return res.status(500).json({ error: 'AI service is not configured' });
     }
-
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -159,19 +155,14 @@ app.post('/api/chat', async (req, res) => {
         ]
       })
     });
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error('Groq API error:', JSON.stringify(errorData));
-      return res.status(response.status).json({
-        error: errorData.error?.message || 'AI service error'
-      });
+      return res.status(response.status).json({ error: errorData.error?.message || 'AI service error' });
     }
-
     const data      = await response.json();
     const replyText = data.choices[0]?.message?.content || '';
     res.json({ reply: replyText });
-
   } catch (error) {
     console.error('Chat proxy error:', error.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -204,9 +195,7 @@ app.get('/api/test', (req, res) => {
 app.use(function (err, req, res, next) {
   console.error('Unhandled error:', err);
   const isProd = process.env.NODE_ENV === 'production';
-  res.status(500).json({
-    error: isProd ? 'Internal server error' : err.message
-  });
+  res.status(500).json({ error: isProd ? 'Internal server error' : err.message });
 });
 
 app.use('*', (req, res) => {
