@@ -38,7 +38,7 @@
         .guide-hero {
             position: relative; overflow: hidden;
             background: linear-gradient(135deg, var(--g1) 0%, var(--g3) 55%, #16a34a 100%);
-            color: white; padding: 3rem 2rem 3.5rem;
+            color: white; padding: 1.6rem 2rem;
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;
         }
         .guide-hero::before {
@@ -67,11 +67,11 @@
         .hero-text p { opacity: 0.88; font-size: 1rem; max-width: 480px; line-height: 1.6; }
 
         .hero-icons {
-            display: flex; gap: 1.2rem; flex-wrap: wrap; position: relative; z-index: 1;
+            display: grid; grid-template-columns: repeat(2, 70px); gap: 0.4rem; position: relative; z-index: 1; align-self: center;
         }
         .hero-icon-bubble {
             background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 16px; padding: 0.9rem 1.3rem; text-align: center;
+            border-radius: 8px; padding: 0.28rem 0.4rem; text-align: center;
             backdrop-filter: blur(4px);
             animation: bobble 3s ease-in-out infinite;
         }
@@ -82,36 +82,15 @@
             0%, 100% { transform: translateY(0); }
             50%       { transform: translateY(-8px); }
         }
-        .hero-icon-bubble .bbl-icon { font-size: 1.8rem; display: block; margin-bottom: 0.25rem; }
-        .hero-icon-bubble .bbl-lbl  { font-size: 0.72rem; font-weight: 600; opacity: 0.9; }
+        .hero-icon-bubble .bbl-icon { font-size: 0.85rem; display: block; margin-bottom: 0.04rem; }
+        .hero-icon-bubble .bbl-lbl  { font-size: 0.55rem; font-weight: 600; opacity: 0.9; white-space: nowrap; }
 
-        /* ── Progress bar ── */
-        .progress-bar-wrap {
-            background: white; padding: 1.1rem 2rem;
-            display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
-            border-bottom: 1px solid var(--g6);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-        .progress-bar-wrap span { font-size: 0.8rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
-        .prog-track { flex: 1; height: 8px; background: var(--g6); border-radius: 4px; min-width: 100px; }
-        .prog-fill  {
-            height: 100%; background: linear-gradient(90deg, var(--g3), var(--g4));
-            border-radius: 4px; width: 0; transition: width 1s ease;
-        }
-        .prog-sections {
-            display: flex; gap: 0.5rem; flex-wrap: wrap;
-        }
-        .prog-sec {
-            font-size: 0.72rem; padding: 0.2rem 0.65rem; border-radius: 10px;
-            background: var(--g6); color: var(--g2); font-weight: 600; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .prog-sec:hover, .prog-sec.active { background: var(--g3); color: white; }
+        
 
         /* ── Main content ── */
         .guide-body {
-            max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem;
-            display: grid; grid-template-columns: 260px 1fr; gap: 2rem;
+            max-width: 1400px; margin: 0 auto; padding: 2.5rem 3rem;
+            display: grid; grid-template-columns: 280px 1fr; gap: 2rem;
         }
         @media (max-width: 768px) { .guide-body { grid-template-columns: 1fr; } }
 
@@ -234,7 +213,7 @@
 
         /* Emergency contacts table */
         .emergency-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 0.85rem;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 0.85rem; margin-bottom: 2.5rem;
         }
         .emerg-card {
             background: #f0fdf4; border: 1px solid var(--g5); border-radius: 10px;
@@ -261,15 +240,6 @@
             font-size: 0.86rem; color: var(--muted); line-height: 1.7; padding: 0;
         }
         .faq-item.open .faq-a { max-height: 300px; padding-bottom: 1rem; }
-
-        /* Back button */
-        .back-btn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            background: white; border: 1.5px solid var(--g5); border-radius: 8px;
-            padding: 0.45rem 1rem; font-size: 0.83rem; font-weight: 600;
-            color: var(--g2); text-decoration: none; transition: all 0.2s; margin-bottom: 1.5rem;
-        }
-        .back-btn:hover { background: var(--g6); border-color: var(--g3); }
 
         /* Floating decorative icons */
         .float-deco {
@@ -302,7 +272,21 @@
             <div class="logo-icon">🧠</div>
             <div class="logo-text">Alzheimer's Support</div>
         </div>
-        <nav class="nav-links" id="sharedNav"></nav>
+        <nav class="nav-links" id="sharedNav">
+            <a href="caregiver.html" class="nav-link">Home</a>
+            <a href="resources.html" class="nav-link">Resources</a>
+            <div class="profile-nav-wrap" id="profileNavWrap">
+                <button type="button" class="profile-nav-btn" id="profileNavBtn">
+                    <div class="profile-avatar-small" id="navInitial">S</div>
+                    <span class="profile-name-short" id="navName">Smith</span>
+                    <span class="profile-caret">&#9660;</span>
+                </button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <a href="profile.html" class="dropdown-item">&#128100; My Profile</a>
+                    <a href="#" class="dropdown-item" id="dropLogout">&#128682; Logout</a>
+                </div>
+            </div>
+        </nav>
     </header>
 
     <!-- Hero -->
@@ -331,20 +315,7 @@
             </div>
         </div>
     </section>
-
-    <!-- Progress indicator -->
-    <div class="progress-bar-wrap">
-        <span>Guide Sections</span>
-        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
-        <div class="prog-sections">
-            <span class="prog-sec active" onclick="scrollTo('sec-stages')">Stages</span>
-            <span class="prog-sec" onclick="scrollTo('sec-daily')">Daily</span>
-            <span class="prog-sec" onclick="scrollTo('sec-medication')">Medication</span>
-            <span class="prog-sec" onclick="scrollTo('sec-emergency')">Emergency</span>
-            <span class="prog-sec" onclick="scrollTo('sec-selfcare')">Self-Care</span>
-            <span class="prog-sec" onclick="scrollTo('sec-faq')">FAQ</span>
-        </div>
-    </div>
+</div>
 
     <div class="guide-body">
 
@@ -369,9 +340,6 @@
 
         <!-- Main content -->
         <main class="guide-content">
-
-            <a href="profile.html" class="back-btn">← Back to Profile</a>
-
             <!-- Section 1: Stages -->
             <div id="sec-stages">
                 <div class="section-header">
@@ -662,6 +630,33 @@
     <script src="nav-shared.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // ── Inline nav init (works without nav-shared.js) ─────────────────────
+        var _u = JSON.parse(localStorage.getItem('user') || '{}');
+        var _name = _u.name || localStorage.getItem('userName') || 'User';
+        var _ini  = _name.charAt(0).toUpperCase();
+        var el = document.getElementById('navInitial'); if (el) el.textContent = _ini;
+        var nl = document.getElementById('navName');    if (nl) nl.textContent = _name.split(' ')[0];
+
+        var navBtn = document.getElementById('profileNavBtn');
+        var navDd  = document.getElementById('profileDropdown');
+        if (navBtn) {
+            navBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (navDd) navDd.classList.toggle('open');
+            });
+        }
+        document.addEventListener('click', function() {
+            if (navDd) navDd.classList.remove('open');
+        });
+        var logoutBtn = document.getElementById('dropLogout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted']
+                    .forEach(function(k) { localStorage.removeItem(k); });
+                window.location.href = 'signup.html';
+            });
+        }
         if (typeof initSharedNav === 'function') initSharedNav('caregiver-guide.html');
 
         // ── Confetti ────────────────────────────────────────────────────────────
@@ -706,49 +701,6 @@
                 }
             });
         }, { passive: true });
-
-        // ── Progress bar section pills ──────────────────────────────────────────
-        document.querySelectorAll('.prog-sec').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.prog-sec').forEach(function (b) { b.classList.remove('active'); });
-                btn.classList.add('active');
-            });
-        });
-
-        // ── FAQ accordion ───────────────────────────────────────────────────────
-        document.querySelectorAll('.faq-q').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var item = btn.closest('.faq-item');
-                var isOpen = item.classList.contains('open');
-                document.querySelectorAll('.faq-item').forEach(function (i) { i.classList.remove('open'); });
-                if (!isOpen) item.classList.add('open');
-            });
-        });
-
-        // ── Checklist persistence ───────────────────────────────────────────────
-        var checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
-        var today = new Date().toDateString();
-        checkboxes.forEach(function (cb) {
-            var key = 'cg_check_' + today + '_' + cb.id;
-            if (localStorage.getItem(key) === '1') {
-                cb.checked = true;
-                cb.closest('li').classList.add('done');
-            }
-            cb.addEventListener('change', function () {
-                localStorage.setItem(key, cb.checked ? '1' : '0');
-                cb.closest('li').classList.toggle('done', cb.checked);
-            });
-        });
-
-        // Reset checklist at midnight (new day)
-        var savedDate = localStorage.getItem('cg_checklist_date');
-        if (savedDate !== today) {
-            localStorage.setItem('cg_checklist_date', today);
-            checkboxes.forEach(function (cb) {
-                localStorage.removeItem('cg_check_' + savedDate + '_' + cb.id);
-            });
-        }
-    });
 
     // Smooth scroll helper
     function scrollTo(id) {
