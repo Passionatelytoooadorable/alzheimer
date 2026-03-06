@@ -67,11 +67,11 @@
         .hero-text p { opacity: 0.88; font-size: 1rem; max-width: 480px; line-height: 1.6; }
 
         .hero-icons {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; position: relative; z-index: 1;
+            display: grid; grid-template-columns: repeat(2, 90px); gap: 0.5rem; position: relative; z-index: 1; align-self: center;
         }
         .hero-icon-bubble {
             background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 12px; padding: 0.45rem 0.7rem; text-align: center;
+            border-radius: 10px; padding: 0.35rem 0.5rem; text-align: center;
             backdrop-filter: blur(4px);
             animation: bobble 3s ease-in-out infinite;
         }
@@ -82,8 +82,8 @@
             0%, 100% { transform: translateY(0); }
             50%       { transform: translateY(-8px); }
         }
-        .hero-icon-bubble .bbl-icon { font-size: 1.2rem; display: block; margin-bottom: 0.1rem; }
-        .hero-icon-bubble .bbl-lbl  { font-size: 0.65rem; font-weight: 600; opacity: 0.9; white-space: nowrap; }
+        .hero-icon-bubble .bbl-icon { font-size: 1rem; display: block; margin-bottom: 0.08rem; }
+        .hero-icon-bubble .bbl-lbl  { font-size: 0.6rem; font-weight: 600; opacity: 0.9; white-space: nowrap; }
 
         
 
