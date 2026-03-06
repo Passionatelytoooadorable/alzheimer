@@ -71,7 +71,7 @@
         }
         .hero-icon-bubble {
             background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 16px; padding: 0.9rem 1.3rem; text-align: center;
+            border-radius: 12px; padding: 0.45rem 0.7rem; text-align: center;
             backdrop-filter: blur(4px);
             animation: bobble 3s ease-in-out infinite;
         }
@@ -82,8 +82,8 @@
             0%, 100% { transform: translateY(0); }
             50%       { transform: translateY(-8px); }
         }
-        .hero-icon-bubble .bbl-icon { font-size: 1.8rem; display: block; margin-bottom: 0.25rem; }
-        .hero-icon-bubble .bbl-lbl  { font-size: 0.72rem; font-weight: 600; opacity: 0.9; }
+        .hero-icon-bubble .bbl-icon { font-size: 1.2rem; display: block; margin-bottom: 0.1rem; }
+        .hero-icon-bubble .bbl-lbl  { font-size: 0.65rem; font-weight: 600; opacity: 0.9; white-space: nowrap; }
 
         
 
@@ -241,15 +241,6 @@
         }
         .faq-item.open .faq-a { max-height: 300px; padding-bottom: 1rem; }
 
-        /* Back button */
-        .back-btn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            background: white; border: 1.5px solid var(--g5); border-radius: 8px;
-            padding: 0.45rem 1rem; font-size: 0.83rem; font-weight: 600;
-            color: var(--g2); text-decoration: none; transition: all 0.2s; margin-bottom: 1.5rem;
-        }
-        .back-btn:hover { background: var(--g6); border-color: var(--g3); }
-
         /* Floating decorative icons */
         .float-deco {
             position: fixed; pointer-events: none; z-index: 0; opacity: 0.045;
@@ -311,15 +302,6 @@
         </div>
     </section>
 </div>
-        <div class="prog-sections">
-            <span class="prog-sec active" onclick="scrollTo('sec-stages')">Stages</span>
-            <span class="prog-sec" onclick="scrollTo('sec-daily')">Daily</span>
-            <span class="prog-sec" onclick="scrollTo('sec-medication')">Medication</span>
-            <span class="prog-sec" onclick="scrollTo('sec-emergency')">Emergency</span>
-            <span class="prog-sec" onclick="scrollTo('sec-selfcare')">Self-Care</span>
-            <span class="prog-sec" onclick="scrollTo('sec-faq')">FAQ</span>
-        </div>
-    </div>
 
     <div class="guide-body">
 
@@ -344,9 +326,6 @@
 
         <!-- Main content -->
         <main class="guide-content">
-
-            <a href="profile.html" class="back-btn">← Back to Profile</a>
-
             <!-- Section 1: Stages -->
             <div id="sec-stages">
                 <div class="section-header">
