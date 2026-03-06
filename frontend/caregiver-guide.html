@@ -67,7 +67,7 @@
         .hero-text p { opacity: 0.88; font-size: 1rem; max-width: 480px; line-height: 1.6; }
 
         .hero-icons {
-            display: flex; gap: 1.2rem; flex-wrap: wrap; position: relative; z-index: 1;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; position: relative; z-index: 1;
         }
         .hero-icon-bubble {
             background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
@@ -85,33 +85,12 @@
         .hero-icon-bubble .bbl-icon { font-size: 1.8rem; display: block; margin-bottom: 0.25rem; }
         .hero-icon-bubble .bbl-lbl  { font-size: 0.72rem; font-weight: 600; opacity: 0.9; }
 
-        /* ── Progress bar ── */
-        .progress-bar-wrap {
-            background: white; padding: 1.1rem 2rem;
-            display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
-            border-bottom: 1px solid var(--g6);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-        .progress-bar-wrap span { font-size: 0.8rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
-        .prog-track { flex: 1; height: 8px; background: var(--g6); border-radius: 4px; min-width: 100px; }
-        .prog-fill  {
-            height: 100%; background: linear-gradient(90deg, var(--g3), var(--g4));
-            border-radius: 4px; width: 0; transition: width 1s ease;
-        }
-        .prog-sections {
-            display: flex; gap: 0.5rem; flex-wrap: wrap;
-        }
-        .prog-sec {
-            font-size: 0.72rem; padding: 0.2rem 0.65rem; border-radius: 10px;
-            background: var(--g6); color: var(--g2); font-weight: 600; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .prog-sec:hover, .prog-sec.active { background: var(--g3); color: white; }
+        
 
         /* ── Main content ── */
         .guide-body {
-            max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem;
-            display: grid; grid-template-columns: 260px 1fr; gap: 2rem;
+            max-width: 1400px; margin: 0 auto; padding: 2.5rem 3rem;
+            display: grid; grid-template-columns: 280px 1fr; gap: 2rem;
         }
         @media (max-width: 768px) { .guide-body { grid-template-columns: 1fr; } }
 
@@ -234,7 +213,7 @@
 
         /* Emergency contacts table */
         .emergency-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 0.85rem;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 0.85rem; margin-bottom: 2.5rem;
         }
         .emerg-card {
             background: #f0fdf4; border: 1px solid var(--g5); border-radius: 10px;
@@ -331,11 +310,7 @@
             </div>
         </div>
     </section>
-
-    <!-- Progress indicator -->
-    <div class="progress-bar-wrap">
-        <span>Guide Sections</span>
-        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+</div>
         <div class="prog-sections">
             <span class="prog-sec active" onclick="scrollTo('sec-stages')">Stages</span>
             <span class="prog-sec" onclick="scrollTo('sec-daily')">Daily</span>
@@ -706,49 +681,6 @@
                 }
             });
         }, { passive: true });
-
-        // ── Progress bar section pills ──────────────────────────────────────────
-        document.querySelectorAll('.prog-sec').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.prog-sec').forEach(function (b) { b.classList.remove('active'); });
-                btn.classList.add('active');
-            });
-        });
-
-        // ── FAQ accordion ───────────────────────────────────────────────────────
-        document.querySelectorAll('.faq-q').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var item = btn.closest('.faq-item');
-                var isOpen = item.classList.contains('open');
-                document.querySelectorAll('.faq-item').forEach(function (i) { i.classList.remove('open'); });
-                if (!isOpen) item.classList.add('open');
-            });
-        });
-
-        // ── Checklist persistence ───────────────────────────────────────────────
-        var checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
-        var today = new Date().toDateString();
-        checkboxes.forEach(function (cb) {
-            var key = 'cg_check_' + today + '_' + cb.id;
-            if (localStorage.getItem(key) === '1') {
-                cb.checked = true;
-                cb.closest('li').classList.add('done');
-            }
-            cb.addEventListener('change', function () {
-                localStorage.setItem(key, cb.checked ? '1' : '0');
-                cb.closest('li').classList.toggle('done', cb.checked);
-            });
-        });
-
-        // Reset checklist at midnight (new day)
-        var savedDate = localStorage.getItem('cg_checklist_date');
-        if (savedDate !== today) {
-            localStorage.setItem('cg_checklist_date', today);
-            checkboxes.forEach(function (cb) {
-                localStorage.removeItem('cg_check_' + savedDate + '_' + cb.id);
-            });
-        }
-    });
 
     // Smooth scroll helper
     function scrollTo(id) {
