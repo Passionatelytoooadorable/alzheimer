@@ -6,49 +6,53 @@
     <title>Dashboard - Alzheimer's Support</title>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
+    <!-- Inline auth guard: runs before any paint to prevent flash of protected content -->
     <script>
-        function checkAuthDash() {
+        (function () {
             if (!localStorage.getItem('token')) {
-                window.location.replace('signup.html');
+                window.location.replace('login.html');
             }
-        }
-        checkAuthDash();
-        window.addEventListener('pageshow', function(e) {
-            if (e.persisted) checkAuthDash();
-        });
+        })();
     </script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="profile.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>🧠</text></svg>">
     <style>
+        /* ── Caregiver link / inbox styles ────────────────────────────────── */
         .cg-card {
             background: white; border-radius: 14px; padding: 1.4rem 1.5rem;
             box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 1.5rem;
         }
         .cg-card h3 { font-size: 1rem; color: #444; margin: 0 0 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
         .cg-unread-badge { background: #f44336; color: white; border-radius: 10px; padding: 0.05rem 0.45rem; font-size: 0.7rem; font-weight: 700; }
+
         .inbox-msg { padding: 0.55rem 0.75rem; border-radius: 8px; margin-bottom: 0.4rem; border-left: 3px solid #4a86e8; background: #e8f0fe; font-size: 0.85rem; }
         .inbox-msg.read { border-left-color: #ddd; background: #f8f9fa; }
         .inbox-msg-text { color: #333; }
         .inbox-msg-meta { font-size: 0.72rem; color: #aaa; margin-top: 0.2rem; display: flex; gap: 0.6rem; align-items: center; }
-        .mark-read-btn { background: none; border: none; color: #4a86e8; cursor: pointer; font-size: 0.72rem; padding: 0; }
+        .mark-read-btn  { background: none; border: none; color: #4a86e8; cursor: pointer; font-size: 0.72rem; padding: 0; }
+
         .link-status-box { border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 0.75rem; }
         .link-status-box.pending  { background: #fff8e1; border: 1px solid #ffe082; color: #795548; }
         .link-status-box.accepted { background: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; }
         .link-status-box.rejected { background: #fdecea; border: 1px solid #f5c6cb; color: #c62828; }
+
         .link-input-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
         .link-input-row input { flex: 1; min-width: 160px; padding: 0.5rem 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.88rem; }
         .link-input-row input:focus { outline: none; border-color: #4a86e8; }
-        .link-send-btn { background: #4a86e8; color: white; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
+        .link-send-btn  { background: #4a86e8; color: white; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
         .link-send-btn:hover { background: #3a76d8; }
         .unlink-btn { background: none; border: 1px solid #ddd; border-radius: 6px; padding: 0.25rem 0.75rem; cursor: pointer; font-size: 0.78rem; color: #888; margin-top: 0.5rem; }
         .unlink-btn:hover { background: #f5f5f5; }
         #linkReqStatus { font-size: 0.8rem; margin-top: 0.4rem; min-height: 1.2em; }
+
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+    <!-- ── Header ── -->
     <header class="header">
         <div class="logo">
             <div class="logo-icon">🧠</div>
@@ -63,11 +67,12 @@
         </div>
     </header>
 
+    <!-- ── Today banner ── -->
     <div class="today-banner">
         <div class="tb-item">
             <div class="tb-label">Today</div>
             <div class="tb-value" id="tbDate">—</div>
-            <div class="tb-sub" id="tbDay">—</div>
+            <div class="tb-sub"   id="tbDay">—</div>
         </div>
         <div class="tb-divider"></div>
         <div class="tb-item">
@@ -81,6 +86,7 @@
         </div>
     </div>
 
+    <!-- ── Mood strip ── -->
     <div class="mood-strip">
         <span class="mood-label">How are you feeling today?</span>
         <div class="mood-btns">
@@ -94,6 +100,7 @@
         <span class="mood-saved" id="moodSaved">✅ Saved!</span>
     </div>
 
+    <!-- ── Welcome hero ── -->
     <section class="welcome-header">
         <div class="welcome-content">
             <h1>Welcome, <span id="userName"></span></h1>
@@ -113,25 +120,28 @@
                 </div>
             </div>
             <div class="floating-icons">
-                <div class="floating-icon" onclick="location.href='memory-vault.html'" role="button" tabindex="0">
+                <div class="floating-icon" onclick="location.href='memory-vault.html'" role="button" tabindex="0" aria-label="Memory Vault">
                     <div>📸</div><div class="icon-label">Memory</div>
                 </div>
-                <div class="floating-icon" onclick="location.href='journal.html'" role="button" tabindex="0">
+                <div class="floating-icon" onclick="location.href='journal.html'" role="button" tabindex="0" aria-label="Journal">
                     <div>📝</div><div class="icon-label">Journal</div>
                 </div>
-                <div class="floating-icon" onclick="location.href='location-tracker.html'" role="button" tabindex="0">
+                <div class="floating-icon" onclick="location.href='location-tracker.html'" role="button" tabindex="0" aria-label="Location">
                     <div>📍</div><div class="icon-label">Location</div>
                 </div>
-                <div class="floating-icon" onclick="location.href='ai-companion.html'" role="button" tabindex="0">
+                <div class="floating-icon" onclick="location.href='ai-companion.html'" role="button" tabindex="0" aria-label="AI Companion">
                     <div>🤖</div><div class="icon-label">AI</div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- ── Main content ── -->
     <main class="dashboard-container">
 
+        <!-- Row 1: Reminders | Activity | Emergency -->
         <div class="feature-row">
+
             <!-- Today's Reminders -->
             <div class="feature-tile reminders-tile">
                 <div class="tile-header">
@@ -177,7 +187,7 @@
                                 <div class="contact-name" id="emergName">Loading…</div>
                                 <div class="contact-role">Emergency Contact</div>
                             </div>
-                            <button class="call-btn" id="emergCallBtn">📞 Call</button>
+                            <button class="call-btn" id="emergCallBtn" aria-label="Call emergency contact">📞 Call</button>
                         </div>
                         <div class="contact-card">
                             <div class="contact-avatar">🏥</div>
@@ -187,11 +197,12 @@
                             </div>
                         </div>
                     </div>
-                    <button class="emergency-btn" id="emergencyBtn">🆘 Emergency Help</button>
+                    <button class="emergency-btn" id="emergencyBtn" aria-label="Open emergency contacts">🆘 Emergency Help</button>
                 </div>
             </div>
         </div>
 
+        <!-- Row 2: Memory | Journal | Location | AI -->
         <div class="feature-row">
             <a href="memory-vault.html" class="feature-tile memory-tile">
                 <div class="tile-header">
@@ -255,7 +266,7 @@
             </a>
         </div>
 
-        <!-- ── Caregiver section — only shown for patients ── -->
+        <!-- ── Caregiver section — injected only for patients by dashboard.js ── -->
         <div id="caregiverSection" style="display:none;">
 
             <!-- Messages from caregiver (shown only when linked) -->
@@ -273,6 +284,7 @@
             <div class="cg-card">
                 <h3>🔗 Link to a Caregiver</h3>
                 <div id="linkStatusSection">
+                    <!-- Spinner shown while loading link status -->
                     <div style="color:#aaa;font-size:0.85rem;text-align:center;padding:0.5rem;">
                         <span style="display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:#4a86e8;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;"></span>Checking…
                     </div>
@@ -287,14 +299,15 @@
         <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
-    <div id="emergencyModal" class="modal">
+    <!-- ── Emergency modal ── -->
+    <div id="emergencyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="emergModalTitle">
         <div class="modal-content">
-            <span class="close" id="modalClose">&times;</span>
-            <h2>🆘 Emergency Contacts</h2>
+            <button class="close" id="modalClose" aria-label="Close emergency modal">&times;</button>
+            <h2 id="emergModalTitle">🆘 Emergency Contacts</h2>
             <div class="contact-list">
                 <div class="contact-item">
                     <div class="contact-name" id="modalEmergName">Emergency Contact</div>
-                    <button class="call-btn" id="modalEmergCall">📞 Call</button>
+                    <button class="call-btn" id="modalEmergCall" aria-label="Call emergency contact">📞 Call</button>
                 </div>
                 <div class="contact-item">
                     <div class="contact-name">Alzheimer's Helpline (24/7)</div>
@@ -308,239 +321,11 @@
         </div>
     </div>
 
+    <!-- Scripts — order matters: api → user-store → nav-shared → dashboard -->
     <script src="api.js"></script>
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
     <script src="dashboard.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (typeof initSharedNav === 'function') initSharedNav('dashboard.html');
 
-        var now     = new Date();
-        var dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        var dayStr  = now.toLocaleDateString('en-US', { weekday: 'long' });
-        document.getElementById('tbDate').textContent      = dateStr;
-        document.getElementById('tbDay').textContent       = dayStr;
-        document.getElementById('currentDate').textContent = dayStr + ', ' + dateStr;
-
-        var stored = localStorage.getItem('user');
-        if (stored) {
-            var u = JSON.parse(stored);
-            document.getElementById('userName').textContent = u.name || u.username || 'Friend';
-        }
-
-        // Show caregiver section only for patients
-        var role = (JSON.parse(localStorage.getItem('user') || '{}')).role || 'patient';
-        if (role === 'patient') {
-            document.getElementById('caregiverSection').style.display = 'block';
-            loadLinkStatus();
-            loadInbox();
-            setInterval(loadInbox, 60000);
-        }
-
-        // Health check
-        fetch('https://alzheimer-backend-new.onrender.com/api/health')
-            .then(function(r) {
-                var p = document.getElementById('connPill');
-                if (r.ok) { p.className = 'conn-pill online'; document.getElementById('connTxt').textContent = 'Connected'; }
-                else throw 0;
-            }).catch(function() {
-                var p = document.getElementById('connPill');
-                p.className = 'conn-pill offline';
-                document.getElementById('connTxt').textContent = 'Offline';
-            });
-
-        Promise.allSettled([loadReminders(), loadStats(), loadProfile(), loadActivity(), loadLocation()]);
-    });
-
-    function loadReminders() {
-        return API.get('/reminders?filter=today').then(function(r) { return r.json(); }).then(function(data) {
-            var list = data.reminders || [], pending = data.today_pending || 0;
-            document.getElementById('reminderCount').textContent = pending;
-            document.getElementById('tbPend').textContent        = pending;
-            document.getElementById('remChip').textContent       = pending + ' pending';
-            var ul = document.getElementById('remindersList');
-            if (!list.length) { ul.innerHTML = '<li class="reminder-empty">🎉 No reminders today</li>'; document.getElementById('tbNext').textContent = 'None today'; return; }
-            var done = list.filter(function(r) { return r.completed; }).length;
-            ul.innerHTML = list.slice(0, 4).map(function(r) {
-                return '<li class="reminder-item' + (r.completed ? ' completed' : '') + '">' +
-                    '<span class="reminder-status-dot">' + (r.completed ? '✅' : '⏰') + '</span>' +
-                    '<span class="reminder-text">' + esc(r.title) + '</span>' +
-                    (r.reminder_time ? '<span class="reminder-time">' + r.reminder_time.substring(0,5) + '</span>' : '') + '</li>';
-            }).join('') + (list.length > 4 ? '<li class="reminder-more">+' + (list.length - 4) + ' more</li>' : '');
-            var pct = Math.round((done / list.length) * 100);
-            document.getElementById('compFill').style.width  = pct + '%';
-            document.getElementById('compLabel').textContent = done + ' / ' + list.length + ' completed';
-            var nx = list.find(function(r) { return !r.completed && r.reminder_time; });
-            document.getElementById('tbNext').textContent = nx ? nx.title + ' at ' + nx.reminder_time.substring(0,5) : 'All done!';
-        }).catch(function() { document.getElementById('remindersList').innerHTML = '<li class="reminder-empty">Could not load</li>'; document.getElementById('tbNext').textContent = 'Unavailable'; });
-    }
-
-    function loadStats() {
-        return Promise.all([
-            API.get('/journals').then(function(r) { return r.json(); }),
-            API.get('/memories').then(function(r) { return r.json(); })
-        ]).then(function(results) {
-            var jr = results[0], mr = results[1];
-            var jt = parseInt((jr.stats || {}).total    || 0);
-            var jw = parseInt((jr.stats || {}).this_week || 0);
-            var mc = (mr.memories || []).length;
-            document.getElementById('journalCount').textContent = jt;
-            document.getElementById('memoryCount').textContent  = mc;
-            var jc2 = document.getElementById('journalCount2'); var mc2 = document.getElementById('memoryCount2');
-            var wc  = document.getElementById('weeklyCount');   var jb  = document.getElementById('journalBadge');
-            var mb  = document.getElementById('memoryBadge');
-            if (jc2) jc2.textContent = jt; if (mc2) mc2.textContent = mc;
-            if (wc)  wc.textContent  = jw; if (jb)  jb.textContent  = jt + ' entries';
-            if (mb)  mb.textContent  = mc + ' memories';
-        }).catch(function() {});
-    }
-
-    function loadProfile() {
-        return API.get('/profile').then(function(r) { return r.json(); }).then(function(data) {
-            var p = data.profile || {}, m = data.medical || {};
-            if (p.emergency) {
-                document.getElementById('emergName').textContent      = p.emergency;
-                document.getElementById('modalEmergName').textContent = p.emergency;
-                document.getElementById('emergCallBtn').onclick       = function() { location.href = 'tel:' + p.emergency; };
-                document.getElementById('modalEmergCall').onclick     = function() { location.href = 'tel:' + p.emergency; };
-            } else { document.getElementById('emergName').textContent = 'Not set — update in Profile'; }
-            if (m.doctor)   document.getElementById('drName').textContent = m.doctor;
-            if (m.hospital) document.getElementById('drHosp').textContent = m.hospital;
-        }).catch(function() {});
-    }
-
-    function loadActivity() {
-        var icons = { login:'🔐', signup:'🎉', journal_added:'📝', journal_deleted:'🗑️', memory_added:'📸', memory_deleted:'🗑️', reminder_added:'⏰', reminder_deleted:'🗑️', location_updated:'📍', report_added:'🔬' };
-        return API.get('/auth/activities').then(function(r) { return r.json(); }).then(function(data) {
-            var acts = (data.activities || []).slice(0, 5);
-            var ul   = document.getElementById('activityList');
-            ul.innerHTML = acts.length
-                ? acts.map(function(a) { return '<li class="activity-item"><span class="act-icon">' + (icons[a.activity_type] || '📌') + '</span><div class="act-body"><div class="act-text">' + esc(a.description) + '</div><div class="act-time">' + timeAgo(new Date(a.timestamp)) + '</div></div></li>'; }).join('')
-                : '<li class="activity-empty">No activity yet.</li>';
-        }).catch(function() { document.getElementById('activityList').innerHTML = '<li class="activity-empty">Unavailable.</li>'; });
-    }
-
-    function loadLocation() {
-        return API.get('/locations/last').then(function(r) { return r.json(); }).then(function(data) {
-            var loc = data.location;
-            if (loc) { document.getElementById('locChip').textContent = 'Sharing'; document.getElementById('locUpdate').textContent = 'Last updated: ' + timeAgo(new Date(loc.timestamp)); }
-            else { document.getElementById('locChip').textContent = 'Not sharing'; document.getElementById('locChip').className = 'tile-chip chip-peach'; }
-        }).catch(function() {});
-    }
-
-    // ── Caregiver link ────────────────────────────────────────────────────────
-    async function loadLinkStatus() {
-        var section = document.getElementById('linkStatusSection');
-        try {
-            var res  = await API.get('/caregiver/link-status');
-            var data = await res.json();
-            var link = data.link;
-
-            if (!link) {
-                section.innerHTML =
-                    '<p style="font-size:0.83rem;color:#666;margin:0 0 0.6rem;">Enter your caregiver\'s email or username to connect with them.</p>' +
-                    '<div class="link-input-row"><input type="text" id="caregiverIdentifier" placeholder="Caregiver email or username"><button class="link-send-btn" onclick="sendLinkRequest()">📤 Send Request</button></div>' +
-                    '<div id="linkReqStatus"></div>';
-                return;
-            }
-            if (link.status === 'pending') {
-                section.innerHTML = '<div class="link-status-box pending">⏳ Request sent to <strong>' + esc(link.caregiver_name) + '</strong> — waiting for approval.</div>' +
-                    '<button class="unlink-btn" onclick="unlinkCaregiver()">Cancel request</button>';
-                return;
-            }
-            if (link.status === 'accepted') {
-                section.innerHTML = '<div class="link-status-box accepted">✅ Linked to <strong>' + esc(link.caregiver_name) + '</strong> (' + esc(link.caregiver_email) + ').<br><span style="font-size:0.78rem;color:#555;">Your caregiver can see your activity, location, mood trends, and send you messages.</span></div>' +
-                    '<button class="unlink-btn" onclick="unlinkCaregiver()">Unlink caregiver</button>';
-                document.getElementById('messagesCard').style.display = 'block';
-                return;
-            }
-            if (link.status === 'rejected') {
-                section.innerHTML = '<div class="link-status-box rejected">❌ Your request to <strong>' + esc(link.caregiver_name) + '</strong> was declined.</div>' +
-                    '<button class="link-send-btn" style="margin-top:0.5rem;" onclick="unlinkAndReset()">Try a different caregiver</button>';
-            }
-        } catch (e) { section.innerHTML = '<div style="color:#aaa;font-size:0.85rem;">Could not load link status.</div>'; }
-    }
-
-    window.sendLinkRequest = async function () {
-        var input = document.getElementById('caregiverIdentifier');
-        var statusEl = document.getElementById('linkReqStatus');
-        var id = input ? input.value.trim() : '';
-        if (!id) { if (statusEl) { statusEl.textContent = '⚠️ Enter caregiver email or username'; statusEl.style.color = '#e65100'; } return; }
-        if (statusEl) { statusEl.textContent = 'Sending…'; statusEl.style.color = '#888'; }
-        try {
-            var res  = await API.post('/caregiver/link-request', { caregiver_identifier: id });
-            var data = await res.json();
-            if (!res.ok) { if (statusEl) { statusEl.textContent = '❌ ' + (data.error || 'Failed'); statusEl.style.color = '#c62828'; } return; }
-            if (statusEl) { statusEl.textContent = '✅ ' + data.message; statusEl.style.color = '#2e7d32'; }
-            setTimeout(loadLinkStatus, 1200);
-        } catch (e) { if (statusEl) { statusEl.textContent = '❌ Could not send request.'; statusEl.style.color = '#c62828'; } }
-    };
-
-    window.unlinkCaregiver = async function () {
-        if (!confirm('Are you sure you want to unlink from your caregiver?')) return;
-        try { await (API.delete || API.del)('/caregiver/unlink'); document.getElementById('messagesCard').style.display = 'none'; loadLinkStatus(); }
-        catch (e) { alert('Could not unlink. Please try again.'); }
-    };
-
-    window.unlinkAndReset = async function () {
-        try { await (API.delete || API.del)('/caregiver/unlink'); } catch (e) {}
-        loadLinkStatus();
-    };
-
-    // ── Inbox ─────────────────────────────────────────────────────────────────
-    async function loadInbox() {
-        try {
-            var res    = await API.get('/caregiver/messages/inbox');
-            var data   = await res.json();
-            var msgs   = data.messages || [];
-            var unread = data.unread_count || 0;
-            var badge  = document.getElementById('unreadBadge');
-            if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'inline' : 'none'; }
-            var box = document.getElementById('inboxMessages');
-            if (!box) return;
-            if (!msgs.length) { box.innerHTML = '<div style="color:#aaa;font-size:0.85rem;text-align:center;padding:0.5rem;">No messages from your caregiver yet.</div>'; return; }
-            box.innerHTML = msgs.map(function (m) {
-                return '<div class="inbox-msg' + (m.is_read ? ' read' : '') + '" id="msg-' + m.id + '">' +
-                    '<div class="inbox-msg-text">' + esc(m.message) + '</div>' +
-                    '<div class="inbox-msg-meta"><span>From: ' + esc(m.caregiver_name) + '</span><span>' + timeAgo(new Date(m.created_at)) + '</span>' +
-                    (!m.is_read ? '<button class="mark-read-btn" onclick="markRead(' + m.id + ')">Mark read ✓</button>' : '<span style="color:#4caf50;">✓ Read</span>') +
-                    '</div></div>';
-            }).join('');
-        } catch (e) { /* ignore — patient may not be linked */ }
-    }
-
-    window.markRead = async function (msgId) {
-        try {
-            await API.put('/caregiver/messages/' + msgId + '/read', {});
-            var el = document.getElementById('msg-' + msgId);
-            if (el) { el.classList.add('read'); var btn = el.querySelector('.mark-read-btn'); if (btn) btn.outerHTML = '<span style="color:#4caf50;">✓ Read</span>'; }
-            loadInbox();
-        } catch (e) {}
-    };
-
-    // ── Mood ──────────────────────────────────────────────────────────────────
-    document.querySelectorAll('.mood-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.mood-btn').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            API.post('/journals', { title: 'Daily Mood Check-in', content: 'Feeling ' + btn.dataset.mood + ' today.', mood: btn.dataset.mood, entry_date: new Date().toISOString().split('T')[0] })
-                .then(function() { var el = document.getElementById('moodSaved'); el.classList.add('show'); setTimeout(function() { el.classList.remove('show'); }, 3000); loadStats(); })
-                .catch(function() {});
-        });
-    });
-
-    // ── Emergency modal ───────────────────────────────────────────────────────
-    document.getElementById('emergencyBtn').addEventListener('click', function() { document.getElementById('emergencyModal').style.display = 'block'; });
-    document.getElementById('modalClose').addEventListener('click', function() { document.getElementById('emergencyModal').style.display = 'none'; });
-    window.addEventListener('click', function(e) { if (e.target === document.getElementById('emergencyModal')) document.getElementById('emergencyModal').style.display = 'none'; });
-
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function timeAgo(d) {
-        var s = Math.floor((Date.now() - d) / 1000);
-        if (s < 60) return 'Just now'; if (s < 3600) return Math.floor(s/60) + 'm ago';
-        if (s < 86400) return Math.floor(s/3600) + 'h ago'; return Math.floor(s/86400) + 'd ago';
-    }
-    </script>
 </body>
 </html>
