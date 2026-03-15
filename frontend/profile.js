@@ -10,7 +10,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     if (!localStorage.getItem('token')) {
-        window.location.replace('signup.html');
+        window.location.replace('login.html');
         return;
     }
 
@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (repData.reports)  UserStore.set('userReports', repData.reports);
             renderAll();
         } catch (err) {
-            console.warn('Backend unavailable, using cache:', err);
             var u = JSON.parse(localStorage.getItem('user') || '{}');
             if (u.email) {
                 var pd2 = UserStore.get('profileData', {});
@@ -319,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
             }
-        } catch (e) { console.warn('Could not load caregiver patients:', e); }
+        } catch (e) { /* caregiver patients unavailable */ }
     }
 
     async function loadPatientReports(patientId) {
@@ -513,5 +512,5 @@ function initProfileDropdown() {
 function doLogout() {
     ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted']
         .forEach(function (k) { localStorage.removeItem(k); });
-    window.location.href = 'signup.html';
+    window.location.href = 'login.html';
 }

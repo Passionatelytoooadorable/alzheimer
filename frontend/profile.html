@@ -8,7 +8,7 @@
     <script>
         function checkAuthProfile() {
             if (!localStorage.getItem('token')) {
-                window.location.replace('signup.html');
+                window.location.replace('login.html');
             }
         }
         checkAuthProfile();
@@ -20,6 +20,32 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="profile.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='85' font-size='95' text-anchor='middle'>👤</text></svg>">
+    <style>
+        /* ── Mobile + A11y for profile ── */
+        @media (max-width: 900px) {
+            .profile-body { grid-template-columns: 1fr !important; padding: 0 1rem !important; }
+            .profile-hero-inner { flex-direction: column !important; text-align: center !important; }
+            .profile-hero-badges { justify-content: center !important; }
+            .edit-profile-btn { margin-top: 0.5rem; }
+        }
+        @media (max-width: 600px) {
+            .profile-hero { padding: 1.5rem 1rem 1rem !important; }
+            .profile-avatar-big { width: 75px !important; height: 75px !important; font-size: 2rem !important; }
+            .profile-hero-info h1 { font-size: 1.5rem !important; }
+            .stats-row { grid-template-columns: 1fr 1fr !important; }
+            .quick-links-grid { grid-template-columns: 1fr 1fr !important; }
+            .edit-grid { grid-template-columns: 1fr !important; }
+            .edit-group.full-width { grid-column: 1 !important; }
+            .pcard { padding: 1.2rem !important; }
+        }
+        body.large-text .info-value { font-size: 1rem !important; }
+        body.large-text .stat-tile-num { font-size: 2.2rem !important; }
+        body.high-contrast .pcard { background: #111 !important; color: #fff !important; border-color: #555 !important; }
+        body.high-contrast .info-value { color: #fff !important; }
+        body.high-contrast .edit-group input,
+        body.high-contrast .edit-group select,
+        body.high-contrast .edit-group textarea { background: #222 !important; color: #fff !important; border-color: #888 !important; }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -246,6 +272,21 @@
 
     <script src="api.js"></script>
     <script src="user-store.js"></script>
+    <script src="nav-shared.js"></script>
     <script src="profile.js"></script>
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">&#9681;</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn=document.getElementById("a11yTextSize"),contBtn=document.getElementById("a11yContrast");
+        if(localStorage.getItem("largText")==="1"){document.body.classList.add("large-text");if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");}}
+        if(localStorage.getItem("hiContrast")==="1"){document.body.classList.add("high-contrast");if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");}}
+        if(sizeBtn)sizeBtn.addEventListener("click",function(){document.body.classList.toggle("large-text");var on=document.body.classList.contains("large-text");localStorage.setItem("largText",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+        if(contBtn)contBtn.addEventListener("click",function(){document.body.classList.toggle("high-contrast");var on=document.body.classList.contains("high-contrast");localStorage.setItem("hiContrast",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+    })();
+    </script>
 </body>
 </html>

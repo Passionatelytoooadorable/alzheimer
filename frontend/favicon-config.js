@@ -26,7 +26,6 @@ class DynamicFavicon {
     }
 
     init() {
-        console.log('DynamicFavicon initialized for page:', this.getCurrentPage());
         // Set initial favicon based on current page
         this.updateFavicon();
         
@@ -58,8 +57,6 @@ class DynamicFavicon {
             const currentPage = this.getCurrentPage();
             const emoji = this.pageIcons[currentPage] || '🧠';
             
-            console.log('Updating favicon for:', currentPage, 'with emoji:', emoji);
-            
             // Remove any existing favicon
             const existingFavicon = document.querySelector('link[rel="icon"]');
             if (existingFavicon) {
@@ -74,12 +71,9 @@ class DynamicFavicon {
             
             document.head.appendChild(favicon);
             
-            console.log('Favicon updated successfully!');
-            
             // Update Apple touch icon too
             this.updateAppleTouchIcon(emoji);
         } catch (error) {
-            console.error('Error updating favicon:', error);
         }
     }
 

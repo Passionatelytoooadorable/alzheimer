@@ -517,7 +517,6 @@ class DailyTips {
         if (unusedTips.length <= 5) {
             this.usedTips = {}; // Reset used tips
             selectedTip = this.tipsDatabase[Math.floor(Math.random() * this.tipsDatabase.length)];
-            console.log('🔄 Tips reset - starting fresh cycle');
         } else {
             selectedTip = unusedTips[Math.floor(Math.random() * unusedTips.length)];
         }
@@ -526,8 +525,6 @@ class DailyTips {
         this.usedTips[today] = selectedTip;
         this.saveUsedTips();
 
-        console.log(`📝 Tip selected: ${selectedTip.text.substring(0, 50)}...`);
-        console.log(`📊 Remaining unique tips: ${unusedTips.length - 1}`);
 
         return selectedTip;
     }
@@ -575,7 +572,6 @@ class DailyTips {
         this.usedTips = {};
         this.saveUsedTips();
         this.displayDailyTip();
-        console.log('🔄 All tips have been reset manually');
     }
 
     // Get tips by category for specialized display

@@ -4,7 +4,7 @@ const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 // bfcache: re-check auth and reset UI on back-button restore
 window.addEventListener('pageshow', function (e) {
     if (!localStorage.getItem('token')) {
-        window.location.replace('signup.html');
+        window.location.replace('login.html');
         return;
     }
     if (e.persisted) {
@@ -37,7 +37,7 @@ window.addEventListener('pageshow', function (e) {
 document.addEventListener('DOMContentLoaded', function () {
 
     var token = localStorage.getItem('token');
-    if (!token) { window.location.replace('signup.html'); return; }
+    if (!token) { window.location.replace('login.html'); return; }
 
     // Build nav
     var nav      = document.getElementById('scanNav');

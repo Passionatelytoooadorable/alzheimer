@@ -1091,7 +1091,6 @@ class Journal {
         } catch (err) {
             if (err.message === 'SESSION_EXPIRED') return;
             // Silently hide chart section if API fails — don't break page
-            console.warn('Mood chart could not load:', err.message);
         }
     }
 
