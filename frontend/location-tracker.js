@@ -448,13 +448,24 @@ function stopRealTimeTracking() {
 function initializeMap() {
     try {
         // Initialize the map with a generic center (will be updated with user's location)
-        const map = L.map('locationMap').setView([20.5937, 78.9629], 5); // Center of India
+        // Ensure the map container has an explicit pixel height before init
+        var mapEl = document.getElementById('locationMap');
+        if (mapEl && !mapEl.style.height) {
+            mapEl.style.height = '500px';
+        }
+
+        const map = L.map('locationMap', { zoomControl: true }).setView([20.5937, 78.9629], 5);
         window.locationMap = map;
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
         }).addTo(map);
+
+        // Force re-render after container is fully painted
+        setTimeout(function() { map.invalidateSize(); }, 200);
+        setTimeout(function() { map.invalidateSize(); }, 800);
         
         // Add a marker that will be updated with real location
         const marker = L.marker([20.5937, 78.9629]).addTo(map)
