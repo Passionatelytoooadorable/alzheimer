@@ -243,10 +243,6 @@
         .compliance-day-cell.status-future  { background: #f5f5f5; border: 1px dashed #ddd; }
         .compliance-day-cell.status-today   { outline: 2px solid var(--primary); outline-offset: 1px; }
 
-        .compliance-day-labels {
-            display: grid; grid-template-columns: repeat(7, 1fr);
-            gap: 4px; margin-bottom: 4px;
-        }
         .compliance-day-label { text-align: center; font-size: 0.68rem; color: #aaa; font-weight: 600; }
 
         .compliance-reminder-row {
@@ -745,41 +741,44 @@
                 pct.style.color  = rate >= 75 ? '#4caf50' : rate >= 40 ? '#ff9800' : '#f44336';
             }, 80);
 
-            // ── Render day-of-week header ────────────────────────────────────
-            var labelsHtml = '<div class="compliance-day-labels">';
+            // ── Single unified 7-column grid: header row + day cells ────────
+            // Clear container and use it directly as the grid
+            grid.innerHTML = '';
+            grid.className = 'compliance-day-grid';
+
+            // Row 1: day-of-week labels as first 7 cells
             ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(function(d) {
-                labelsHtml += '<div class="compliance-day-label">' + d + '</div>';
+                var lbl = document.createElement('div');
+                lbl.className = 'compliance-day-label';
+                lbl.textContent = d;
+                grid.appendChild(lbl);
             });
-            labelsHtml += '</div>';
-            grid.innerHTML = labelsHtml;
 
-            // Pad to start on correct weekday
+            // Padding cells so first data day falls on correct weekday column
             var firstDay = new Date(days[0] + 'T12:00:00').getDay(); // 0=Sun
-            var gridWrap = document.createElement('div');
-            gridWrap.className = 'compliance-day-grid';
-
             for (var pad = 0; pad < firstDay; pad++) {
                 var blank = document.createElement('div');
-                gridWrap.appendChild(blank);
+                blank.className = 'compliance-day-cell status-future';
+                blank.style.opacity = '0';
+                grid.appendChild(blank);
             }
 
-            // Render each day cell
+            // Day cells — siblings of the header cells, same grid
             days.forEach(function(ds) {
-                var stat   = dayStats[ds];
+                var stat     = dayStats[ds];
                 var isFuture = ds > todayStr;
                 var isToday  = ds === todayStr;
                 var status;
 
-                if (isFuture)             status = 'future';
-                else if (stat.total === 0) status = 'none';
-                else if (stat.done === stat.total) status = 'all';
-                else if (stat.done > 0)   status = 'partial';
-                else                      status = 'missed';
+                if (isFuture)                          status = 'future';
+                else if (stat.total === 0)             status = 'none';
+                else if (stat.done === stat.total)     status = 'all';
+                else if (stat.done > 0)                status = 'partial';
+                else                                   status = 'missed';
 
                 var cell = document.createElement('div');
                 cell.className = 'compliance-day-cell status-' + status + (isToday ? ' status-today' : '');
 
-                // Format date for tooltip
                 var dObj = new Date(ds + 'T12:00:00');
                 var label = dObj.toLocaleDateString('en-US', { month:'short', day:'numeric' });
                 var tooltipText = isFuture ? label + ': upcoming'
@@ -787,10 +786,8 @@
                                 : label + ': ' + stat.done + '/' + stat.total + ' done';
 
                 cell.innerHTML = '<span class="tooltip">' + tooltipText + '</span>';
-                gridWrap.appendChild(cell);
+                grid.appendChild(cell);
             });
-
-            grid.appendChild(gridWrap);
 
             // ── Per-reminder breakdown ───────────────────────────────────────
             // Group by reminder title
