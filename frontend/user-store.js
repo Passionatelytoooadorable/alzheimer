@@ -34,7 +34,7 @@
         },
         set: function (name, value) {
             try { localStorage.setItem(sk(name), JSON.stringify(value)); }
-            catch (e) { console.warn('UserStore.set failed', e); }
+            catch (e) {  }
         },
         remove: function (name) {
             try { localStorage.removeItem(sk(name)); } catch (e) {}

@@ -95,3 +95,20 @@ function doLogout() {
         document.head.appendChild(link);
     }
 })();
+
+// ── Accessibility: restore large-text and high-contrast from localStorage ──
+(function () {
+    if (localStorage.getItem('largText')  === '1') document.documentElement.classList.add('large-text-pending');
+    if (localStorage.getItem('hiContrast') === '1') document.documentElement.classList.add('high-contrast-pending');
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (localStorage.getItem('largText')  === '1') document.body.classList.add('large-text');
+        if (localStorage.getItem('hiContrast') === '1') document.body.classList.add('high-contrast');
+
+        // Sync any a11y toolbar buttons that exist on this page
+        var sizeBtn = document.getElementById('a11yTextSize');
+        var contBtn = document.getElementById('a11yContrast');
+        if (sizeBtn && localStorage.getItem('largText')  === '1') { sizeBtn.classList.add('active'); sizeBtn.setAttribute('aria-pressed', 'true'); }
+        if (contBtn && localStorage.getItem('hiContrast') === '1') { contBtn.classList.add('active'); contBtn.setAttribute('aria-pressed', 'true'); }
+    });
+})();

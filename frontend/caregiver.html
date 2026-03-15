@@ -128,6 +128,16 @@
         .spinner-sm { display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--primary);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .dashboard-content.hidden { display: none; }
+        @media (max-width: 480px) {
+            .caregiver-header { padding: 1rem !important; }
+            .caregiver-header h1 { font-size: 1.5rem !important; }
+            .patient-card { padding: 1rem !important; }
+            .msg-compose textarea { font-size: 0.9rem !important; }
+        }
+        body.large-text .patient-name { font-size: 1.2rem !important; }
+        body.large-text .cg-stat-num  { font-size: 2rem !important; }
+        body.high-contrast .patient-card { background:#111 !important; color:#fff !important; border-color:#555 !important; }
+        body.high-contrast .msg-compose textarea { background:#222 !important; color:#fff !important; }
     </style>
 </head>
 <body>
@@ -575,6 +585,20 @@
         t.textContent = msg; t.classList.add('show');
         setTimeout(function () { t.classList.remove('show'); }, 2800);
     }
+    </script>
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">&#9681;</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn=document.getElementById("a11yTextSize"),contBtn=document.getElementById("a11yContrast");
+        if(localStorage.getItem("largText")==="1"){document.body.classList.add("large-text");if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");}}
+        if(localStorage.getItem("hiContrast")==="1"){document.body.classList.add("high-contrast");if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");}}
+        if(sizeBtn)sizeBtn.addEventListener("click",function(){document.body.classList.toggle("large-text");var on=document.body.classList.contains("large-text");localStorage.setItem("largText",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+        if(contBtn)contBtn.addEventListener("click",function(){document.body.classList.toggle("high-contrast");var on=document.body.classList.contains("high-contrast");localStorage.setItem("hiContrast",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+    })();
     </script>
 </body>
 </html>

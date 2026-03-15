@@ -46,6 +46,30 @@
         .unlink-btn:hover { background: #f5f5f5; }
         #linkReqStatus { font-size: 0.8rem; margin-top: 0.4rem; min-height: 1.2em; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        /* ── Accessibility: font-size toggle for dashboard ── */
+        body.large-text .stat-number, body.large-text .tb-value { font-size: 2.2rem !important; }
+        body.large-text .reminder-text, body.large-text .act-text { font-size: 1rem !important; }
+        body.large-text .tile-desc { font-size: 1rem !important; }
+
+        /* ── Mobile Responsiveness ── */
+        @media (max-width: 900px) {
+            .feature-row { flex-direction: column !important; }
+            .feature-tile { width: 100% !important; min-width: unset !important; }
+            .welcome-header { padding: 1.5rem 1rem !important; }
+            .quick-stats { flex-wrap: wrap; gap: 1rem !important; }
+            .dashboard-container { padding: 1rem !important; }
+            .today-banner { flex-wrap: wrap; gap: 0.75rem !important; padding: 0.75rem 1rem !important; }
+            .tb-divider { display: none; }
+            .mood-strip { flex-wrap: wrap; gap: 0.5rem !important; padding: 0.75rem 1rem !important; }
+        }
+        @media (max-width: 600px) {
+            .welcome-header h1 { font-size: 1.6rem !important; }
+            .feature-row { gap: 0.75rem !important; }
+            .floating-icons { gap: 0.75rem !important; }
+            .floating-icon { width: 64px !important; height: 64px !important; font-size: 1.6rem !important; }
+            .emergency-contacts { gap: 0.5rem !important; }
+            .contact-card { flex-wrap: wrap !important; }
+        }
     </style>
 </head>
 <body>
@@ -541,6 +565,21 @@
         if (s < 60) return 'Just now'; if (s < 3600) return Math.floor(s/60) + 'm ago';
         if (s < 86400) return Math.floor(s/3600) + 'h ago'; return Math.floor(s/86400) + 'd ago';
     }
+    </script>
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">◑</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn = document.getElementById("a11yTextSize");
+        var contBtn = document.getElementById("a11yContrast");
+        if (localStorage.getItem("largText")==="1") { document.body.classList.add("large-text"); if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");} }
+        if (localStorage.getItem("hiContrast")==="1") { document.body.classList.add("high-contrast"); if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");} }
+        if(sizeBtn) sizeBtn.addEventListener("click",function(){ document.body.classList.toggle("large-text"); var on=document.body.classList.contains("large-text"); localStorage.setItem("largText",on?"1":"0"); this.classList.toggle("active",on); this.setAttribute("aria-pressed",String(on)); });
+        if(contBtn) contBtn.addEventListener("click",function(){ document.body.classList.toggle("high-contrast"); var on=document.body.classList.contains("high-contrast"); localStorage.setItem("hiContrast",on?"1":"0"); this.classList.toggle("active",on); this.setAttribute("aria-pressed",String(on)); });
+    })();
     </script>
 </body>
 </html>

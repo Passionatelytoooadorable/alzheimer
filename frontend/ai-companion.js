@@ -632,7 +632,7 @@ async function sendMessage() {
         addMessageToChat(aiMessage);
         chatHistory.push(aiMessage);
     } catch (error) {
-        console.error('Claude API error:', error);
+
         const errMessage = {
             type: 'companion',
             text: "I'm sorry, I'm having a little trouble connecting right now. Please try again in a moment! 💙",
@@ -1164,7 +1164,6 @@ function setupConsoleCommands() {
     };
     window.clearAIChat = clearCurrentChat;
     window.resetAICompanionReminders = resetRemindersToDefault;
-    console.log('🎮 Console commands: debugAICompanion(), clearAIChat(), resetAICompanionReminders()');
 }
 
 // ─── Global Export ────────────────────────────────────────────────────────────

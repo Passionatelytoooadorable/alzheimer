@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         } catch (err) {
-            console.warn('Could not save report to backend (saved locally):', err);
+            
         }
     }
 

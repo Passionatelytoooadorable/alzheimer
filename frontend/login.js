@@ -49,8 +49,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!res.ok) {
                 var msg = result.error || 'Login failed. Please try again.';
-                if (res.status === 401) msg = 'Incorrect username or password. Please try again.';
-                if (res.status === 429) msg = 'Too many attempts. Please wait a moment and try again.';
+                if (res.status === 401) msg = '❌ Incorrect username or password. Please try again.';
+                if (res.status === 429) msg = '⏳ Too many login attempts. Please wait a minute and try again.';
+                if (res.status === 500) msg = '⚠️ Server error. Please try again shortly.';
+                if (res.status === 0 || res.status >= 502) msg = '🌐 Cannot reach the server. It may be starting up — please wait 30 seconds and retry.';
                 showAlert('alertBanner', msg, 'error');
                 setBtn('Sign In', false);
                 document.getElementById('password').value = '';
@@ -101,8 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (err) {
             setBtn('Sign In', false);
-            showAlert('alertBanner', '⚠️ Could not reach server. Please check your internet and try again.', 'error');
-            console.error('Login error:', err);
+            showAlert('alertBanner', '⚠️ Could not reach the server. Please check your internet connection and try again.', 'error');
         }
     }
 

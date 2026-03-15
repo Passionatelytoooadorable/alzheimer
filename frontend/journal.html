@@ -10,6 +10,29 @@
     <script src="favicon-config.js"></script>
     <script src="user-store.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        /* ── Mobile Responsiveness for Journal ── */
+        @media (max-width: 900px) {
+            .main-content { flex-direction: column !important; }
+            .calendar-sidebar { width: 100% !important; order: -1; }
+            .journal-content { width: 100% !important; }
+        }
+        @media (max-width: 600px) {
+            .journal-container { padding: 0.5rem !important; }
+            .journal-header { padding: 1rem !important; }
+            .header-content { flex-direction: column !important; }
+            .header-animation { display: none !important; }
+            .quick-actions { flex-direction: column !important; }
+            .action-btn { width: 100% !important; }
+            .filter-options { flex-wrap: wrap !important; gap: 0.3rem !important; }
+        }
+        /* ── Large text mode ── */
+        body.large-text .entry-content, body.large-text .journal-form textarea { font-size: 1.05rem !important; }
+        /* ── High contrast ── */
+        body.high-contrast .journal-form input,
+        body.high-contrast .journal-form textarea { background:#222 !important; color:#fff !important; border-color:#888 !important; }
+        body.high-contrast .entry-card { background:#111 !important; color:#fff !important; border-color:#555 !important; }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -247,6 +270,20 @@
     <script>
         // Init shared nav after DOM is ready — journal.js is at bottom so DOM is already loaded
         initSharedNav('journal.html');
+    </script>
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">&#9681;</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn=document.getElementById("a11yTextSize"),contBtn=document.getElementById("a11yContrast");
+        if(localStorage.getItem("largText")==="1"){document.body.classList.add("large-text");if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");}}
+        if(localStorage.getItem("hiContrast")==="1"){document.body.classList.add("high-contrast");if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");}}
+        if(sizeBtn)sizeBtn.addEventListener("click",function(){document.body.classList.toggle("large-text");var on=document.body.classList.contains("large-text");localStorage.setItem("largText",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+        if(contBtn)contBtn.addEventListener("click",function(){document.body.classList.toggle("high-contrast");var on=document.body.classList.contains("high-contrast");localStorage.setItem("hiContrast",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+    })();
     </script>
 </body>
 </html>
