@@ -337,13 +337,15 @@
                 localStorage.setItem('userName',   u.name     || name);
                 localStorage.setItem('userEmail',  u.email    || email);
 
-                showAlert('alertBanner', 'Account created! Redirecting…', 'success');
+                showAlert('alertBanner', 'Account created! Starting setup…', 'success');
 
-                // Role-based redirect
-                // New patients → index.html to upload their first report
-                // Caregivers  → caregiver.html
+                // Show onboarding wizard instead of immediate redirect
                 setTimeout(function () {
-                    window.location.replace(role === 'caregiver' ? 'caregiver.html' : 'index.html');
+                    if (typeof obShowWizard === 'function') {
+                        obShowWizard(role);
+                    } else {
+                        window.location.replace(role === 'caregiver' ? 'caregiver.html' : 'index.html');
+                    }
                 }, 700);
 
             } catch (err) {
@@ -404,6 +406,195 @@
         }
     });
     </script>
+
+    <!-- ══════════════════════════════════════════════════════
+         ONBOARDING WIZARD (#9) — shown after signup for new users
+         3 steps: Welcome → Set up profile info → Tour features
+         Stored in localStorage('onboardingDone') to show only once
+    ══════════════════════════════════════════════════════ -->
+    <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9500;align-items:center;justify-content:center;padding:1rem;">
+        <div id="onboardingModal" style="background:white;border-radius:20px;padding:0;max-width:480px;width:100%;max-height:92vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.25);display:flex;flex-direction:column;">
+
+            <!-- Progress bar -->
+            <div style="height:4px;background:#e9ecef;">
+                <div id="onboardProgress" style="height:100%;background:linear-gradient(90deg,#4a86e8,#96ceb4);transition:width 0.4s ease;width:33%;"></div>
+            </div>
+
+            <!-- Step 1: Welcome -->
+            <div id="obStep1" class="ob-step" style="padding:2rem;text-align:center;">
+                <div style="font-size:3.5rem;margin-bottom:1rem;" id="obWelcomeEmoji">🧠</div>
+                <h2 style="color:#374785;margin-bottom:0.5rem;font-size:1.5rem;" id="obWelcomeTitle">Welcome to Alzheimer's Support!</h2>
+                <p style="color:#6c757d;margin-bottom:1.5rem;font-size:0.95rem;" id="obWelcomeSub">We're glad you're here. Let's take 30 seconds to get your account ready.</p>
+                <div id="obRoleFeatures" style="background:#f8faff;border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;text-align:left;">
+                    <!-- filled by JS based on role -->
+                </div>
+                <button onclick="obNext()" style="background:#4a86e8;color:white;border:none;border-radius:10px;padding:0.8rem 2.5rem;font-size:1rem;font-weight:600;cursor:pointer;width:100%;transition:background 0.2s;">Get Started →</button>
+            </div>
+
+            <!-- Step 2: Quick profile setup -->
+            <div id="obStep2" class="ob-step" style="display:none;padding:2rem;">
+                <div style="text-align:center;margin-bottom:1.25rem;">
+                    <div style="font-size:2.5rem;">👤</div>
+                    <h2 style="color:#374785;margin:0.5rem 0 0.25rem;font-size:1.25rem;">Quick profile setup</h2>
+                    <p style="color:#6c757d;font-size:0.85rem;">This helps personalise your experience</p>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.85rem;">
+                    <div>
+                        <label style="font-size:0.82rem;font-weight:600;color:#555;display:block;margin-bottom:0.3rem;" id="obLabel1">Your preferred name (optional)</label>
+                        <input id="obPrefName" type="text" placeholder="e.g. Jane" style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='#4a86e8'" onblur="this.style.borderColor='#e0e0e0'">
+                    </div>
+                    <div id="obPhoneRow">
+                        <label style="font-size:0.82rem;font-weight:600;color:#555;display:block;margin-bottom:0.3rem;">Emergency contact number (optional)</label>
+                        <input id="obPhone" type="tel" placeholder="e.g. +44 7700 900000" style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='#4a86e8'" onblur="this.style.borderColor='#e0e0e0'">
+                    </div>
+                    <div id="obNotifRow" style="background:#f8faff;border-radius:10px;padding:1rem;display:flex;align-items:center;gap:0.75rem;">
+                        <input type="checkbox" id="obNotifCheck" style="width:18px;height:18px;accent-color:#4a86e8;cursor:pointer;">
+                        <label for="obNotifCheck" style="font-size:0.88rem;color:#374785;cursor:pointer;font-weight:500;">Enable reminder notifications</label>
+                    </div>
+                </div>
+                <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+                    <button onclick="obBack()" style="flex:1;background:white;color:#555;border:1.5px solid #ddd;border-radius:10px;padding:0.7rem;font-size:0.9rem;cursor:pointer;">← Back</button>
+                    <button onclick="obNextStep2()" style="flex:2;background:#4a86e8;color:white;border:none;border-radius:10px;padding:0.7rem;font-size:0.9rem;font-weight:600;cursor:pointer;">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Feature tour -->
+            <div id="obStep3" class="ob-step" style="display:none;padding:2rem;">
+                <div style="text-align:center;margin-bottom:1.25rem;">
+                    <div style="font-size:2.5rem;">✨</div>
+                    <h2 style="color:#374785;margin:0.5rem 0 0.25rem;font-size:1.25rem;">Here's what you can do</h2>
+                    <p style="color:#6c757d;font-size:0.85rem;">Your platform is ready — here are the key features</p>
+                </div>
+                <div id="obFeatureList" style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.5rem;">
+                    <!-- filled by JS -->
+                </div>
+                <div style="display:flex;gap:0.75rem;">
+                    <button onclick="obBack()" style="flex:1;background:white;color:#555;border:1.5px solid #ddd;border-radius:10px;padding:0.7rem;font-size:0.9rem;cursor:pointer;">← Back</button>
+                    <button onclick="obFinish()" style="flex:2;background:linear-gradient(135deg,#4a86e8,#374785);color:white;border:none;border-radius:10px;padding:0.7rem;font-size:1rem;font-weight:700;cursor:pointer;">Go to Dashboard 🚀</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    // ── Onboarding Wizard logic ───────────────────────────────────────────────
+    (function() {
+        var currentStep = 1;
+        var userRole    = 'patient';
+
+        var patientFeatures = [
+            { icon: '🧠', title: 'AI Scan', desc: 'Upload your medical report for an AI risk assessment' },
+            { icon: '📝', title: 'Daily Journal', desc: 'Record thoughts, moods and daily moments' },
+            { icon: '⏰', title: 'Smart Reminders', desc: 'Never miss medication or appointments' },
+            { icon: '📍', title: 'Location Safety', desc: 'Share your location with your caregiver' },
+            { icon: '🤖', title: 'AI Companion', desc: 'Chat with your AI care companion anytime' }
+        ];
+
+        var caregiverFeatures = [
+            { icon: '🔗', title: 'Link to Patients', desc: 'Connect with patients who request your care' },
+            { icon: '📊', title: 'Activity Dashboard', desc: 'Monitor mood trends, reminders and activity' },
+            { icon: '📍', title: 'Live Location Map', desc: 'See patient location and safe zones in real time' },
+            { icon: '💬', title: 'Messaging', desc: 'Send reminders and encouragement directly' },
+            { icon: '📋', title: 'Compliance Reports', desc: 'Download weekly AI-generated summaries' }
+        ];
+
+        window.obShowWizard = function(role) {
+            userRole = role || 'patient';
+            currentStep = 1;
+
+            // Personalise step 1
+            var emoji  = document.getElementById('obWelcomeEmoji');
+            var title  = document.getElementById('obWelcomeTitle');
+            var sub    = document.getElementById('obWelcomeSub');
+            var feats  = document.getElementById('obRoleFeatures');
+
+            if (role === 'caregiver') {
+                if (emoji) emoji.textContent = '👩‍⚕️';
+                if (title) title.textContent = 'Welcome, Caregiver!';
+                if (sub)   sub.textContent   = 'Your dashboard is set up to help you monitor and support your patients.';
+                if (feats) feats.innerHTML   =
+                    '<p style="font-weight:600;color:#374785;margin:0 0 0.5rem;font-size:0.88rem;">As a caregiver you can:</p>' +
+                    '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.35rem;">' +
+                    caregiverFeatures.slice(0,3).map(function(f){
+                        return '<li style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:#495057;">' +
+                               '<span style="font-size:1rem;">' + f.icon + '</span>' + f.title + '</li>';
+                    }).join('') + '</ul>';
+                // Hide phone/emergency row for caregiver
+                var phoneRow = document.getElementById('obPhoneRow');
+                if (phoneRow) phoneRow.style.display = 'none';
+                var label1 = document.getElementById('obLabel1');
+                if (label1) label1.textContent = 'Your preferred name (optional)';
+            } else {
+                if (emoji) emoji.textContent = '🧠';
+                if (title) title.textContent  = 'Welcome to Alzheimer's Support!';
+                if (sub)   sub.textContent    = 'We're glad you're here. Let's take 30 seconds to get your account ready.';
+                if (feats) feats.innerHTML    =
+                    '<p style="font-weight:600;color:#374785;margin:0 0 0.5rem;font-size:0.88rem;">What's available for you:</p>' +
+                    '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.35rem;">' +
+                    patientFeatures.slice(0,3).map(function(f){
+                        return '<li style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:#495057;">' +
+                               '<span style="font-size:1rem;">' + f.icon + '</span>' + f.title + '</li>';
+                    }).join('') + '</ul>';
+            }
+
+            // Fill feature tour list
+            var list     = document.getElementById('obFeatureList');
+            var features = (role === 'caregiver') ? caregiverFeatures : patientFeatures;
+            if (list) {
+                list.innerHTML = features.map(function(f) {
+                    return '<div style="display:flex;align-items:center;gap:0.75rem;background:#f8faff;border-radius:10px;padding:0.7rem 1rem;">' +
+                           '<span style="font-size:1.4rem;flex-shrink:0;">' + f.icon + '</span>' +
+                           '<div><div style="font-weight:600;font-size:0.88rem;color:#374785;">' + f.title + '</div>' +
+                           '<div style="font-size:0.78rem;color:#888;">' + f.desc + '</div></div>' +
+                           '</div>';
+                }).join('');
+            }
+
+            var overlay = document.getElementById('onboardingOverlay');
+            if (overlay) { overlay.style.display = 'flex'; }
+            obGoTo(1);
+        };
+
+        window.obNext = function() { obGoTo(2); };
+        window.obBack = function() { obGoTo(currentStep - 1); };
+
+        window.obNextStep2 = function() {
+            // Save pref name + notification preference to localStorage
+            var prefName = (document.getElementById('obPrefName') || {}).value || '';
+            if (prefName) {
+                var stored = JSON.parse(localStorage.getItem('user') || '{}');
+                stored.prefName = prefName;
+                localStorage.setItem('user', JSON.stringify(stored));
+            }
+            // Request notification permission if checked
+            var notifCheck = document.getElementById('obNotifCheck');
+            if (notifCheck && notifCheck.checked && 'Notification' in window) {
+                Notification.requestPermission();
+            }
+            obGoTo(3);
+        };
+
+        window.obFinish = function() {
+            localStorage.setItem('onboardingDone', '1');
+            var overlay = document.getElementById('onboardingOverlay');
+            if (overlay) overlay.style.display = 'none';
+            // Redirect based on role (signup.js already set token, just go)
+            window.location.replace(userRole === 'caregiver' ? 'caregiver.html' : 'index.html');
+        };
+
+        function obGoTo(step) {
+            currentStep = step;
+            [1, 2, 3].forEach(function(n) {
+                var el = document.getElementById('obStep' + n);
+                if (el) el.style.display = (n === step) ? 'block' : 'none';
+            });
+            var prog = document.getElementById('onboardProgress');
+            if (prog) prog.style.width = (step === 1 ? 33 : step === 2 ? 66 : 100) + '%';
+        }
+    })();
+    </script>
+
     <!-- Accessibility toolbar -->
     <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
         <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>

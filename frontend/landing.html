@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alzheimer's Support Platform — Memory, Care & Connection</title>
+    <meta name="description" content="AI-powered support platform for Alzheimer's patients and caregivers. Journals, reminders, location safety and more.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <style>
+        /* ── Landing-specific styles — all build on style.css tokens ── */
+        :root {
+            --blue:   #4a86e8;
+            --dark:   #374785;
+            --teal:   #96ceb4;
+            --light:  #f0f7ff;
+            --white:  #ffffff;
+            --gray:   #6c757d;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(135deg, #374785 0%, #4a86e8 55%, #96ceb4 100%);
+            color: white;
+            padding: 4rem 2rem 5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -40px;
+            width: 260px; height: 260px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+        .hero-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        @media (max-width: 768px) {
+            .hero-inner { grid-template-columns: 1fr; text-align: center; }
+            .hero-ctas  { justify-content: center !important; }
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: 0.03em;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 4vw, 2.9rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .hero h1 span { color: #c8e8d4; }
+        .hero-sub {
+            font-size: 1.05rem;
+            opacity: 0.88;
+            line-height: 1.7;
+            margin-bottom: 2rem;
+            max-width: 440px;
+        }
+        .hero-ctas {
+            display: flex;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .btn-hero-primary {
+            background: white;
+            color: var(--dark);
+            padding: 0.85rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.25s;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .btn-hero-secondary {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            padding: 0.85rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            border: 1.5px solid rgba(255,255,255,0.4);
+            transition: all 0.25s;
+        }
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero-card-stack {
+            position: relative;
+            width: 280px;
+            height: 300px;
+        }
+        .hcard {
+            position: absolute;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 1.1rem 1.3rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            color: #333;
+            font-size: 0.85rem;
+        }
+        .hcard-1 { top:0;   left:0;   width:200px; transform:rotate(-3deg); }
+        .hcard-2 { top:70px;left:60px;width:210px; transform:rotate(1.5deg); z-index:2; }
+        .hcard-3 { top:155px;left:20px;width:200px;transform:rotate(-1deg); z-index:3; }
+        .hcard-icon { font-size:1.4rem; margin-bottom:0.3rem; }
+        .hcard-title { font-weight:700; color:var(--dark); font-size:0.82rem; }
+        .hcard-body  { color:#666; font-size:0.75rem; margin-top:0.15rem; }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            background: var(--dark);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+        .stats-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            text-align: center;
+        }
+        @media (max-width: 600px) { .stats-inner { grid-template-columns: repeat(2,1fr); } }
+        .stat-num   { font-size: 2rem; font-weight: 700; color: var(--teal); line-height: 1; }
+        .stat-desc  { font-size: 0.78rem; opacity: 0.75; margin-top: 0.25rem; }
+
+        /* ── Who is this for ── */
+        .audience-section {
+            padding: 4rem 2rem;
+            background: var(--white);
+        }
+        .section-label {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 0.5rem;
+        }
+        .section-title {
+            text-align: center;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.75rem;
+        }
+        .section-sub {
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.95rem;
+            max-width: 540px;
+            margin: 0 auto 2.5rem;
+        }
+        .audience-grid {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 640px) { .audience-grid { grid-template-columns: 1fr; } }
+        .audience-card {
+            border-radius: 18px;
+            padding: 2rem;
+            text-decoration: none;
+            display: block;
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .audience-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+        }
+        .audience-card.patient   { background: linear-gradient(135deg,#e8f0fe,#dce8ff); border: 1.5px solid #c5d5f8; }
+        .audience-card.caregiver { background: linear-gradient(135deg,#e8f7f0,#d4f0e0); border: 1.5px solid #b0ddc4; }
+        .aud-icon  { font-size: 2.5rem; margin-bottom: 1rem; }
+        .aud-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--blue); margin-bottom: 0.4rem; }
+        .audience-card.caregiver .aud-label { color: #2a7d50; }
+        .aud-title { font-size: 1.25rem; font-weight: 700; color: var(--dark); margin-bottom: 0.6rem; }
+        .aud-desc  { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 1.25rem; }
+        .aud-features { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+        .aud-features li { font-size: 0.84rem; color: #444; padding: 0.2rem 0; display:flex;gap:0.5rem;align-items:center; }
+        .aud-features li::before { content: '✓'; font-weight: 700; color: var(--blue); }
+        .audience-card.caregiver .aud-features li::before { color: #2a7d50; }
+        .aud-cta {
+            display: inline-block;
+            padding: 0.65rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .audience-card.patient   .aud-cta { background:var(--blue);   color:white; }
+        .audience-card.caregiver .aud-cta { background:#2a7d50; color:white; }
+        .aud-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* ── How it works ── */
+        .how-section {
+            background: var(--light);
+            padding: 4rem 2rem;
+        }
+        .steps-grid {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 1.5rem;
+        }
+        @media (max-width: 640px) { .steps-grid { grid-template-columns: 1fr; } }
+        .step-card {
+            background: white;
+            border-radius: 14px;
+            padding: 1.75rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            position: relative;
+        }
+        .step-num {
+            position: absolute;
+            top: -14px; left: 50%; transform: translateX(-50%);
+            background: var(--blue);
+            color: white;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .step-icon  { font-size: 2rem; margin-bottom: 0.75rem; }
+        .step-title { font-weight: 700; color: var(--dark); margin-bottom: 0.4rem; font-size:0.95rem; }
+        .step-desc  { font-size: 0.82rem; color: var(--gray); line-height: 1.6; }
+
+        /* ── Features strip ── */
+        .features-section {
+            background: white;
+            padding: 4rem 2rem;
+        }
+        .features-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+        @media (max-width: 768px) { .features-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 480px) { .features-grid { grid-template-columns: 1fr; } }
+        .feat-tile {
+            background: var(--light);
+            border-radius: 14px;
+            padding: 1.5rem;
+            border: 1px solid #dce8ff;
+            transition: transform 0.2s;
+        }
+        .feat-tile:hover { transform: translateY(-3px); }
+        .feat-tile-icon  { font-size: 1.8rem; margin-bottom: 0.6rem; }
+        .feat-tile-title { font-weight: 700; color: var(--dark); font-size:0.9rem; margin-bottom:0.3rem; }
+        .feat-tile-desc  { font-size: 0.8rem; color: var(--gray); line-height: 1.5; }
+
+        /* ── CTA strip ── */
+        .cta-strip {
+            background: linear-gradient(135deg, #374785, #4a86e8);
+            color: white;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .cta-strip h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight:700; margin-bottom:0.75rem; }
+        .cta-strip p  { opacity:0.85; margin-bottom:2rem; font-size:0.95rem; }
+        .cta-btns     { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+        .btn-white    {
+            background:white; color:var(--dark);
+            padding:0.85rem 2rem; border-radius:50px;
+            font-weight:700; text-decoration:none; font-size:0.95rem;
+            transition:all 0.2s; box-shadow:0 4px 14px rgba(0,0,0,0.12);
+        }
+        .btn-white:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.18); }
+        .btn-outline {
+            background:transparent; color:white;
+            border:2px solid rgba(255,255,255,0.5);
+            padding:0.85rem 2rem; border-radius:50px;
+            font-weight:600; text-decoration:none; font-size:0.95rem;
+            transition:all 0.2s;
+        }
+        .btn-outline:hover { background:rgba(255,255,255,0.12); transform:translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Alzheimer's Support</div>
+        </div>
+        <nav class="nav-links">
+            <a href="login.html"  class="nav-link">Sign In</a>
+            <a href="signup.html" class="nav-link" style="background:rgba(255,255,255,0.2);border-radius:4px;">Get Started</a>
+        </nav>
+    </header>
+
+    <!-- ── Hero ── -->
+    <section class="hero" aria-label="Hero section">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <div class="hero-badge">🧠 AI-Powered Care Platform</div>
+                <h1>Memory, care &amp;<br><span>connection —</span><br>all in one place</h1>
+                <p class="hero-sub">A compassionate platform for Alzheimer's patients and their caregivers. AI tools, smart reminders, location safety and more — designed to make every day easier.</p>
+                <div class="hero-ctas">
+                    <a href="signup.html" class="btn-hero-primary">Get Started Free →</a>
+                    <a href="login.html"  class="btn-hero-secondary">Sign In</a>
+                </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hero-card-stack">
+                    <div class="hcard hcard-1">
+                        <div class="hcard-icon">⏰</div>
+                        <div class="hcard-title">Morning Medication</div>
+                        <div class="hcard-body">2 tablets · 8:00 AM · Daily</div>
+                    </div>
+                    <div class="hcard hcard-2">
+                        <div class="hcard-icon">📍</div>
+                        <div class="hcard-title">Safe Zone: Home</div>
+                        <div class="hcard-body">Patient is within safe radius ✅</div>
+                    </div>
+                    <div class="hcard hcard-3">
+                        <div class="hcard-icon">😊</div>
+                        <div class="hcard-title">Today's Mood</div>
+                        <div class="hcard-body">Feeling happy · Journal saved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Stats bar ── -->
+    <div class="stats-bar" aria-label="Platform statistics">
+        <div class="stats-inner">
+            <div>
+                <div class="stat-num">55M+</div>
+                <div class="stat-desc">People living with dementia worldwide</div>
+            </div>
+            <div>
+                <div class="stat-num">1 in 3</div>
+                <div class="stat-desc">Seniors die with Alzheimer's or dementia</div>
+            </div>
+            <div>
+                <div class="stat-num">11M+</div>
+                <div class="stat-desc">Unpaid caregivers in the US alone</div>
+            </div>
+            <div>
+                <div class="stat-num">AI</div>
+                <div class="stat-desc">Powered tools built specifically for memory care</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Who is this for ── -->
+    <section class="audience-section" aria-labelledby="audienceTitle">
+        <div class="section-label">Who it's for</div>
+        <h2 class="section-title" id="audienceTitle">Built for patients &amp; caregivers</h2>
+        <p class="section-sub">Whether you're managing your own memory health or supporting a loved one, we have the right tools for you.</p>
+
+        <div class="audience-grid">
+            <!-- Patient card -->
+            <a href="signup.html?role=patient" class="audience-card patient" aria-label="Sign up as a patient">
+                <div class="aud-icon">🧑</div>
+                <div class="aud-label">For Patients</div>
+                <div class="aud-title">Manage your memory health</div>
+                <div class="aud-desc">Tools designed to help you stay independent, organised and connected with those who care about you.</div>
+                <ul class="aud-features">
+                    <li>AI-powered scan report analysis</li>
+                    <li>Daily journal with mood tracking</li>
+                    <li>Smart medication &amp; appointment reminders</li>
+                    <li>Location safety with safe zones</li>
+                    <li>AI companion — chat anytime</li>
+                </ul>
+                <span class="aud-cta">Join as Patient →</span>
+            </a>
+
+            <!-- Caregiver card -->
+            <a href="signup.html?role=caregiver" class="audience-card caregiver" aria-label="Sign up as a caregiver">
+                <div class="aud-icon">👩‍⚕️</div>
+                <div class="aud-label">For Caregivers</div>
+                <div class="aud-title">Support your patients better</div>
+                <div class="aud-desc">A dedicated caregiver dashboard so you can monitor, communicate and intervene when it matters most.</div>
+                <ul class="aud-features">
+                    <li>Live location map &amp; geofence alerts</li>
+                    <li>Mood trends &amp; activity feed</li>
+                    <li>Reminder compliance reports</li>
+                    <li>Direct messaging to patient dashboard</li>
+                    <li>AI weekly summary PDF downloads</li>
+                </ul>
+                <span class="aud-cta">Join as Caregiver →</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- ── How it works ── -->
+    <section class="how-section" aria-labelledby="howTitle">
+        <div class="section-label">How it works</div>
+        <h2 class="section-title" id="howTitle">Up and running in minutes</h2>
+        <p class="section-sub">No complex setup. Just create an account and start using the tools that matter.</p>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <div class="step-icon">✍️</div>
+                <div class="step-title">Create your account</div>
+                <div class="step-desc">Sign up as a patient or caregiver. Takes under a minute — no credit card needed.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <div class="step-icon">🔗</div>
+                <div class="step-title">Link patient &amp; caregiver</div>
+                <div class="step-desc">Patients invite their caregiver by email. Once accepted, both dashboards sync automatically.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <div class="step-icon">🚀</div>
+                <div class="step-title">Start using your tools</div>
+                <div class="step-desc">Set reminders, write journal entries, track location — everything works from day one.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Features strip ── -->
+    <section class="features-section" aria-labelledby="featuresTitle">
+        <div class="section-label">Features</div>
+        <h2 class="section-title" id="featuresTitle">Everything you need</h2>
+        <p class="section-sub">Carefully chosen tools that make a real difference every day.</p>
+
+        <div class="features-grid">
+            <div class="feat-tile">
+                <div class="feat-tile-icon">🧠</div>
+                <div class="feat-tile-title">AI Scan Analysis</div>
+                <div class="feat-tile-desc">Upload a medical PDF and our AI highlights Alzheimer's risk indicators instantly.</div>
+            </div>
+            <div class="feat-tile">
+                <div class="feat-tile-icon">📝</div>
+                <div class="feat-tile-title">Daily Journal</div>
+                <div class="feat-tile-desc">Voice or text entries with mood tracking, tags, and weekly AI-generated insights.</div>
+            </div>
+            <div class="feat-tile">
+                <div class="feat-tile-icon">⏰</div>
+                <div class="feat-tile-title">Smart Reminders</div>
+                <div class="feat-tile-desc">Medication, appointments, tasks — with repeat options and a 30-day compliance tracker.</div>
+            </div>
+            <div class="feat-tile">
+                <div class="feat-tile-icon">📍</div>
+                <div class="feat-tile-title">Location Safety</div>
+                <div class="feat-tile-desc">Real-time map, customisable safe zones and automatic geofence alerts to caregivers.</div>
+            </div>
+            <div class="feat-tile">
+                <div class="feat-tile-icon">🤖</div>
+                <div class="feat-tile-title">AI Companion</div>
+                <div class="feat-tile-desc">A warm, patient AI to chat with, play memory games, or get daily support from.</div>
+            </div>
+            <div class="feat-tile">
+                <div class="feat-tile-icon">💬</div>
+                <div class="feat-tile-title">Caregiver Messaging</div>
+                <div class="feat-tile-desc">Caregivers send messages and encouragement directly to the patient's dashboard.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Final CTA ── -->
+    <section class="cta-strip" aria-labelledby="ctaTitle">
+        <h2 id="ctaTitle">Start supporting memory health today</h2>
+        <p>Free to join. No setup required. Works on any device.</p>
+        <div class="cta-btns">
+            <a href="signup.html" class="btn-white">Create Free Account →</a>
+            <a href="login.html"  class="btn-outline">Sign In</a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2025–2026 Alzheimer's Support Platform. All rights reserved.</p>
+    </footer>
+
+    <script>
+    // Pre-fill role on signup page if user clicked a specific CTA
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('a[href*="signup.html?role="]').forEach(function(link) {
+            link.addEventListener('click', function() {
+                var role = new URL(this.href).searchParams.get('role');
+                if (role) sessionStorage.setItem('prefilledRole', role);
+                // Remove the query string so signup.html URL is clean
+                this.href = 'signup.html';
+            });
+        });
+    });
+    </script>
+
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">&#9681;</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn=document.getElementById("a11yTextSize"),contBtn=document.getElementById("a11yContrast");
+        if(localStorage.getItem("largText")==="1"){document.body.classList.add("large-text");if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");}}
+        if(localStorage.getItem("hiContrast")==="1"){document.body.classList.add("high-contrast");if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");}}
+        if(sizeBtn)sizeBtn.addEventListener("click",function(){document.body.classList.toggle("large-text");var on=document.body.classList.contains("large-text");localStorage.setItem("largText",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+        if(contBtn)contBtn.addEventListener("click",function(){document.body.classList.toggle("high-contrast");var on=document.body.classList.contains("high-contrast");localStorage.setItem("hiContrast",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+    })();
+    </script>
+
+</body>
+</html>

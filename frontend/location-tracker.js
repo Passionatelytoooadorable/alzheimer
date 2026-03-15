@@ -299,9 +299,94 @@ async function saveLocationToBackend(latitude, longitude) {
             throw new Error('Failed to save location to backend');
         }
         
-        return await response.json();
+        const result = await response.json();
+        // ── Geofence check after every successful save ──────────────────
+        checkGeofence(latitude, longitude);
+        return result;
     } catch (error) {
         throw error;
+    }
+}
+
+// ── Safe zone store — populated by loadSafeZones() ───────────────────────────
+var _safeZones = [];       // { name, lat, lng, radius (metres) }
+var _lastAlertZone = null; // prevent alert storms
+
+// Haversine distance in metres between two lat/lng points
+function _haversineM(lat1, lng1, lat2, lng2) {
+    var R  = 6371000;
+    var f1 = lat1 * Math.PI / 180, f2 = lat2 * Math.PI / 180;
+    var df = (lat2 - lat1) * Math.PI / 180;
+    var dl = (lng2 - lng1) * Math.PI / 180;
+    var a  = Math.sin(df/2)*Math.sin(df/2) +
+             Math.cos(f1)*Math.cos(f2)*Math.sin(dl/2)*Math.sin(dl/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── Main geofence check ───────────────────────────────────────────────────────
+async function checkGeofence(lat, lng) {
+    if (!_safeZones.length) return;
+
+    var insideAny = _safeZones.some(function(zone) {
+        return _haversineM(lat, lng, zone.lat, zone.lng) <= zone.radius;
+    });
+
+    if (!insideAny) {
+        // Find the nearest zone for the alert message
+        var nearest = _safeZones.reduce(function(best, zone) {
+            var d = _haversineM(lat, lng, zone.lat, zone.lng);
+            return d < best.dist ? { zone: zone, dist: d } : best;
+        }, { zone: _safeZones[0], dist: Infinity });
+
+        var alertKey = Math.round(lat * 100) + ',' + Math.round(lng * 100);
+        if (_lastAlertZone === alertKey) return; // same position, already alerted
+        _lastAlertZone = alertKey;
+
+        // Show in-app notification
+        showNotification(
+            'You are outside all safe zones! Nearest: ' + nearest.zone.name +
+            ' (' + Math.round(nearest.dist) + 'm away). Your caregiver has been notified.',
+            'error'
+        );
+
+        // Browser push notification if permission granted
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('⚠️ Safe Zone Alert', {
+                body: 'You have left all your safe zones. Nearest: ' + nearest.zone.name + '.',
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧠</text></svg>'
+            });
+        }
+
+        // Notify backend so caregiver gets flagged
+        notifyBackendGeofenceBreach(lat, lng, nearest.zone.name);
+    } else {
+        // Back inside — reset storm prevention
+        if (_lastAlertZone !== null) {
+            _lastAlertZone = null;
+            showNotification('You are back inside a safe zone.', 'success');
+        }
+    }
+}
+
+async function notifyBackendGeofenceBreach(lat, lng, nearestZoneName) {
+    var token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        await fetch(API_BASE + '/locations/geofence-breach', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                latitude:     lat,
+                longitude:    lng,
+                nearest_zone: nearestZoneName,
+                breached_at:  new Date().toISOString()
+            })
+        });
+    } catch (e) {
+        // Silently fail — the in-app notification already fired
     }
 }
 
@@ -328,19 +413,28 @@ async function loadSafeZones() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    // ── Try backend first, fall back to localStorage ─────────────────────────
     try {
-        const response = await fetch(`${API_BASE}/safe-zones`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+        const response = await fetch(API_BASE + '/safe-zones', {
+            headers: { 'Authorization': 'Bearer ' + token }
         });
-        
         if (response.ok) {
             const data = await response.json();
-            // In a real implementation, you would update the safe zones list with data from backend
+            if (data.zones && data.zones.length) {
+                _safeZones = data.zones.map(function(z) {
+                    return { name: z.name || 'Safe Zone', lat: parseFloat(z.latitude), lng: parseFloat(z.longitude), radius: parseFloat(z.radius) || 300 };
+                });
+                localStorage.setItem('_safeZones', JSON.stringify(_safeZones));
+                return;
+            }
         }
-    } catch (error) {
-    }
+    } catch (e) {}
+
+    // ── Fallback: use zones saved to localStorage by the safe-zone form ───────
+    try {
+        var stored = JSON.parse(localStorage.getItem('_safeZones') || '[]');
+        if (stored.length) { _safeZones = stored; }
+    } catch (e) {}
 }
 
 
@@ -668,6 +762,12 @@ function setupSafeZoneForm() {
         
         // Show success message
         showNotification('Safe zone added successfully!', 'success');
+                    // Save to geofence store
+                    try {
+                        var newZone = { name: zoneName || 'Safe Zone', lat: lat, lng: lng, radius: radius };
+                        _safeZones.push(newZone);
+                        localStorage.setItem('_safeZones', JSON.stringify(_safeZones));
+                    } catch(e) {}
         
         // Update stats
         updateStats();
