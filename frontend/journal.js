@@ -37,6 +37,7 @@ class Journal {
         this.fetchEntries();
         this._setupVoice();
         this.loadMoodChart();
+        this._loadAIInsights();
     }
 
     // ── Inject new elements into the existing HTML ────────────────────────────
@@ -90,7 +91,7 @@ class Journal {
             m.className = 'modal';
             m.innerHTML = `
                 <div class="modal-content" style="max-width:420px;text-align:center;">
-                    <div style="font-size:3rem;margin-bottom:1rem;">🗑️</div>
+                    <div style="font-size:3rem;margin-bottom:1rem;">&#128465;</div>
                     <h2 style="color:#374785;margin-bottom:.75rem;">Delete Entry?</h2>
                     <p style="color:#6c757d;margin-bottom:2rem;">This cannot be undone.</p>
                     <div style="display:flex;gap:1rem;">
@@ -100,6 +101,42 @@ class Journal {
                     </div>
                 </div>`;
             document.body.appendChild(m);
+        }
+
+        // 6. AI Weekly Insights panel
+        if (!document.getElementById('aiInsightsPanel')) {
+            const panel = document.createElement('div');
+            panel.id = 'aiInsightsPanel';
+            panel.className = 'ai-insights-panel';
+            panel.innerHTML =
+                '<div class="ai-insights-header">' +
+                    '<div class="ai-insights-title">' +
+                        '<span class="ai-insights-icon">&#129302;</span>' +
+                        '<h3>Weekly AI Insights</h3>' +
+                        '<span class="ai-insights-badge">Powered by AI</span>' +
+                    '</div>' +
+                    '<button class="ai-insights-refresh" id="aiInsightsRefreshBtn" title="Regenerate insights">&#8635; Refresh</button>' +
+                '</div>' +
+                '<div class="ai-insights-body" id="aiInsightsBody">' +
+                    '<div class="ai-insights-placeholder" id="aiInsightsPlaceholder">' +
+                        '<span class="ai-insights-placeholder-icon">&#10024;</span>' +
+                        '<p>Your personalised weekly mood &amp; journal summary will appear here.</p>' +
+                        '<button class="ai-insights-generate-btn" id="aiInsightsGenerateBtn">Generate Insights</button>' +
+                    '</div>' +
+                '</div>';
+            const moodSection = document.getElementById('moodChartSection');
+            const journalMain = document.querySelector('.journal-main') ||
+                                document.querySelector('.entries-section') ||
+                                document.getElementById('entriesSection');
+            if (moodSection && moodSection.parentNode) {
+                moodSection.parentNode.insertBefore(panel, moodSection.nextSibling);
+            } else if (journalMain) {
+                journalMain.appendChild(panel);
+            } else {
+                document.body.appendChild(panel);
+            }
+            document.getElementById('aiInsightsGenerateBtn').addEventListener('click', () => this._generateAIInsights());
+            document.getElementById('aiInsightsRefreshBtn').addEventListener('click',  () => this._generateAIInsights(true));
         }
     }
 
@@ -172,6 +209,52 @@ class Journal {
             cursor:pointer;padding:0;line-height:1;}
         .reminder-item.done{opacity:.65;}
         .modal{backdrop-filter:blur(2px);}
+
+        /* ── AI Weekly Insights panel ── */
+        .ai-insights-panel{background:#fff;border-radius:14px;
+            border:1.5px solid #e0e7ff;padding:1.5rem;margin:1.5rem 0;
+            box-shadow:0 2px 12px rgba(74,134,232,.08);}
+        .ai-insights-header{display:flex;align-items:center;justify-content:space-between;
+            margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+        .ai-insights-title{display:flex;align-items:center;gap:.6rem;}
+        .ai-insights-title h3{margin:0;font-size:1rem;color:#374785;font-weight:700;}
+        .ai-insights-icon{font-size:1.3rem;}
+        .ai-insights-badge{background:#e0e7ff;color:#374785;font-size:.68rem;font-weight:700;
+            padding:.15rem .55rem;border-radius:20px;text-transform:uppercase;letter-spacing:.04em;}
+        .ai-insights-refresh{background:#f0f4ff;border:1px solid #c7d7f8;color:#374785;
+            border-radius:8px;padding:.35rem .85rem;font-size:.82rem;font-weight:600;
+            cursor:pointer;transition:all .2s;}
+        .ai-insights-refresh:hover{background:#e0e7ff;}
+        .ai-insights-refresh:disabled{opacity:.55;cursor:not-allowed;}
+        .ai-insights-body{min-height:80px;}
+        .ai-insights-placeholder{text-align:center;padding:1.5rem 1rem;color:#6c757d;}
+        .ai-insights-placeholder-icon{font-size:2rem;display:block;margin-bottom:.6rem;}
+        .ai-insights-placeholder p{font-size:.9rem;margin-bottom:1rem;}
+        .ai-insights-generate-btn{background:linear-gradient(135deg,#374785,#6a85e8);
+            color:#fff;border:none;border-radius:8px;padding:.6rem 1.4rem;
+            font-size:.88rem;font-weight:600;cursor:pointer;transition:transform .15s;}
+        .ai-insights-generate-btn:hover{transform:translateY(-1px);}
+        .ai-insights-loading{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;
+            color:#374785;font-size:.9rem;font-weight:600;}
+        .ai-insights-spinner{width:20px;height:20px;border:3px solid #e0e7ff;
+            border-top-color:#374785;border-radius:50%;
+            animation:_aisp .7s linear infinite;flex-shrink:0;}
+        @keyframes _aisp{to{transform:rotate(360deg)}}
+        .ai-insights-content{font-size:.93rem;color:#374785;line-height:1.75;}
+        .ai-insights-content h4{font-size:.95rem;color:#374785;margin:1rem 0 .4rem;
+            font-weight:700;}
+        .ai-insights-content p{margin:0 0 .65rem;color:#495057;}
+        .ai-insights-content ul{margin:.3rem 0 .65rem 1.2rem;padding:0;}
+        .ai-insights-content li{margin-bottom:.3rem;color:#495057;}
+        .ai-insights-section{background:#f8faff;border-radius:10px;padding:1rem 1.1rem;
+            margin-bottom:.85rem;border-left:3px solid #96ceb4;}
+        .ai-insights-section.mood{border-left-color:#f9ca24;}
+        .ai-insights-section.patterns{border-left-color:#6a85e8;}
+        .ai-insights-section.tips{border-left-color:#4ecdc4;}
+        .ai-insights-footer{display:flex;align-items:center;justify-content:space-between;
+            margin-top:.8rem;padding-top:.8rem;border-top:1px solid #e9ecef;
+            font-size:.76rem;color:#adb5bd;flex-wrap:wrap;gap:.4rem;}
+        .ai-insights-timestamp{font-style:italic;}
         `;
         document.head.appendChild(s);
     }
@@ -233,7 +316,7 @@ class Journal {
             if (err.message === 'SESSION_EXPIRED') return;
 
             // Show entries from localStorage while explaining what happened
-            this._localFallback();
+            this._localFallback(search);
 
             const msg = err.message === 'TIMEOUT'
                 ? '⏳ Server is waking up — showing local entries. Refresh in ~30 seconds.'
@@ -242,14 +325,26 @@ class Journal {
         }
     }
 
-    _localFallback() {
+    _localFallback(search = '') {
         try {
             const saved = JSON.parse(localStorage.getItem('journalEntries') || '[]');
             this.entries = saved.map(e => ({ ...e, entry_date: e.entry_date || e.date }));
         } catch (_) { this.entries = []; }
         this._updateStats({});
-        this._renderEntries(this.entries);
+        const list = search.trim() ? this._clientSearch(this.entries, search.trim()) : this.entries;
+        this._renderEntries(list);
         this.updateCalendar(this.currentCalendarDate);
+    }
+
+    // Client-side search — used for offline fallback; tags, mood, title, content all searchable
+    _clientSearch(entries, query) {
+        const q = query.toLowerCase();
+        return entries.filter(e =>
+            (e.title   || '').toLowerCase().includes(q) ||
+            (e.content || '').toLowerCase().includes(q) ||
+            (Array.isArray(e.tags) ? e.tags.join(' ') : (e.tags || '')).toLowerCase().includes(q) ||
+            (e.mood    || '').toLowerCase().includes(q)
+        );
     }
 
     // ── Render entry cards ────────────────────────────────────────────────────
@@ -258,16 +353,31 @@ class Journal {
         if (!c) return;
         c.innerHTML = '';
 
+        const searchVal = (document.getElementById('searchInput')?.value || '').trim();
+
         if (!list || list.length === 0) {
-            c.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📝</div>
-                    <h3>No journal entries found</h3>
-                    <p>Start writing your first entry!</p>
-                    <button class="action-btn primary" id="emptyBtn"
-                        style="margin-top:1rem;max-width:220px;">✏️ Write First Entry</button>
-                </div>`;
-            document.getElementById('emptyBtn')?.addEventListener('click', () => this.openNewEntryForm());
+            if (searchVal) {
+                c.innerHTML =
+                    '<div class="empty-state">' +
+                        '<div class="empty-icon">🔍</div>' +
+                        '<h3>No entries match &ldquo;' + searchVal.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '&rdquo;</h3>' +
+                        '<p>Try a different keyword, or clear the search to see all entries.</p>' +
+                        '<button class="action-btn primary" id="clearSearchBtn" style="margin-top:1rem;max-width:220px;">✕ Clear Search</button>' +
+                    '</div>';
+                document.getElementById('clearSearchBtn')?.addEventListener('click', () => {
+                    const si = document.getElementById('searchInput');
+                    if (si) { si.value = ''; si.dispatchEvent(new Event('input')); }
+                });
+            } else {
+                c.innerHTML =
+                    '<div class="empty-state">' +
+                        '<div class="empty-icon">📝</div>' +
+                        '<h3>No journal entries found</h3>' +
+                        '<p>Start writing your first entry!</p>' +
+                        '<button class="action-btn primary" id="emptyBtn" style="margin-top:1rem;max-width:220px;">✏️ Write First Entry</button>' +
+                    '</div>';
+                document.getElementById('emptyBtn')?.addEventListener('click', () => this.openNewEntryForm());
+            }
             return;
         }
 
@@ -1208,6 +1318,175 @@ class Journal {
         </div>`;
         document.body.appendChild(el);
         setTimeout(() => el.parentElement && el.remove(), 5000);
+    }
+
+    // ── AI Weekly Insights (#10) ──────────────────────────────────────────────
+    // Loads cached insights or generates fresh ones on first visit each day.
+    async _loadAIInsights() {
+        try {
+            const cached = JSON.parse(localStorage.getItem('_aiInsights') || 'null');
+            const today  = new Date().toISOString().split('T')[0];
+            if (cached && cached.date === today && cached.text) {
+                this._renderAIInsights(cached.text, cached.generatedAt);
+                return;
+            }
+        } catch (_) {}
+        // Don't auto-generate on load — wait for user to click Generate
+    }
+
+    async _generateAIInsights(force = false) {
+        const body    = document.getElementById('aiInsightsBody');
+        const genBtn  = document.getElementById('aiInsightsGenerateBtn');
+        const refBtn  = document.getElementById('aiInsightsRefreshBtn');
+        if (!body) return;
+
+        // Show loading state
+        body.innerHTML =
+            '<div class="ai-insights-loading">' +
+                '<div class="ai-insights-spinner"></div>' +
+                '<span>Analysing your week… this may take a moment</span>' +
+            '</div>';
+        if (refBtn) { refBtn.disabled = true; refBtn.textContent = '... Generating'; }
+
+        try {
+            // Gather the last 7 days of entries
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const recent = this.entries.filter(e => {
+                const d = new Date((e.entry_date || e.date || '').split('T')[0] + 'T12:00:00');
+                return d >= sevenDaysAgo;
+            });
+
+            if (recent.length === 0) {
+                body.innerHTML =
+                    '<div class="ai-insights-placeholder">' +
+                        '<span class="ai-insights-placeholder-icon">📭</span>' +
+                        '<p>No journal entries found for the past 7 days. Write a few entries first, then come back for your insights!</p>' +
+                    '</div>';
+                if (refBtn) { refBtn.disabled = false; refBtn.textContent = '↻ Refresh'; }
+                return;
+            }
+
+            // Build a compact summary for the AI prompt
+            const entrySummaries = recent.map(e =>
+                'Date: ' + (e.entry_date || e.date || '').split('T')[0] +
+                ' | Mood: ' + (e.mood || 'not set') +
+                ' | Title: ' + (e.title || '') +
+                ' | Excerpt: ' + (e.content || '').slice(0, 200)
+            ).join('\n');
+
+            const moodList  = recent.map(e => e.mood).filter(Boolean);
+            const moodCounts = {};
+            moodList.forEach(m => { moodCounts[m] = (moodCounts[m] || 0) + 1; });
+            const moodSummary = Object.entries(moodCounts)
+                .map(([m, c]) => m + ' x' + c).join(', ');
+
+            const prompt =
+                'You are a warm, empathetic mental wellness assistant on an Alzheimer\'s support app. ' +
+                'A patient or caregiver has written ' + recent.length + ' journal entries this week.\n\n' +
+                'ENTRIES:\n' + entrySummaries + '\n\n' +
+                'MOOD SUMMARY: ' + moodSummary + '\n\n' +
+                'Please provide a concise weekly insights report with these EXACT sections (use these headings):\n' +
+                '## Mood Overview\n(2-3 sentences on their emotional patterns this week)\n\n' +
+                '## Key Themes\n(2-3 bullet points of topics or themes recurring in their entries)\n\n' +
+                '## Positive Highlights\n(1-2 encouraging things noticed)\n\n' +
+                '## Gentle Suggestions\n(2-3 brief, kind, practical tips based on what you saw)\n\n' +
+                'Keep the tone warm, supportive and non-clinical. ' +
+                'Do NOT mention specific names from entries. Keep each section brief.';
+
+            const response = await fetch(API_BASE + '/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.token
+                },
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] })
+            });
+
+            if (!response.ok) throw new Error('AI service error ' + response.status);
+            const data = await response.json();
+            const text = data.reply || '';
+            if (!text) throw new Error('Empty AI response');
+
+            // Cache for today
+            localStorage.setItem('_aiInsights', JSON.stringify({
+                date: new Date().toISOString().split('T')[0],
+                text,
+                generatedAt: new Date().toISOString()
+            }));
+
+            this._renderAIInsights(text, new Date().toISOString());
+
+        } catch (err) {
+            if (err.message === 'SESSION_EXPIRED') return;
+            body.innerHTML =
+                '<div class="ai-insights-placeholder">' +
+                    '<span class="ai-insights-placeholder-icon">⚠️</span>' +
+                    '<p>Could not generate insights right now. Please try again in a moment.</p>' +
+                    '<button class="ai-insights-generate-btn" id="aiInsightsRetryBtn">Try Again</button>' +
+                '</div>';
+            document.getElementById('aiInsightsRetryBtn')?.addEventListener('click', () => this._generateAIInsights(true));
+        } finally {
+            if (refBtn) { refBtn.disabled = false; refBtn.textContent = '↻ Refresh'; }
+        }
+    }
+
+    _renderAIInsights(text, generatedAt) {
+        const body = document.getElementById('aiInsightsBody');
+        if (!body) return;
+
+        // Parse the markdown-style sections from AI response into styled HTML
+        const sectionMap = {
+            'Mood Overview':       { cls: 'mood',     icon: '💭' },
+            'Key Themes':          { cls: 'patterns',  icon: '🔍' },
+            'Positive Highlights': { cls: 'tips',      icon: '✨' },
+            'Gentle Suggestions':  { cls: 'tips',      icon: '💡' }
+        };
+
+        let html = '<div class="ai-insights-content">';
+
+        // Split on ## headings
+        const sections = text.split(/^##\s*/m).filter(Boolean);
+        sections.forEach(section => {
+            const lines     = section.split('\n').filter(Boolean);
+            const heading   = lines[0].trim().replace(/^\*+|\*+$/g, '');
+            const bodyLines = lines.slice(1);
+
+            const meta = sectionMap[heading] || { cls: '', icon: '📌' };
+
+            html += '<div class="ai-insights-section ' + meta.cls + '">';
+            html += '<h4>' + meta.icon + ' ' + this._esc(heading) + '</h4>';
+
+            bodyLines.forEach(line => {
+                const clean = line.trim();
+                if (!clean) return;
+                if (clean.startsWith('-') || clean.startsWith('*')) {
+                    // It's a bullet list item
+                    html += '<ul><li>' + this._esc(clean.replace(/^[-*]\s*/, '')) + '</li></ul>';
+                } else {
+                    html += '<p>' + this._esc(clean) + '</p>';
+                }
+            });
+
+            html += '</div>';
+        });
+
+        // If parsing produced nothing (AI responded differently), show raw
+        if (sections.length === 0) {
+            html += '<p>' + this._esc(text) + '</p>';
+        }
+
+        const ts = generatedAt
+            ? 'Generated ' + new Date(generatedAt).toLocaleString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+            : '';
+
+        html += '</div>';
+        html += '<div class="ai-insights-footer">' +
+                    '<span class="ai-insights-timestamp">' + this._esc(ts) + '</span>' +
+                    '<span>Based on your last 7 days of entries</span>' +
+                '</div>';
+
+        body.innerHTML = html;
     }
 }
 

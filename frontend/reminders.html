@@ -183,6 +183,83 @@
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+        /* ── Compliance History Panel ── */
+        .compliance-header { margin-bottom: 1.5rem; }
+        .compliance-title  { font-size: 1.2rem; color: #333; margin-bottom: 0.25rem; }
+        .compliance-subtitle { font-size: 0.85rem; color: #888; }
+
+        .compliance-stats-row {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 600px) { .compliance-stats-row { grid-template-columns: repeat(2,1fr); } }
+        .compliance-stat {
+            background: white; border-radius: 10px; padding: 1rem;
+            text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+        }
+        .compliance-stat.highlight { background: var(--primary); color: white; }
+        .compliance-stat-num { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .compliance-stat.highlight .compliance-stat-num { color: white; }
+        .compliance-stat-lbl { font-size: 0.72rem; color: #888; margin-top: 0.1rem; }
+        .compliance-stat.highlight .compliance-stat-lbl { color: rgba(255,255,255,0.85); }
+
+        .compliance-bar-wrap  { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem; }
+        .compliance-bar-track { flex: 1; height: 10px; background: #e9ecef; border-radius: 20px; overflow: hidden; }
+        .compliance-bar-fill  { height: 100%; background: linear-gradient(90deg, #4caf50, #81c784); border-radius: 20px; transition: width 0.8s ease; }
+        .compliance-bar-pct   { font-size: 0.88rem; font-weight: 700; color: #4caf50; min-width: 38px; text-align: right; }
+
+        .compliance-grid-title { font-size: 0.95rem; color: #444; font-weight: 600; margin-bottom: 0.75rem; }
+        .compliance-legend { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.78rem; color: #666; }
+        .compliance-legend-item { display: flex; align-items: center; gap: 0.35rem; }
+        .compliance-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .dot-all     { background: #4caf50; }
+        .dot-partial { background: #ff9800; }
+        .dot-missed  { background: #f44336; }
+        .dot-none    { background: #e9ecef; border: 1px solid #ddd; }
+
+        .compliance-day-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px; margin-bottom: 0.5rem;
+        }
+        .compliance-day-cell {
+            aspect-ratio: 1; border-radius: 4px; cursor: default;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.68rem; font-weight: 600; color: transparent;
+            position: relative; transition: transform 0.15s;
+        }
+        .compliance-day-cell:hover { transform: scale(1.15); z-index: 2; }
+        .compliance-day-cell .tooltip {
+            display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+            transform: translateX(-50%); background: #333; color: white;
+            font-size: 0.72rem; padding: 0.3rem 0.6rem; border-radius: 6px;
+            white-space: nowrap; z-index: 10; pointer-events: none;
+        }
+        .compliance-day-cell:hover .tooltip { display: block; }
+        .compliance-day-cell.status-all     { background: #4caf50; }
+        .compliance-day-cell.status-partial { background: #ff9800; }
+        .compliance-day-cell.status-missed  { background: #f44336; }
+        .compliance-day-cell.status-none    { background: #e9ecef; }
+        .compliance-day-cell.status-future  { background: #f5f5f5; border: 1px dashed #ddd; }
+        .compliance-day-cell.status-today   { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+        .compliance-day-labels {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 4px; margin-bottom: 4px;
+        }
+        .compliance-day-label { text-align: center; font-size: 0.68rem; color: #aaa; font-weight: 600; }
+
+        .compliance-reminder-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: white; border-radius: 10px; padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem; box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+            flex-wrap: wrap;
+        }
+        .compliance-reminder-name { flex: 1; min-width: 120px; font-weight: 600; color: #333; font-size: 0.88rem; }
+        .compliance-reminder-mini-bar { flex: 2; min-width: 100px; height: 8px; background: #e9ecef; border-radius: 20px; overflow: hidden; }
+        .compliance-reminder-mini-fill { height: 100%; border-radius: 20px; transition: width 0.6s ease; }
+        .compliance-reminder-pct { font-size: 0.82rem; font-weight: 700; min-width: 36px; text-align: right; }
+
         /* ── Mobile Responsiveness ── */
         @media (max-width: 768px) {
             .reminders-layout { flex-direction: column !important; }
@@ -242,11 +319,66 @@
             <button class="filter-tab"        data-filter="today"    role="tab">Today</button>
             <button class="filter-tab"        data-filter="upcoming" role="tab">Upcoming</button>
             <button class="filter-tab"        data-filter="past"     role="tab">Past</button>
+            <button class="filter-tab"        data-filter="history"  role="tab" id="historyTab">📊 30-Day History</button>
         </div>
 
         <!-- Reminder list -->
         <div id="reminderList" aria-live="polite">
             <div style="text-align:center;padding:3rem;"><div class="spinner"></div></div>
+        </div>
+    </div>
+
+    <!-- 30-Day Compliance History Panel -->
+    <div id="compliancePanel" style="display:none;">
+        <div class="compliance-header">
+            <h2 class="compliance-title">📊 30-Day Compliance History</h2>
+            <p class="compliance-subtitle">Track how consistently you have been completing your reminders</p>
+        </div>
+
+        <!-- Summary stats row -->
+        <div class="compliance-stats-row" id="complianceStats">
+            <div class="compliance-stat">
+                <div class="compliance-stat-num" id="cStatTotal">—</div>
+                <div class="compliance-stat-lbl">Total Reminders</div>
+            </div>
+            <div class="compliance-stat">
+                <div class="compliance-stat-num" id="cStatDone">—</div>
+                <div class="compliance-stat-lbl">Completed</div>
+            </div>
+            <div class="compliance-stat">
+                <div class="compliance-stat-num" id="cStatMissed">—</div>
+                <div class="compliance-stat-lbl">Missed</div>
+            </div>
+            <div class="compliance-stat highlight">
+                <div class="compliance-stat-num" id="cStatRate">—</div>
+                <div class="compliance-stat-lbl">Compliance Rate</div>
+            </div>
+        </div>
+
+        <!-- Rate bar -->
+        <div class="compliance-bar-wrap">
+            <div class="compliance-bar-track">
+                <div class="compliance-bar-fill" id="cBarFill" style="width:0%"></div>
+            </div>
+            <span class="compliance-bar-pct" id="cBarPct">0%</span>
+        </div>
+
+        <!-- 30-day calendar grid -->
+        <h3 class="compliance-grid-title">Daily Breakdown — Last 30 Days</h3>
+        <div class="compliance-legend">
+            <span class="compliance-legend-item"><span class="compliance-dot dot-all"></span> All done</span>
+            <span class="compliance-legend-item"><span class="compliance-dot dot-partial"></span> Partial</span>
+            <span class="compliance-legend-item"><span class="compliance-dot dot-missed"></span> Missed</span>
+            <span class="compliance-legend-item"><span class="compliance-dot dot-none"></span> No reminders</span>
+        </div>
+        <div class="compliance-day-grid" id="complianceDayGrid">
+            <!-- Filled by JS -->
+        </div>
+
+        <!-- Per-category breakdown table -->
+        <h3 class="compliance-grid-title" style="margin-top:2rem;">By Reminder</h3>
+        <div id="complianceByReminder">
+            <!-- Filled by JS -->
         </div>
     </div>
 
@@ -537,7 +669,184 @@
         }
 
         load();
+
+        // ── Compliance history tab handler ────────────────────────────────────
+        document.getElementById('historyTab').addEventListener('click', function() {
+            loadComplianceHistory();
+        });
     });
+
+    // ── Compliance History (#4) ──────────────────────────────────────────────
+    async function loadComplianceHistory() {
+        var panel    = document.getElementById('compliancePanel');
+        var listEl   = document.getElementById('reminderList');
+        if (!panel || !listEl) return;
+
+        panel.style.display = 'block';
+        listEl.style.display = 'none';
+
+        var grid     = document.getElementById('complianceDayGrid');
+        var byRem    = document.getElementById('complianceByReminder');
+        grid.innerHTML  = '<div style="padding:1rem;color:#aaa;font-size:.85rem;">Loading…</div>';
+        byRem.innerHTML = '';
+
+        try {
+            // Fetch all reminders (no filter = all)
+            var res  = await API.get('/reminders');
+            var data = await res.json();
+            var all  = data.reminders || [];
+
+            // ── Build 30-day date array ──────────────────────────────────────
+            var days = [];
+            var today = new Date();
+            for (var i = 29; i >= 0; i--) {
+                var d = new Date(today);
+                d.setDate(today.getDate() - i);
+                days.push(d.toISOString().split('T')[0]);
+            }
+            var todayStr = today.toISOString().split('T')[0];
+
+            // ── Per-day stats ────────────────────────────────────────────────
+            var dayStats = {};
+            days.forEach(function(ds) { dayStats[ds] = { total: 0, done: 0 }; });
+
+            all.forEach(function(r) {
+                var rd = (r.reminder_date || '').split('T')[0];
+                if (dayStats[rd]) {
+                    dayStats[rd].total++;
+                    if (r.completed) dayStats[rd].done++;
+                }
+            });
+
+            // ── Overall stats ────────────────────────────────────────────────
+            var totalInPeriod = 0, doneInPeriod = 0;
+            days.forEach(function(ds) {
+                if (ds <= todayStr) {
+                    totalInPeriod += dayStats[ds].total;
+                    doneInPeriod  += dayStats[ds].done;
+                }
+            });
+            var missedInPeriod = totalInPeriod - doneInPeriod;
+            var rate = totalInPeriod > 0 ? Math.round(doneInPeriod / totalInPeriod * 100) : 0;
+
+            document.getElementById('cStatTotal').textContent  = totalInPeriod;
+            document.getElementById('cStatDone').textContent   = doneInPeriod;
+            document.getElementById('cStatMissed').textContent = missedInPeriod;
+            document.getElementById('cStatRate').textContent   = rate + '%';
+
+            var fill = document.getElementById('cBarFill');
+            var pct  = document.getElementById('cBarPct');
+            setTimeout(function() {
+                fill.style.width = rate + '%';
+                fill.style.background = rate >= 75 ? 'linear-gradient(90deg,#4caf50,#81c784)'
+                                      : rate >= 40 ? 'linear-gradient(90deg,#ff9800,#ffb74d)'
+                                      :              'linear-gradient(90deg,#f44336,#e57373)';
+                pct.textContent  = rate + '%';
+                pct.style.color  = rate >= 75 ? '#4caf50' : rate >= 40 ? '#ff9800' : '#f44336';
+            }, 80);
+
+            // ── Render day-of-week header ────────────────────────────────────
+            var labelsHtml = '<div class="compliance-day-labels">';
+            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(function(d) {
+                labelsHtml += '<div class="compliance-day-label">' + d + '</div>';
+            });
+            labelsHtml += '</div>';
+            grid.innerHTML = labelsHtml;
+
+            // Pad to start on correct weekday
+            var firstDay = new Date(days[0] + 'T12:00:00').getDay(); // 0=Sun
+            var gridWrap = document.createElement('div');
+            gridWrap.className = 'compliance-day-grid';
+
+            for (var pad = 0; pad < firstDay; pad++) {
+                var blank = document.createElement('div');
+                gridWrap.appendChild(blank);
+            }
+
+            // Render each day cell
+            days.forEach(function(ds) {
+                var stat   = dayStats[ds];
+                var isFuture = ds > todayStr;
+                var isToday  = ds === todayStr;
+                var status;
+
+                if (isFuture)             status = 'future';
+                else if (stat.total === 0) status = 'none';
+                else if (stat.done === stat.total) status = 'all';
+                else if (stat.done > 0)   status = 'partial';
+                else                      status = 'missed';
+
+                var cell = document.createElement('div');
+                cell.className = 'compliance-day-cell status-' + status + (isToday ? ' status-today' : '');
+
+                // Format date for tooltip
+                var dObj = new Date(ds + 'T12:00:00');
+                var label = dObj.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+                var tooltipText = isFuture ? label + ': upcoming'
+                                : stat.total === 0 ? label + ': no reminders'
+                                : label + ': ' + stat.done + '/' + stat.total + ' done';
+
+                cell.innerHTML = '<span class="tooltip">' + tooltipText + '</span>';
+                gridWrap.appendChild(cell);
+            });
+
+            grid.appendChild(gridWrap);
+
+            // ── Per-reminder breakdown ───────────────────────────────────────
+            // Group by reminder title
+            var reminderMap = {};
+            all.forEach(function(r) {
+                var rd = (r.reminder_date || '').split('T')[0];
+                if (rd > todayStr) return; // skip future
+                var key = r.title || 'Untitled';
+                if (!reminderMap[key]) reminderMap[key] = { total: 0, done: 0 };
+                reminderMap[key].total++;
+                if (r.completed) reminderMap[key].done++;
+            });
+
+            var remEntries = Object.entries(reminderMap)
+                .sort(function(a, b) { return b[1].total - a[1].total; })
+                .slice(0, 15); // cap at 15 rows
+
+            if (remEntries.length === 0) {
+                byRem.innerHTML = '<p style="color:#aaa;font-size:.85rem;padding:.5rem 0;">No reminder data for the past 30 days.</p>';
+            } else {
+                byRem.innerHTML = remEntries.map(function(entry) {
+                    var name  = entry[0];
+                    var stat2 = entry[1];
+                    var pct2  = stat2.total > 0 ? Math.round(stat2.done / stat2.total * 100) : 0;
+                    var color = pct2 >= 75 ? '#4caf50' : pct2 >= 40 ? '#ff9800' : '#f44336';
+                    return '<div class="compliance-reminder-row">' +
+                        '<div class="compliance-reminder-name">' + esc(name) + '</div>' +
+                        '<div class="compliance-reminder-mini-bar">' +
+                            '<div class="compliance-reminder-mini-fill" style="width:' + pct2 + '%;background:' + color + ';"></div>' +
+                        '</div>' +
+                        '<div class="compliance-reminder-pct" style="color:' + color + ';">' + pct2 + '%</div>' +
+                        '<div style="font-size:.75rem;color:#aaa;min-width:60px;text-align:right;">' + stat2.done + '/' + stat2.total + '</div>' +
+                    '</div>';
+                }).join('');
+            }
+
+        } catch (e) {
+            grid.innerHTML = '<div style="padding:1rem;color:#f44336;font-size:.85rem;">Could not load compliance data. Please check your connection.</div>';
+        }
+    }
+
+    // Override the normal filter tab click to hide/show compliance panel
+    // (patch applied after DOMContentLoaded so the original handler is already set)
+    (function patchHistoryTab() {
+        var tabs   = document.querySelectorAll('.filter-tab');
+        var panel  = document.getElementById('compliancePanel');
+        var listEl = document.getElementById('reminderList');
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                if (this.dataset.filter !== 'history') {
+                    if (panel)  panel.style.display  = 'none';
+                    if (listEl) listEl.style.display = 'block';
+                }
+            });
+        });
+    })();
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     function esc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
