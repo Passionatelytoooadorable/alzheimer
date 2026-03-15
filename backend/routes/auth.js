@@ -77,7 +77,7 @@ router.post('/signup', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Signup error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Signup error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -138,7 +138,7 @@ router.post('/signin', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Signin error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Signin error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -160,7 +160,7 @@ router.get('/me', auth, async (req, res) => {
     if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
     res.json({ user: result.rows[0] });
   } catch (error) {
-    console.error('Get me error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Get me error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -192,7 +192,7 @@ router.post('/forgot-password', async (req, res) => {
     res.json({ message: 'If that email exists, a reset link has been sent.' });
 
   } catch (error) {
-    console.error('Forgot password error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -213,7 +213,7 @@ router.get('/activities', auth, async (req, res) => {
     );
     res.json({ activities: activities.rows });
   } catch (error) {
-    console.error('Get activities error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Get activities error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -245,7 +245,7 @@ router.post('/change-password', auth, async (req, res) => {
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Change password error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Change password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
