@@ -83,7 +83,7 @@ function initProfileDropdown() {
 function doLogout() {
     ['token','user','isLoggedIn','userName','userEmail','isNewUser','scanCompleted']
         .forEach(function (k) { localStorage.removeItem(k); });
-    window.location.href = 'signup.html';
+    window.location.href = 'landing.html';
 }
 
 // Auto-inject profile.css for dropdown styles if needed

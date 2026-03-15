@@ -339,32 +339,35 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof initSharedNav === 'function') initSharedNav('dashboard.html');
 
-        // ── Onboarding: show wizard on first dashboard visit if not already done ──
-        (function() {
-            if (localStorage.getItem('onboardingDone') === '1') return;
-            var user = JSON.parse(localStorage.getItem('user') || '{}');
-            var role = user.role || 'patient';
-            // Only show if user just signed up (isNewUser flag or no onboardingDone)
-            // We show a lightweight welcome banner + skip option on the dashboard itself
+        // ── Onboarding welcome banner (#9) — only for users who haven't seen tour ──
+        if (localStorage.getItem('onboardingDone') !== '1') {
             var banner = document.createElement('div');
             banner.id = 'obDashBanner';
             banner.style.cssText = 'background:linear-gradient(135deg,#4a86e8,#374785);color:white;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;';
-            banner.innerHTML =
-                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                    '<span style="font-size:1.5rem;">👋</span>' +
-                    '<div><div style="font-weight:700;font-size:0.95rem;">Welcome! Take a quick tour of your dashboard</div>' +
-                    '<div style="font-size:0.8rem;opacity:0.85;">Set up your profile and learn what's available — takes 30 seconds</div></div>' +
-                '</div>' +
-                '<div style="display:flex;gap:0.6rem;flex-shrink:0;">' +
-                    '<button onclick="startDashboardTour()" style="background:white;color:#374785;border:none;border-radius:8px;padding:0.45rem 1rem;font-size:0.85rem;font-weight:700;cursor:pointer;">Start Tour ✨</button>' +
-                    '<button onclick="skipTour()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:0.45rem 0.8rem;font-size:0.82rem;cursor:pointer;">Skip</button>' +
-                '</div>';
-            // Insert after header
+            var bannerLeft = document.createElement('div');
+            bannerLeft.style.cssText = 'display:flex;align-items:center;gap:0.75rem;';
+            bannerLeft.innerHTML = '<span style="font-size:1.5rem;">&#128075;</span>' +
+                '<div><div style="font-weight:700;font-size:0.95rem;">Welcome! Take a quick tour of your dashboard</div>' +
+                '<div style="font-size:0.8rem;opacity:0.85;">Set up your profile and learn what is available &mdash; takes 30 seconds</div></div>';
+            var bannerRight = document.createElement('div');
+            bannerRight.style.cssText = 'display:flex;gap:0.6rem;flex-shrink:0;';
+            var tourBtn = document.createElement('button');
+            tourBtn.style.cssText = 'background:white;color:#374785;border:none;border-radius:8px;padding:0.45rem 1rem;font-size:0.85rem;font-weight:700;cursor:pointer;';
+            tourBtn.textContent = 'Start Tour ✨';
+            tourBtn.onclick = function() { startDashboardTour(); };
+            var skipBtn = document.createElement('button');
+            skipBtn.style.cssText = 'background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:0.45rem 0.8rem;font-size:0.82rem;cursor:pointer;';
+            skipBtn.textContent = 'Skip';
+            skipBtn.onclick = function() { skipTour(); };
+            bannerRight.appendChild(tourBtn);
+            bannerRight.appendChild(skipBtn);
+            banner.appendChild(bannerLeft);
+            banner.appendChild(bannerRight);
             var header = document.querySelector('header.header');
             if (header && header.nextSibling) {
                 header.parentNode.insertBefore(banner, header.nextSibling);
             }
-        })();
+        }
 
         var now     = new Date();
         var dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -593,44 +596,39 @@
     }
     </script>
 
-    <!-- ── Dashboard onboarding tour modal (#9) ── -->
+    <!-- Onboarding tour modal (#9) -->
     <div id="dashTourOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9500;align-items:center;justify-content:center;padding:1rem;">
         <div style="background:white;border-radius:20px;max-width:440px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.25);overflow:hidden;">
             <div style="height:4px;background:#e9ecef;"><div id="dashTourBar" style="height:100%;background:linear-gradient(90deg,#4a86e8,#96ceb4);width:25%;transition:width 0.4s;"></div></div>
             <div id="dashTourBody" style="padding:1.75rem;"></div>
         </div>
     </div>
-
     <script>
     var dashTourStep = 0;
     var dashTourRole = (function(){ try{ return JSON.parse(localStorage.getItem('user')||'{}').role||'patient'; }catch(e){ return 'patient'; } })();
-
     var dashTourSteps = dashTourRole === 'caregiver' ? [
-        { icon:'🔗', title:'Link to patients',     body:'Go to your Caregiver Dashboard → patients see a "Link to Caregiver" box where they send you a request. Accept it to start monitoring.' },
-        { icon:'📍', title:'Live location map',    body:'Once linked, you can see a patient's real-time location on the map in your caregiver dashboard, including safe zone status.' },
-        { icon:'💬', title:'Send messages',        body:'Use the messaging panel to send reminders and encouragement directly to your linked patient's dashboard inbox.' },
-        { icon:'📊', title:'Activity & compliance',body:'The caregiver dashboard shows mood trends, reminder compliance rates, and a full 30-day activity feed for each patient.' }
+        { icon:'&#128279;', title:'Link to patients',      body:'Go to your Caregiver Dashboard. Patients send you a link request from their dashboard. Accept it to start monitoring them.' },
+        { icon:'&#128205;', title:'Live location map',     body:'Once linked, you can see a patient location on the live map in your caregiver dashboard, including safe zone status.' },
+        { icon:'&#128172;', title:'Send messages',         body:'Use the messaging panel to send reminders and encouragement directly to your linked patient inbox.' },
+        { icon:'&#128202;', title:'Activity and compliance', body:'The caregiver dashboard shows mood trends, reminder compliance rates, and a full 30-day activity feed for each patient.' }
     ] : [
-        { icon:'🧠', title:'Start with your scan', body:'Upload a medical PDF report on the Home page and our AI will assess Alzheimer's risk indicators privately and instantly.' },
-        { icon:'⏰', title:'Set up reminders',     body:'Head to Reminders to add medication schedules, appointments, and tasks. Enable notifications so you never miss one.' },
-        { icon:'📝', title:'Keep a daily journal', body:'The Journal page lets you log thoughts, moods, and memories. Your AI companion generates weekly mood insights from your entries.' },
-        { icon:'🔗', title:'Connect a caregiver',  body:'Use the "Link to a Caregiver" section on this dashboard to connect with a trusted carer who can monitor your wellbeing.' }
+        { icon:'&#129302;', title:'Start with your scan', body:'Upload a medical PDF report on the Home page and our AI will assess risk indicators privately and instantly.' },
+        { icon:'&#9200;',   title:'Set up reminders',     body:'Head to Reminders to add medication schedules, appointments, and tasks. Enable notifications so you never miss one.' },
+        { icon:'&#128221;', title:'Keep a daily journal', body:'The Journal page lets you log thoughts, moods, and memories. Your AI companion generates weekly mood insights from your entries.' },
+        { icon:'&#128279;', title:'Connect a caregiver',  body:'Use the Link to a Caregiver section on this dashboard to connect with a trusted carer who can monitor your wellbeing.' }
     ];
-
     window.startDashboardTour = function() {
-        var banner = document.getElementById('obDashBanner');
-        if (banner) banner.style.display = 'none';
+        var b = document.getElementById('obDashBanner');
+        if (b) b.style.display = 'none';
         dashTourStep = 0;
         document.getElementById('dashTourOverlay').style.display = 'flex';
         renderDashTourStep();
     };
-
     window.skipTour = function() {
         localStorage.setItem('onboardingDone', '1');
-        var banner = document.getElementById('obDashBanner');
-        if (banner) banner.remove();
+        var b = document.getElementById('obDashBanner');
+        if (b) b.remove();
     };
-
     function renderDashTourStep() {
         var step   = dashTourSteps[dashTourStep];
         var isLast = dashTourStep === dashTourSteps.length - 1;
@@ -644,30 +642,26 @@
             '</div>' +
             '<div style="display:flex;gap:0.6rem;align-items:center;">' +
                 '<span style="font-size:0.78rem;color:#aaa;flex:1;">' + (dashTourStep+1) + ' of ' + dashTourSteps.length + '</span>' +
-                (dashTourStep > 0 ? '<button onclick="dashTourNav(-1)" style="background:white;color:#555;border:1.5px solid #ddd;border-radius:8px;padding:0.55rem 1rem;font-size:0.85rem;cursor:pointer;">← Back</button>' : '') +
+                (dashTourStep > 0 ? '<button onclick="dashTourNav(-1)" style="background:white;color:#555;border:1.5px solid #ddd;border-radius:8px;padding:0.55rem 1rem;font-size:0.85rem;cursor:pointer;">&larr; Back</button>' : '') +
                 '<button onclick="dashTourNav(1)" style="background:#4a86e8;color:white;border:none;border-radius:8px;padding:0.55rem 1.4rem;font-size:0.88rem;font-weight:600;cursor:pointer;">' +
-                (isLast ? 'Done 🎉' : 'Next →') + '</button>' +
+                (isLast ? 'Done &#127881;' : 'Next &rarr;') + '</button>' +
             '</div>';
     }
-
     window.dashTourNav = function(dir) {
         dashTourStep += dir;
         if (dashTourStep >= dashTourSteps.length) {
             localStorage.setItem('onboardingDone', '1');
             document.getElementById('dashTourOverlay').style.display = 'none';
-            var b = document.getElementById('obDashBanner');
-            if (b) b.remove();
+            var b = document.getElementById('obDashBanner'); if (b) b.remove();
             return;
         }
         renderDashTourStep();
     };
-    // Close on overlay click
     document.getElementById('dashTourOverlay').addEventListener('click', function(e) {
         if (e.target === this) {
             localStorage.setItem('onboardingDone', '1');
             this.style.display = 'none';
-            var b = document.getElementById('obDashBanner');
-            if (b) b.remove();
+            var b = document.getElementById('obDashBanner'); if (b) b.remove();
         }
     });
     </script>

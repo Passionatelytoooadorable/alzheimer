@@ -516,16 +516,23 @@
     </footer>
 
     <script>
-    // Pre-fill role on signup page if user clicked a specific CTA
     document.addEventListener('DOMContentLoaded', function() {
+        // Store role preference and navigate to clean signup URL
         document.querySelectorAll('a[href*="signup.html?role="]').forEach(function(link) {
-            link.addEventListener('click', function() {
-                var role = new URL(this.href).searchParams.get('role');
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                var role = new URL(this.href, window.location.href).searchParams.get('role');
                 if (role) sessionStorage.setItem('prefilledRole', role);
-                // Remove the query string so signup.html URL is clean
-                this.href = 'signup.html';
+                window.location.href = 'signup.html';
             });
         });
+        // If already logged in, redirect to their dashboard
+        var token = localStorage.getItem('token');
+        if (token) {
+            var u = {};
+            try { u = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) {}
+            window.location.replace(u.role === 'caregiver' ? 'caregiver.html' : 'dashboard.html');
+        }
     });
     </script>
 

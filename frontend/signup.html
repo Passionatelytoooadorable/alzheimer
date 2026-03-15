@@ -255,6 +255,19 @@
         var togglePwBtn = document.getElementById('togglePassword');
         var pwInput     = document.getElementById('password');
 
+        // ── Pre-fill role from landing page CTA click ────────────────────────────
+        (function() {
+            var preRole = sessionStorage.getItem('prefilledRole');
+            if (preRole) {
+                sessionStorage.removeItem('prefilledRole');
+                var radio = document.querySelector('input[name="role"][value="' + preRole + '"]');
+                if (radio) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        })();
+
         // ── Role card toggle ──────────────────────────────────────────────────
         document.querySelectorAll('input[name="role"]').forEach(function (radio) {
             radio.addEventListener('change', function () {
