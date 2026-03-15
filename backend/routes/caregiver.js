@@ -27,6 +27,14 @@ const { query }    = require('../config/database');
 const auth         = require('../middleware/auth');
 const router       = express.Router();
 
+
+// ── Helper: convert Postgres error codes to user-friendly messages ────────────
+function pgErrMsg(err) {
+  if (err.code === '42P01') return 'A required database table does not exist. Run the migration SQL in your Neon dashboard.';
+  if (err.code === '42703') return 'A required database column is missing. Run the migration SQL in your Neon dashboard.';
+  return 'Internal server error';
+}
+
 // ── Helper: verify caregiver is linked to patient ────────────────────────────
 async function assertLinked(caregiverId, patientId) {
   const r = await query(
@@ -94,8 +102,8 @@ router.post('/link-request', auth, requireRole('patient'), async (req, res) => {
       caregiver: { id: caregiver.id, name: caregiver.name, email: caregiver.email }
     });
   } catch (err) {
-    console.error('link-request error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('link-request error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -113,8 +121,8 @@ router.get('/link-status', auth, requireRole('patient'), async (req, res) => {
     if (!r.rows.length) return res.json({ link: null });
     res.json({ link: r.rows[0] });
   } catch (err) {
-    console.error('link-status error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('link-status error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -127,8 +135,8 @@ router.delete('/unlink', auth, requireRole('patient'), async (req, res) => {
     );
     res.json({ message: 'Unlinked successfully' });
   } catch (err) {
-    console.error('unlink error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('unlink error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -148,8 +156,8 @@ router.get('/patients', auth, requireRole('caregiver'), async (req, res) => {
     );
     res.json({ patients: r.rows });
   } catch (err) {
-    console.error('get patients error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('get patients error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -166,8 +174,8 @@ router.put('/link/:id/accept', auth, requireRole('caregiver'), async (req, res) 
     if (!r.rows.length) return res.status(404).json({ error: 'Link request not found' });
     res.json({ message: 'Patient accepted', link: r.rows[0] });
   } catch (err) {
-    console.error('accept error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('accept error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -184,8 +192,8 @@ router.put('/link/:id/reject', auth, requireRole('caregiver'), async (req, res) 
     if (!r.rows.length) return res.status(404).json({ error: 'Link request not found' });
     res.json({ message: 'Request rejected', link: r.rows[0] });
   } catch (err) {
-    console.error('reject error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('reject error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -226,8 +234,8 @@ router.get('/patient/:patientId/stats', auth, requireRole('caregiver'), async (r
     });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('patient stats error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('patient stats error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -247,8 +255,8 @@ router.get('/patient/:patientId/activities', auth, requireRole('caregiver'), asy
     res.json({ activities: r.rows });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('patient activities error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('patient activities error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -267,8 +275,8 @@ router.get('/patient/:patientId/location', auth, requireRole('caregiver'), async
     res.json({ location: r.rows[0] || null });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('patient location error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('patient location error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -287,8 +295,8 @@ router.get('/patient/:patientId/moods', auth, requireRole('caregiver'), async (r
     res.json({ moods: r.rows });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('patient moods error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('patient moods error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -306,8 +314,8 @@ router.get('/patient/:patientId/reports', auth, requireRole('caregiver'), async 
     res.json({ reports: r.rows });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('patient reports error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('patient reports error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -334,8 +342,8 @@ router.post('/message', auth, requireRole('caregiver'), async (req, res) => {
     res.status(201).json({ message: 'Message sent', data: r.rows[0] });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('send message error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('send message error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -355,8 +363,8 @@ router.get('/messages/patient/:patientId', auth, requireRole('caregiver'), async
     res.json({ messages: r.rows });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
-    console.error('get messages error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('get messages error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -375,8 +383,8 @@ router.get('/messages/inbox', auth, requireRole('patient'), async (req, res) => 
     const unread = r.rows.filter(m => !m.is_read).length;
     res.json({ messages: r.rows, unread_count: unread });
   } catch (err) {
-    console.error('inbox error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('inbox error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
@@ -390,8 +398,8 @@ router.put('/messages/:id/read', auth, requireRole('patient'), async (req, res) 
     );
     res.json({ message: 'Marked as read' });
   } catch (err) {
-    console.error('mark read error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    if (process.env.NODE_ENV !== 'production') console.error('mark read error:', err);
+    res.status(500).json({ error: pgErrMsg(err) });
   }
 });
 
