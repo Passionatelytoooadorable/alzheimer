@@ -91,20 +91,24 @@
         }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
 
-        /* hero visual cards */
-        .hero-visual { display: flex; justify-content: center; align-items: center; }
-        .hero-card-stack { position: relative; width: 280px; height: 300px; }
-        .hcard {
-            position: absolute; background: rgba(255,255,255,0.96);
-            border-radius: 16px; padding: 1.1rem 1.3rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12); color: #333; font-size: 0.85rem;
+        /* hero visual cards — staggered but fully readable */
+        .hero-visual { display: flex; justify-content: center; align-items: flex-start; padding-top: 1rem; }
+        .hero-card-stack {
+            display: flex; flex-direction: column; gap: 0.65rem;
+            width: 240px;
         }
-        .hcard-1 { top:0;    left:0;    width:200px; transform:rotate(-3deg); }
-        .hcard-2 { top:70px; left:60px; width:210px; transform:rotate(1.5deg); z-index:2; }
-        .hcard-3 { top:155px;left:20px; width:200px; transform:rotate(-1deg); z-index:3; }
-        .hcard-icon  { font-size:1.4rem; margin-bottom:0.3rem; }
-        .hcard-title { font-weight:700; color:var(--dark); font-size:0.82rem; }
-        .hcard-body  { color:#777; font-size:0.75rem; margin-top:0.15rem; }
+        .hcard {
+            background: rgba(255,255,255,0.97);
+            border-radius: 14px; padding: 0.9rem 1.1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); color: #333; font-size: 0.85rem;
+            width: 100%;
+        }
+        .hcard-1 { transform: translateX(-14px); }
+        .hcard-2 { transform: translateX(14px); }
+        .hcard-3 { transform: translateX(-8px); }
+        .hcard-icon  { font-size: 1.3rem; margin-bottom: 0.25rem; }
+        .hcard-title { font-weight: 700; color: var(--dark); font-size: 0.82rem; }
+        .hcard-body  { color: #777; font-size: 0.75rem; margin-top: 0.15rem; }
 
         /* ── Stats bar — desaturated navy ── */
         .stats-bar { background: var(--land-stats-bg); color: white; padding: 1.5rem 2rem; }
@@ -143,6 +147,16 @@
             transition: transform 0.25s, box-shadow 0.25s;
         }
         .audience-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+        .audience-card.selected-patient {
+            border-color: #7a9cc7 !important;
+            box-shadow: 0 0 0 3px rgba(122,156,199,0.25), 0 8px 30px rgba(0,0,0,0.1) !important;
+            transform: translateY(-4px);
+        }
+        .audience-card.selected-caregiver {
+            border-color: #2a7d50 !important;
+            box-shadow: 0 0 0 3px rgba(42,125,80,0.2), 0 8px 30px rgba(0,0,0,0.1) !important;
+            transform: translateY(-4px);
+        }
         .audience-card.patient   { background: linear-gradient(135deg,#eef3fc,#e2ecf9); border: 1.5px solid #c8d9f2; }
         .audience-card.caregiver { background: linear-gradient(135deg,#eaf5f0,#d8efe4); border: 1.5px solid #b2dcc8; }
         .aud-icon  { font-size: 2.5rem; margin-bottom: 1rem; }
@@ -312,7 +326,7 @@
         <p class="section-sub">Whether you're managing your own memory health or supporting a loved one, we have the right tools for you.</p>
 
         <div class="audience-grid">
-            <a href="signup.html?role=patient" class="audience-card patient" aria-label="Sign up as a patient">
+            <a href="signup.html?role=patient" class="audience-card patient" id="cardPatient" aria-label="Sign up as a patient">
                 <div class="aud-icon">🧑</div>
                 <div class="aud-label">For Patients</div>
                 <div class="aud-title">Manage your memory health</div>
@@ -325,7 +339,7 @@
                     <li>AI companion — chat anytime</li>
                 </ul>
             </a>
-            <a href="signup.html?role=caregiver" class="audience-card caregiver" aria-label="Sign up as a caregiver">
+            <a href="signup.html?role=caregiver" class="audience-card caregiver" id="cardCaregiver" aria-label="Sign up as a caregiver">
                 <div class="aud-icon">👩‍⚕️</div>
                 <div class="aud-label">For Caregivers</div>
                 <div class="aud-title">Support your patients better</div>
@@ -441,15 +455,27 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Store role when a role-specific card is clicked, then go to clean signup URL
-        document.querySelectorAll('a[href*="signup.html?role="]').forEach(function(link) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                var role = new URL(this.href, window.location.href).searchParams.get('role');
-                if (role) sessionStorage.setItem('prefilledRole', role);
+        var cardP = document.getElementById('cardPatient');
+        var cardC = document.getElementById('cardCaregiver');
+
+        function handleCardClick(e, role) {
+            e.preventDefault();
+            // Remove any existing selection
+            if (cardP) cardP.classList.remove('selected-patient', 'selected-caregiver');
+            if (cardC) cardC.classList.remove('selected-patient', 'selected-caregiver');
+            // Highlight the clicked card
+            var clicked = (role === 'patient') ? cardP : cardC;
+            var cls     = (role === 'patient') ? 'selected-patient' : 'selected-caregiver';
+            if (clicked) clicked.classList.add(cls);
+            // Store role and navigate after brief visual feedback (200ms)
+            sessionStorage.setItem('prefilledRole', role);
+            setTimeout(function() {
                 window.location.href = 'signup.html';
-            });
-        });
+            }, 200);
+        }
+
+        if (cardP) cardP.addEventListener('click', function(e) { handleCardClick(e, 'patient'); });
+        if (cardC) cardC.addEventListener('click', function(e) { handleCardClick(e, 'caregiver'); });
     });
     </script>
 
