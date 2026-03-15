@@ -317,8 +317,7 @@
         checkHealth();
         setInterval(checkHealth, 60000);
 
-        await Promise.allSettled([loadPatients(), loadPendingRequests()]);
-
+        // Attach the change listener BEFORE loadPatients() so auto-select fires correctly
         document.getElementById('patientSelect').addEventListener('change', function () {
             var opt = this.options[this.selectedIndex];
             selectedPatientId   = this.value ? parseInt(this.value) : null;
@@ -332,6 +331,8 @@
                 document.getElementById('dashboardContent').classList.add('hidden');
             }
         });
+
+        await Promise.allSettled([loadPatients(), loadPendingRequests()]);
 
         document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
         document.getElementById('geofenceToggle').addEventListener('change', function () {
@@ -377,7 +378,7 @@
                 sel.value = accepted[0].patient_id;
                 sel.dispatchEvent(new Event('change'));
             }
-        } catch (e) { console.error('loadPatients:', e); }
+        } catch (e) {}
     }
 
     async function loadPendingRequests() {
@@ -385,13 +386,23 @@
             var res     = await API.get('/caregiver/patients');
             var data    = await res.json();
             var pending = (data.patients || []).filter(function (p) { return p.status === 'pending'; });
-            if (!pending.length) return;
 
-            document.getElementById('pendingBadge').classList.add('visible');
+            var badge = document.getElementById('pendingBadge');
+            var panel = document.getElementById('pendingPanel');
+            var list  = document.getElementById('pendingList');
+
+            if (!pending.length) {
+                if (badge) badge.classList.remove('visible');
+                if (panel) panel.classList.remove('visible');
+                if (list)  list.innerHTML = '';
+                return;
+            }
+
+            if (badge) { badge.classList.add('visible'); }
             document.getElementById('pendingCount').textContent = pending.length;
-            document.getElementById('pendingPanel').classList.add('visible');
+            if (panel) panel.classList.add('visible');
 
-            document.getElementById('pendingList').innerHTML = pending.map(function (p) {
+            list.innerHTML = pending.map(function (p) {
                 return '<div class="pending-request">' +
                     '<div><div class="req-name">' + esc(p.name) + '</div>' +
                     '<div class="req-email">' + esc(p.email) + '</div></div>' +
@@ -400,13 +411,17 @@
                         '<button class="btn-reject" onclick="respondToRequest(' + p.link_id + ',\'reject\')">✕ Reject</button>' +
                     '</div></div>';
             }).join('');
-        } catch (e) { console.error('loadPendingRequests:', e); }
+        } catch (e) {}
     }
 
     async function respondToRequest(linkId, action) {
         try {
-            await API.put('/caregiver/link/' + linkId + '/' + action, {});
+            var res  = await API.put('/caregiver/link/' + linkId + '/' + action, {});
+            var data = await res.json();
+            if (!res.ok) { showToast('❌ ' + (data.error || 'Failed')); return; }
             showToast(action === 'accept' ? '✅ Patient accepted!' : '✕ Request rejected');
+            // Small delay so the DB write is visible before re-fetching
+            await new Promise(function(r){ setTimeout(r, 400); });
             await Promise.allSettled([loadPatients(), loadPendingRequests()]);
         } catch (e) { showToast('❌ Failed to respond'); }
     }
