@@ -602,11 +602,10 @@ class DailyTips {
     // Display tips statistics (for debugging)
     showStatistics() {
         const stats = this.getTipsStatistics();
-        console.log('📊 Daily Tips Statistics:');
-        console.log(`   Total Tips: ${stats.total}`);
-        console.log(`   Tips Used: ${stats.used}`);
-        console.log(`   Tips Remaining: ${stats.remaining}`);
-        console.log(`   Completion: ${stats.percentageUsed}%`);
+
+
+
+
         
         return stats;
     }

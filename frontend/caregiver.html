@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caregiver Dashboard - Alzheimer's Support</title>
-    <link rel="stylesheet" href="style.css">
+        <script>
+        (function() {
+            if (!localStorage.getItem('token')) { window.location.replace('login.html'); }
+            window.addEventListener('pageshow', function(e) {
+                if (e.persisted && !localStorage.getItem('token')) { window.location.replace('login.html'); }
+            });
+        })();
+    </script>
+<link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>

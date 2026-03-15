@@ -9,7 +9,7 @@
     <script>
         function checkAuthDash() {
             if (!localStorage.getItem('token')) {
-                window.location.replace('signup.html');
+                window.location.replace('login.html');
             }
         }
         checkAuthDash();
@@ -335,7 +335,6 @@
     <script src="api.js"></script>
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
-    <script src="dashboard.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof initSharedNav === 'function') initSharedNav('dashboard.html');
@@ -566,6 +565,9 @@
         if (s < 86400) return Math.floor(s/3600) + 'h ago'; return Math.floor(s/86400) + 'd ago';
     }
     </script>
+    <!-- Demo data seeder: run ?seedDemo=1 to populate realistic data -->
+    <script src="demo-data.js"></script>
+
     <!-- Accessibility toolbar -->
     <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
         <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>

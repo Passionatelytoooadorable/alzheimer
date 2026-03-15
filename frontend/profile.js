@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<div class="quick-links-grid">' +
                     '<a href="caregiver.html" class="qlink" style="background:linear-gradient(135deg,#0891b2,#0e7490)"><span>👥</span><span>My Patients</span></a>' +
                     '<a href="resources.html" class="qlink" style="background:linear-gradient(135deg,#a0e4f1,#0891b2)"><span>📚</span><span>Resources</span></a>' +
-                    '<a href="caregiver-guide.html" class="qlink" style="background:linear-gradient(135deg,#ffd89b,#f9a825)"><span>📋</span><span>Care Guide</span></a>' +
                 '</div>';
             rightCol.appendChild(cgLinks);
 

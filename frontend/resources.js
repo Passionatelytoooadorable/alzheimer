@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initResources() {
-    console.log('Resources section initialized');
     
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('token');
@@ -161,7 +160,6 @@ function setupResourceLinkTracking() {
 
 function logResourceAccess(resourceName, resourceUrl = '') {
     // In a real app, this would send data to analytics
-    console.log(`Resource accessed: ${resourceName}`, resourceUrl);
     
     // Store in localStorage for recent resources
     const recentResources = JSON.parse(localStorage.getItem('recentResources') || '[]');
@@ -182,14 +180,7 @@ function logResourceAccess(resourceName, resourceUrl = '') {
 
 // Emergency contact functions
 function callNumber(number) {
-    if (confirm(`Call ${number}?`)) {
-        // In a real app, this would initiate a phone call
-        // For web demo, we'll just show an alert
-        alert(`Calling ${number}...\n\nIn a real application, this would connect the call.`);
-        
-        // Log emergency call attempt
-        logResourceAccess(`emergency_call_${number}`);
-    }
+    window.location.href = 'tel:' + number;
 }
 
 // Export functions for use in other modules
@@ -210,7 +201,6 @@ window.resourcesFunctions = {
 // Add some utility functions
 function searchResources(query) {
     // This would be implemented for search functionality
-    console.log('Searching resources for:', query);
     
     // In a real implementation, this would filter resources based on the query
     const resources = document.querySelectorAll('.resource-card');

@@ -51,11 +51,16 @@ async function apiFetch(path, options = {}) {
 async function loadMemories() {
     showLoadingState();
     try {
-        const data = await apiFetch('/memories');
-        // Map DB column names → frontend shape
+        // Use shared API helper (has Render cold-start retry + status banner)
+        let data;
+        if (window.API) {
+            const res = await window.API.get('/memories');
+            data = await res.json();
+        } else {
+            data = await apiFetch('/memories');
+        }
         allMemories = data.memories.map(dbToFrontend);
     } catch (err) {
-        console.warn('DB fetch failed, using localStorage fallback:', err.message);
         allMemories = JSON.parse(localStorage.getItem('memories')) || [];
         showNotification('Working offline — changes may not sync.', 'info');
     }
@@ -176,13 +181,13 @@ function createMemoryCard(memory) {
         </div>
         <div class="memory-info">
             <div class="memory-card-badges">
-                <span class="memory-relationship">${memory.relationship}</span>
+                <span class="memory-relationship">${escHtml(memory.relationship)}</span>
                 <span class="memory-type-badge">${typeBadge}</span>
                 ${memory.audioData ? '<span class="memory-audio-badge">🎙 Voice</span>' : ''}
                 <span class="memory-db-badge">☁️ Synced</span>
             </div>
-            <div class="memory-name">${memory.name}</div>
-            <div class="memory-description">${memory.description}</div>
+            <div class="memory-name">${escHtml(memory.name)}</div>
+            <div class="memory-description">${escHtml(memory.description)}</div>
             ${memory.audioData
                 ? `<audio controls src="${memory.audioData}" style="width:100%;margin-top:.5rem;"></audio>`
                 : ''}
@@ -524,7 +529,6 @@ async function handleMemorySubmit(e) {
             showNotification('Memory saved to your account! ☁️💖', 'success');
         } catch (err) {
             // Offline fallback: save to localStorage
-            console.warn('API save failed, using localStorage:', err.message);
             const fallback = { ...mem, id: Date.now(), createdAt: new Date().toISOString() };
             allMemories.unshift(fallback);
             const stored = JSON.parse(localStorage.getItem('memories')) || [];
@@ -577,13 +581,13 @@ function viewMemory(id) {
             ${m.photoData
                 ? `<img src="${m.photoData}" class="view-photo" alt="${m.name}">`
                 : `<div class="view-emoji">${m.image}</div>`}
-            <h2>${m.name}</h2>
+            <h2>${escHtml(m.name)}</h2>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin:.75rem 0">
                 <span class="memory-relationship">${m.relationship}</span>
                 <span class="memory-type-badge">${typeLabel[m.memoryType] || 'General'}</span>
                 <span class="memory-db-badge">☁️ Saved to account</span>
             </div>
-            <p class="view-description">${m.description}</p>
+            <p class="view-description">${escHtml(m.description)}</p>
             ${m.audioData
                 ? `<div style="margin-top:1rem;text-align:left">
                        <p style="font-weight:600;color:#374785;margin-bottom:.4rem">🎙 Voice Note:</p>
@@ -629,7 +633,6 @@ async function deleteMemory(id) {
         await apiDeleteMemory(id);
         showNotification('Memory deleted', 'info');
     } catch (err) {
-        console.warn('API delete failed, removing locally:', err.message);
     }
     allMemories = allMemories.filter(m => m.id !== id);
     updateMemoryStats();

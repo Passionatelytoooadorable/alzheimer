@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resources - Alzheimer's Support</title>
-    <link rel="stylesheet" href="style.css">
+        <script>
+        (function() {
+            if (!localStorage.getItem('token')) { window.location.replace('login.html'); }
+            window.addEventListener('pageshow', function(e) {
+                if (e.persisted && !localStorage.getItem('token')) { window.location.replace('login.html'); }
+            });
+        })();
+    </script>
+<link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="resources.css">
     <!-- Simple default favicon -->
     <link rel="icon" href="#" id="dynamic-favicon">
@@ -420,7 +428,7 @@
     <script>
         (function() {
             if (!localStorage.getItem('token')) {
-                window.location.replace('signup.html');
+                window.location.replace('login.html');
                 return;
             }
         })();
@@ -431,5 +439,19 @@
         });
     </script>
     <script src="resources.js"></script>
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">&#9681;</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn=document.getElementById("a11yTextSize"),contBtn=document.getElementById("a11yContrast");
+        if(localStorage.getItem("largText")==="1"){document.body.classList.add("large-text");if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");}}
+        if(localStorage.getItem("hiContrast")==="1"){document.body.classList.add("high-contrast");if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");}}
+        if(sizeBtn)sizeBtn.addEventListener("click",function(){document.body.classList.toggle("large-text");var on=document.body.classList.contains("large-text");localStorage.setItem("largText",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+        if(contBtn)contBtn.addEventListener("click",function(){document.body.classList.toggle("high-contrast");var on=document.body.classList.contains("high-contrast");localStorage.setItem("hiContrast",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+    })();
+    </script>
 </body>
 </html>
