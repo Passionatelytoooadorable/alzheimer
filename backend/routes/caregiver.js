@@ -268,7 +268,7 @@ router.get('/patient/:patientId/location', auth, requireRole('caregiver'), async
 
     const r = await query(
       `SELECT latitude, longitude, address, timestamp
-       FROM locations WHERE user_id = $1
+       FROM user_locations WHERE user_id = $1
        ORDER BY timestamp DESC LIMIT 1`,
       [pid]
     );

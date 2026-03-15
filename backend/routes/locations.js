@@ -28,7 +28,7 @@ router.post('/', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update location error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Update location error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -46,7 +46,27 @@ router.get('/last', auth, async (req, res) => {
     );
     res.json({ location: lastLocation.rows[0] || null });
   } catch (error) {
-    console.error('Get location error:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Get location error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// Get location history (last 50 entries) - used by location tracker page
+router.get('/history', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const locations = await query(
+      `SELECT id, latitude, longitude, address, timestamp
+       FROM user_locations
+       WHERE user_id = $1
+       ORDER BY timestamp DESC
+       LIMIT 50`,
+      [userId]
+    );
+    res.json({ locations: locations.rows });
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') console.error('Get location history error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
