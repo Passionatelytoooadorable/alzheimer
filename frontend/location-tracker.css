@@ -1011,3 +1011,29 @@ body {
         text-align: center;
     }
 }
+
+/* ── Guardian info card (shown when no caregiver linked) ── */
+.guardian-info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: #f0f7ff;
+    border: 1.5px dashed #a8d0e6;
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem;
+    margin-top: 0.5rem;
+}
+.guardian-info-icon { font-size: 2rem; flex-shrink: 0; }
+.guardian-info-text p { font-size: 0.88rem; color: #555; margin-bottom: 0.6rem; line-height: 1.4; }
+.guardian-link-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #4a86e8, #374785);
+    color: white;
+    text-decoration: none;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.guardian-link-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(74,134,232,0.3); }

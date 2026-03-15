@@ -2,14 +2,13 @@
 const API_BASE = 'https://alzheimer-backend-new.onrender.com/api';
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Location Safety Page Loaded');
     
     // Check authentication
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     if (!token) {
-        window.location.href = 'index.html';
+        window.location.replace('login.html');
         return;
     }
 
@@ -24,29 +23,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadInitialData() {
     try {
-        // Load location history from backend
         await loadLocationHistory();
-        
-        // Load safe zones from backend
         await loadSafeZones();
-        
-        // Load guardians from backend
-        await loadGuardians();
-        
-        console.log('Initial data loaded from backend');
+        await loadLinkedCaregiver();
     } catch (error) {
-        console.error('Error loading initial data:', error);
     }
 }
 
+async function loadLinkedCaregiver() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const res = await fetch(API_BASE + '/caregiver/link-status', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const link = data.link;
+        const listEl = document.getElementById('guardiansList');
+        const infoEl = document.getElementById('guardiansInfo');
+        if (!listEl) return;
+
+        if (link && link.status === 'accepted') {
+            const initials = (link.caregiver_name || 'C').split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0, 2);
+            listEl.innerHTML =
+                '<div class="guardian-card">' +
+                    '<div class="guardian-info">' +
+                        '<div class="guardian-avatar">' + escStr(initials) + '</div>' +
+                        '<div class="guardian-details">' +
+                            '<div class="guardian-name">' + escStr(link.caregiver_name || 'Caregiver') + '</div>' +
+                            '<div class="guardian-contact">' + escStr(link.caregiver_email || '') + '</div>' +
+                            '<div class="guardian-role">Linked Caregiver</div>' +
+                        '</div>' +
+                        '<div class="guardian-status active">Active</div>' +
+                    '</div>' +
+                '</div>';
+            if (infoEl) infoEl.style.display = 'none';
+            var guardianStat = document.querySelector('.header-stats .stat:nth-child(3) .stat-number');
+            if (guardianStat) guardianStat.textContent = '1';
+        } else {
+            listEl.innerHTML = '';
+            if (infoEl) infoEl.style.display = 'flex';
+            var guardianStat2 = document.querySelector('.header-stats .stat:nth-child(3) .stat-number');
+            if (guardianStat2) guardianStat2.textContent = '0';
+        }
+    } catch (e) {
+        // Silently fail — caregiver link is optional
+    }
+}
+
+function escStr(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
 function setupBasicEventListeners() {
-    console.log('Setting up event listeners...');
     
     // Start Tracking Button - WITH BACKEND INTEGRATION
     const startTrackingBtn = document.getElementById('startTrackingBtn');
     if (startTrackingBtn) {
         startTrackingBtn.addEventListener('click', function() {
-            console.log('Start Tracking button clicked!');
             startRealTimeTracking();
             showNotification('Live tracking started with real location!', 'success');
         });
@@ -56,7 +93,6 @@ function setupBasicEventListeners() {
     const shareLocationBtn = document.getElementById('shareLocationBtn');
     if (shareLocationBtn) {
         shareLocationBtn.addEventListener('click', function() {
-            console.log('Share Location button clicked!');
             shareRealTimeLocation();
         });
     }
@@ -65,7 +101,6 @@ function setupBasicEventListeners() {
     const refreshLocation = document.getElementById('refreshLocation');
     if (refreshLocation) {
         refreshLocation.addEventListener('click', function() {
-            console.log('Refresh Location button clicked!');
             refreshRealLocation();
         });
     }
@@ -74,33 +109,21 @@ function setupBasicEventListeners() {
     const centerMap = document.getElementById('centerMap');
     if (centerMap) {
         centerMap.addEventListener('click', function() {
-            console.log('Center Map button clicked!');
             centerOnUserLocation();
         });
     }
     
-    // Add Guardian Button
-    const addGuardianBtn = document.getElementById('addGuardianBtn');
-    if (addGuardianBtn) {
-        addGuardianBtn.addEventListener('click', function() {
-            console.log('Add Guardian button clicked!');
-            showNotification('Add guardian feature coming soon!', 'info');
-        });
-    }
-    
-    // Edit and Delete Zone Buttons
+// Edit and Delete Zone Buttons
     const editButtons = document.querySelectorAll('.zone-btn.edit');
     editButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            console.log('Edit zone button clicked!');
-            showNotification('Edit zone feature coming soon!', 'info');
+            showNotification('To edit this zone, delete it and add a new one.', 'info');
         });
     });
     
     const deleteButtons = document.querySelectorAll('.zone-btn.delete');
     deleteButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            console.log('Delete zone button clicked!');
             const zoneCard = this.closest('.safe-zone-card');
             zoneCard.remove();
             showNotification('Safe zone deleted!', 'success');
@@ -112,8 +135,7 @@ function setupBasicEventListeners() {
     const viewAllBtn = document.querySelector('.view-all-btn');
     if (viewAllBtn) {
         viewAllBtn.addEventListener('click', function() {
-            console.log('View All History button clicked!');
-            showNotification('Full history view coming soon!', 'info');
+            showNotification('Your full location history is visible to your linked caregiver.', 'info');
         });
     }
 }
@@ -148,7 +170,6 @@ function startRealTimeTracking() {
             try {
                 await saveLocationToBackend(lat, lng);
             } catch (error) {
-                console.error('Failed to save location to backend:', error);
             }
             
             // Update map with real location
@@ -160,10 +181,8 @@ function startRealTimeTracking() {
             // Simulate battery update (in real app, this would come from device)
             updateBatteryLevel();
             
-            console.log('Real location updated:', { lat, lng, accuracy });
         },
         function(error) {
-            console.error('Error getting location:', error);
             handleLocationError(error);
         },
         options
@@ -190,7 +209,6 @@ async function refreshRealLocation() {
             try {
                 await saveLocationToBackend(lat, lng);
             } catch (error) {
-                console.error('Failed to save location to backend:', error);
             }
             
             // Update map with real location
@@ -205,7 +223,6 @@ async function refreshRealLocation() {
             showNotification('Location refreshed with real coordinates!', 'success');
         },
         function(error) {
-            console.error('Error refreshing location:', error);
             handleLocationError(error);
         },
         {
@@ -241,14 +258,12 @@ async function shareRealTimeLocation() {
         const message = `My current location: https://maps.google.com/?q=${lat},${lng}`;
         
         // In a real app, this would send to backend/guardians
-        console.log('Sharing location:', message);
         
         try {
             // Save to backend when sharing
             await saveLocationToBackend(lat, lng);
             showNotification('Your real location has been shared with guardians!', 'success');
         } catch (error) {
-            console.error('Failed to save location:', error);
             showNotification('Location shared locally, but failed to save to server.', 'warning');
         }
         
@@ -286,7 +301,6 @@ async function saveLocationToBackend(latitude, longitude) {
         
         return await response.json();
     } catch (error) {
-        console.error('Error saving location to backend:', error);
         throw error;
     }
 }
@@ -307,7 +321,6 @@ async function loadLocationHistory() {
             displayLocationHistory(data.locations || []);
         }
     } catch (error) {
-        console.error('Failed to load location history:', error);
     }
 }
 
@@ -325,33 +338,11 @@ async function loadSafeZones() {
         if (response.ok) {
             const data = await response.json();
             // In a real implementation, you would update the safe zones list with data from backend
-            console.log('Loaded safe zones from backend:', data);
         }
     } catch (error) {
-        console.error('Failed to load safe zones:', error);
     }
 }
 
-async function loadGuardians() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-        const response = await fetch(`${API_BASE}/guardians`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            // In a real implementation, you would update the guardians list with data from backend
-            console.log('Loaded guardians from backend:', data);
-        }
-    } catch (error) {
-        console.error('Failed to load guardians:', error);
-    }
-}
 
 async function getAddressFromCoords(latitude, longitude) {
     // You can integrate with a geocoding service like Google Maps API here
@@ -365,7 +356,6 @@ function displayLocationHistory(locations) {
 
     // Update history list with data from backend
     // This is a simplified implementation - you might want to merge with existing UI
-    console.log('Location history from backend:', locations);
 }
 
 // REST OF THE ORIGINAL FUNCTIONS (unchanged)
@@ -461,13 +451,11 @@ function handleLocationError(error) {
     }
     
     showNotification(message, 'error');
-    console.error('Location Error:', error);
 }
 
 function addToLocationHistory(lat, lng) {
     // This would normally save to database
     // For now, we'll just log it
-    console.log('Location saved to history:', { lat, lng, timestamp: new Date() });
 }
 
 function stopRealTimeTracking() {
@@ -481,13 +469,22 @@ function stopRealTimeTracking() {
 function initializeMap() {
     try {
         // Initialize the map with a generic center (will be updated with user's location)
-        const map = L.map('locationMap').setView([20.5937, 78.9629], 5); // Center of India
+        // Ensure map container has a concrete height before Leaflet reads it
+        var mapEl = document.getElementById('locationMap');
+        if (mapEl && !mapEl.style.height) { mapEl.style.height = '500px'; }
+
+        const map = L.map('locationMap', { zoomControl: true }).setView([20.5937, 78.9629], 5);
         window.locationMap = map;
-        
+
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
         }).addTo(map);
+
+        // Force tile re-render after layout is fully painted
+        setTimeout(function() { map.invalidateSize(); }, 200);
+        setTimeout(function() { map.invalidateSize(); }, 800);
         
         // Add a marker that will be updated with real location
         const marker = L.marker([20.5937, 78.9629]).addTo(map)
@@ -498,7 +495,6 @@ function initializeMap() {
         // Add sample safe zones (these would be dynamic in real app)
         addDynamicSafeZones();
         
-        console.log('Map initialized - ready for real location tracking');
         
         // Auto-start tracking if permissions are already granted
         setTimeout(() => {
@@ -506,7 +502,6 @@ function initializeMap() {
         }, 1000);
         
     } catch (error) {
-        console.log('Map could not be initialized:', error);
         // Fallback: Show message if map fails
         const mapContainer = document.getElementById('locationMap');
         if (mapContainer) {
@@ -537,7 +532,6 @@ function addDynamicSafeZones() {
         radius: 500
     }).addTo(window.locationMap).bindPopup('Home Safe Zone<br>500m radius<br>Location will update when tracking starts');
     
-    console.log('Dynamic safe zones added - will update with real locations');
 }
 
 function setupSafeZoneForm() {
@@ -592,7 +586,6 @@ function setupSafeZoneForm() {
     // Show form from quick actions button with smooth scroll
     if (addSafeZoneBtn) {
         addSafeZoneBtn.addEventListener('click', function() {
-            console.log('Add Safe Zone button clicked!');
             showSafeZoneFormFunc();
             
             // Smooth scroll to the form
@@ -606,7 +599,6 @@ function setupSafeZoneForm() {
     // Cancel form
     if (cancelSafeZone) {
         cancelSafeZone.addEventListener('click', function() {
-            console.log('Cancel Safe Zone button clicked!');
             hideSafeZoneForm();
         });
     }
@@ -615,7 +607,6 @@ function setupSafeZoneForm() {
     if (safeZoneFormElement) {
         safeZoneFormElement.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log('Safe Zone form submitted!');
             saveSafeZone();
         });
     }
@@ -660,7 +651,7 @@ function setupSafeZoneForm() {
         
         // Add event listeners to new buttons
         newZoneCard.querySelector('.zone-btn.edit').addEventListener('click', function() {
-            showNotification('Edit zone feature coming soon!', 'info');
+            showNotification('To edit this zone, delete it and add a new one.', 'info');
         });
         
         newZoneCard.querySelector('.zone-btn.delete').addEventListener('click', function() {
@@ -729,7 +720,6 @@ document.head.appendChild(style);
 
 // Enhanced reset function for debugging
 function resetLocationTracker() {
-    console.log('🧠 Alzheimer\'s Support - Location Tracker Reset');
     
     // Stop real-time tracking
     stopRealTimeTracking();
@@ -865,7 +855,6 @@ function resetLocationTracker() {
     }
     
     showNotification('Location tracker has been reset! Click "Start Live Tracking" for real location.', 'success');
-    console.log('✅ Reset complete! Ready for real location tracking.');
 }
 
 // Make it available globally for console access

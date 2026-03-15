@@ -4,9 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Location Safety - Alzheimer's Support</title>
+    <script>
+        (function() {
+            if (!localStorage.getItem('token')) { window.location.replace('login.html'); }
+            window.addEventListener('pageshow', function(e) {
+                if (e.persisted && !localStorage.getItem('token')) { window.location.replace('login.html'); }
+            });
+        })();
+    </script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="location-tracker.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <!-- Simple default favicon -->
     <link rel="icon" href="#" id="dynamic-favicon">
     <script src="favicon-config.js"></script>
@@ -187,37 +195,19 @@
 
                 <!-- Right Column - Enlarged Sidebar -->
                 <aside class="location-sidebar">
-                    <!-- Enlarged Guardians Section -->
+                    <!-- Guardians Section — managed via caregiver link on Dashboard -->
                     <div class="guardians-section">
                         <div class="section-header">
                             <h3>Guardians</h3>
-                            <button class="add-btn" id="addGuardianBtn">
-                                <span class="btn-icon">👤</span>
-                                Add
-                            </button>
                         </div>
-                        <div class="guardians-list">
-                            <div class="guardian-card">
-                                <div class="guardian-info">
-                                    <div class="guardian-avatar">EJ</div>
-                                    <div class="guardian-details">
-                                        <div class="guardian-name">Ella Johnson</div>
-                                        <div class="guardian-contact">(555) 123-4567</div>
-                                        <div class="guardian-role">Primary Guardian</div>
-                                    </div>
-                                    <div class="guardian-status active">Active</div>
-                                </div>
-                            </div>
-                            <div class="guardian-card">
-                                <div class="guardian-info">
-                                    <div class="guardian-avatar">MC</div>
-                                    <div class="guardian-details">
-                                        <div class="guardian-name">Michael Chen</div>
-                                        <div class="guardian-contact">(555) 987-6543</div>
-                                        <div class="guardian-role">Secondary Guardian</div>
-                                    </div>
-                                    <div class="guardian-status active">Active</div>
-                                </div>
+                        <div id="guardiansList" class="guardians-list">
+                            <!-- Populated dynamically from caregiver link -->
+                        </div>
+                        <div id="guardiansInfo" class="guardian-info-card">
+                            <div class="guardian-info-icon">👥</div>
+                            <div class="guardian-info-text">
+                                <p>Your caregiver can see your location when linked.</p>
+                                <a href="dashboard.html" class="guardian-link-btn">Link a Caregiver →</a>
                             </div>
                         </div>
                     </div>
@@ -290,7 +280,7 @@
         <p>&copy; 2025 Alzheimer's Support Platform. All rights reserved.</p>
     </footer>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
         <script src="api.js"></script>
     <script src="user-store.js"></script>
     <script src="nav-shared.js"></script>
@@ -309,5 +299,19 @@
         })();
     </script>
     <script src="location-tracker.js"></script>
+    <!-- Accessibility toolbar -->
+    <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button class="a11y-btn" id="a11yTextSize" title="Toggle larger text" aria-pressed="false" aria-label="Toggle larger text">A+</button>
+        <button class="a11y-btn" id="a11yContrast" title="Toggle high contrast" aria-pressed="false" aria-label="Toggle high contrast">&#9681;</button>
+    </div>
+    <script>
+    (function(){
+        var sizeBtn=document.getElementById("a11yTextSize"),contBtn=document.getElementById("a11yContrast");
+        if(localStorage.getItem("largText")==="1"){document.body.classList.add("large-text");if(sizeBtn){sizeBtn.classList.add("active");sizeBtn.setAttribute("aria-pressed","true");}}
+        if(localStorage.getItem("hiContrast")==="1"){document.body.classList.add("high-contrast");if(contBtn){contBtn.classList.add("active");contBtn.setAttribute("aria-pressed","true");}}
+        if(sizeBtn)sizeBtn.addEventListener("click",function(){document.body.classList.toggle("large-text");var on=document.body.classList.contains("large-text");localStorage.setItem("largText",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+        if(contBtn)contBtn.addEventListener("click",function(){document.body.classList.toggle("high-contrast");var on=document.body.classList.contains("high-contrast");localStorage.setItem("hiContrast",on?"1":"0");this.classList.toggle("active",on);this.setAttribute("aria-pressed",String(on));});
+    })();
+    </script>
 </body>
 </html>
