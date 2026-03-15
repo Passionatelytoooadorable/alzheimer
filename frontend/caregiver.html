@@ -87,6 +87,7 @@
         @media (max-width: 768px) { .caregiver-grid { grid-template-columns: 1fr; padding: 1rem; } }
         .full-width { grid-column: 1 / -1; }
         .card { background: white; border-radius: 14px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }
+        .card.map-card { overflow: visible; padding-bottom: 0; }
         .card h3 { font-size: 1rem; color: #444; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
         .card-badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; background: var(--primary-light); color: var(--primary); font-weight: 600; margin-left: auto; }
         .patient-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
@@ -94,7 +95,10 @@
         .patient-stat { text-align: center; padding: 1rem; border-radius: 10px; background: var(--primary-light); }
         .patient-stat .ps-num { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
         .patient-stat .ps-lbl { font-size: 0.75rem; color: #666; margin-top: 0.1rem; }
-        #locationMap { height: 280px; border-radius: 10px; background: #f0f0f0; }
+        #locationMap { height: 420px; border-radius: 10px; background: #f0f0f0; position: relative; z-index: 1; }
+        .map-card .leaflet-container { border-radius: 10px; }
+        /* Keep sticky header above Leaflet tile panes (z-index 200-650) */
+        .main-header, header { position: sticky; top: 0; z-index: 1000 !important; }
         .map-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #666; margin-top: 0.6rem; }
         .map-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
         .map-dot.green  { background: var(--success); }
@@ -227,7 +231,7 @@
             </div>
 
             <!-- Location map -->
-            <div class="card">
+            <div class="card map-card">
                 <h3>📍 Patient Location</h3>
                 <div id="locationMap"></div>
                 <div class="map-status">
@@ -455,6 +459,8 @@
         } catch (e) { console.error('loadStats:', e); }
     }
 
+    var locationRefreshTimer = null;
+
     async function loadLocation(pid) {
         try {
             var res  = await API.get('/caregiver/patient/' + pid + '/location');
@@ -463,18 +469,28 @@
             var center = loc ? [parseFloat(loc.latitude), parseFloat(loc.longitude)] : [20.5937, 78.9629];
 
             if (!map) {
-                map = L.map('locationMap').setView(center, loc ? 14 : 4);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
+                // Ensure container has height before Leaflet reads it
+                var mapEl = document.getElementById('locationMap');
+                if (mapEl && !mapEl.offsetHeight) { mapEl.style.height = '420px'; }
+                map = L.map('locationMap', { zoomControl: true }).setView(center, loc ? 14 : 4);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 19
+                }).addTo(map);
+                // Force tile re-render after layout paint
+                setTimeout(function() { if (map) map.invalidateSize(); }, 200);
+                setTimeout(function() { if (map) map.invalidateSize(); }, 800);
             } else {
                 map.setView(center, loc ? 14 : 4);
+                setTimeout(function() { if (map) map.invalidateSize(); }, 100);
             }
             if (patientMarker) { patientMarker.remove(); patientMarker = null; }
 
             if (loc) {
                 var lat = parseFloat(loc.latitude), lng = parseFloat(loc.longitude);
-                var icon = L.divIcon({ className: '', html: '<div style="font-size:28px;">📍</div>', iconSize:[30,30], iconAnchor:[15,30] });
-                patientMarker = L.marker([lat, lng], {icon}).addTo(map)
-                    .bindPopup('<strong>' + esc(selectedPatientName) + '</strong><br>' + (loc.address||'') + '<br><small>' + timeAgo(new Date(loc.timestamp)) + '</small>')
+                var icon = L.divIcon({ className: '', html: '<div style="font-size:28px;line-height:1;">📍</div>', iconSize:[30,30], iconAnchor:[15,30] });
+                patientMarker = L.marker([lat, lng], {icon: icon}).addTo(map)
+                    .bindPopup('<strong>' + esc(selectedPatientName) + '</strong><br>' + esc(loc.address||'') + '<br><small>' + timeAgo(new Date(loc.timestamp)) + '</small>')
                     .openPopup();
                 L.circle([lat, lng], { radius: 500, color: '#4a86e8', fillOpacity: 0.08, weight: 1 }).addTo(map);
                 var age = (Date.now() - new Date(loc.timestamp)) / 60000;
@@ -482,9 +498,15 @@
                 document.getElementById('mapStatusText').textContent =
                     'Last updated ' + timeAgo(new Date(loc.timestamp)) + (loc.address ? ' · ' + loc.address : '');
             } else {
-                document.getElementById('mapStatusText').textContent = 'No location data. Patient must enable location sharing from their dashboard.';
+                document.getElementById('mapStatusText').textContent = 'No location data yet. Patient must click "Start Live Tracking" on their Location Safety page.';
             }
         } catch (e) { document.getElementById('mapStatusText').textContent = 'Location unavailable.'; }
+
+        // Auto-refresh location every 30 seconds while this patient is selected
+        if (locationRefreshTimer) clearTimeout(locationRefreshTimer);
+        if (pid && pid === selectedPatientId) {
+            locationRefreshTimer = setTimeout(function() { loadLocation(pid); }, 30000);
+        }
     }
 
     async function loadActivity(pid) {
