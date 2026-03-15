@@ -9,7 +9,8 @@
     <script>
         function checkAuthScan() {
             if (!localStorage.getItem('token')) {
-                window.location.replace('login.html');
+                // Unauthenticated users land on landing.html, not login directly
+                window.location.replace('landing.html');
             }
         }
         checkAuthScan();
