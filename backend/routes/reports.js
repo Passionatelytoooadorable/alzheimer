@@ -35,7 +35,7 @@ router.get('/', auth, async (req, res) => {
 
     res.json({ reports });
   } catch (err) {
-    if (process.env.NODE_ENV !== 'production') console.error('GET /reports error:', err);
+    console.error('GET /reports error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -74,7 +74,7 @@ router.post('/', auth, async (req, res) => {
 
     res.status(201).json({ message: 'Report saved', id: saved.rows[0].id });
   } catch (err) {
-    if (process.env.NODE_ENV !== 'production') console.error('POST /reports error:', err);
+    console.error('POST /reports error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -96,7 +96,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     res.json({ message: 'Report deleted' });
   } catch (err) {
-    if (process.env.NODE_ENV !== 'production') console.error('DELETE /reports error:', err);
+    console.error('DELETE /reports error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

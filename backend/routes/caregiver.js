@@ -306,27 +306,12 @@ router.get('/patient/:patientId/reports', auth, requireRole('caregiver'), async 
     const pid = parseInt(req.params.patientId);
     await assertLinked(req.user.userId, pid);
     const r = await query(
-      `SELECT id, file_name, result, risk_score, findings, doctor, notes,
-              report_date, report_date_label, is_manual
-       FROM scan_reports WHERE user_id = $1
-       ORDER BY report_date DESC`,
+      `SELECT id, file_name, result, risk_score, findings, doctor, notes, report_date, created_at
+       FROM reports WHERE user_id = $1
+       ORDER BY created_at DESC`,
       [pid]
     );
-    // Normalise field names to match what profile.js expects
-    const reports = r.rows.map(function(row) {
-      return {
-        id:          row.id,
-        file_name:   row.file_name,
-        result:      row.result,
-        risk_score:  row.risk_score,
-        findings:    row.findings ? JSON.parse(row.findings) : [],
-        doctor:      row.doctor   || '',
-        notes:       row.notes    || '',
-        report_date: row.report_date,
-        created_at:  row.report_date   // profile.js falls back to created_at
-      };
-    });
-    res.json({ reports });
+    res.json({ reports: r.rows });
   } catch (err) {
     if (err.message === 'NOT_LINKED') return res.status(403).json({ error: 'Not linked to this patient' });
     if (process.env.NODE_ENV !== 'production') console.error('patient reports error:', err);
